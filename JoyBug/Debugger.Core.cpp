@@ -42,22 +42,27 @@ namespace Debugger
 		{
 			return false;
 		}
-		state.process.hProcess = pi.hProcess;
-		state.process.hThread = pi.hThread;
-		state.process.ProcessId = pi.dwProcessId;
-		state.process.MainThreadId = pi.dwThreadId;
+		state.Process.hProcess = pi.hProcess;
+		state.Process.hThread = pi.hThread;
+		state.Process.ProcessId = pi.dwProcessId;
+		state.Process.MainThreadId = pi.dwThreadId;
 		if (process)
-			*process = state.process;
+			*process = state.Process;
 		return true;
 	}
 
 	bool Stop()
 	{
-		return !!TerminateProcess(state.process.hProcess, 0);
+		return !!TerminateProcess(state.Process.hProcess, 0);
 	}
 
 	bool Detach()
 	{
-		return !!DebugActiveProcessStop(state.process.ProcessId);
+		return !!DebugActiveProcessStop(state.Process.ProcessId);
+	}
+
+	DebugState* State()
+	{
+		return &state;
 	}
 };

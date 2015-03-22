@@ -12,6 +12,7 @@ namespace Debugger
 		ProcessInfo* process);
 	bool Stop();
 	bool Detach();
+	DebugState* State();
 };
 
 #endif //_DEBUGGER_CORE_H
