@@ -65,12 +65,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Debugger.Core.cpp" />
+    <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Debugger.Loop.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="_global.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.Core.h" />
+    <ClInclude Include="Debugger.h" />
     <ClInclude Include="Debugger.Loop.h" />
     <ClInclude Include="Debugger.State.h" />
     <ClInclude Include="_global.h" />
