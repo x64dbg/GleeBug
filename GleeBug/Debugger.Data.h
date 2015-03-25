@@ -5,6 +5,9 @@
 
 namespace GleeBug
 {
+	/**
+	\brief Process information structure.
+	*/
 	struct ProcessInfo
 	{
 		HANDLE hProcess;

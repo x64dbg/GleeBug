@@ -1,7 +1,7 @@
 #ifndef _MYDEBUGGER_H
 #define _MYDEBUGGER_H
 
-#include "Debugger.h"
+#include "../GleeBug/Debugger.h"
 
 class MyDebugger : public GleeBug::Debugger
 {

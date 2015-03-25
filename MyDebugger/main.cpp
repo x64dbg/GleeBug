@@ -1,8 +1,5 @@
 #include <cstdio>
-#include "Debugger.h"
 #include "MyDebugger.h"
-
-using namespace GleeBug;
 
 int main()
 {
