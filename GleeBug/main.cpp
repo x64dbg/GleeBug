@@ -1,17 +1,17 @@
 #include <cstdio>
-#include "Debugger.Core.h"
-#include "Debugger.Loop.h"
+#include "Debugger.h"
 
 int main()
 {
 	wchar_t szFilePath[256] = L"c:\\CodeBlocks\\arma_cert_bin_info\\bin\\arma_cert_bin_info.exe";
 	wchar_t szCommandLine[256] = L"";
 	wchar_t szCurrentDir[256] = L"c:\\CodeBlocks\\arma_cert_bin_info\\bin";
-	Debugger::ProcessInfo process;
-	if (Debugger::Init(szFilePath, NULL, szCurrentDir, &process))
+	GleeBug::Debugger dbg;
+	if (dbg.Init(szFilePath, szCommandLine, szCurrentDir))
 	{
-		printf("Debugger::Init success! PID: %X\n", process.ProcessId);
-		Debugger::Loop();
+		printf("Debugger::Init success! PID: %X\n", dbg.GetMainProcess().ProcessId);
+		dbg.Start();
+		printf("Debugger::Start finished!");
 	}
 	else
 	{

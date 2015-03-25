@@ -1,99 +1,98 @@
-#include "Debugger.Loop.h"
-#include "Debugger.Core.h"
+#include "Debugger.h"
 
-namespace Debugger
+namespace GleeBug
 {
-	static void CreateProcessEvent(CREATE_PROCESS_DEBUG_INFO* CreateProcess, DebugState* state)
+	void Debugger::createProcessEvent(CREATE_PROCESS_DEBUG_INFO* CreateProcess)
 	{
-		puts("> CreateProcessEvent");
+		log("Debugger::createProcessEvent");
 	}
 
-	static void ExitProcessEvent(EXIT_PROCESS_DEBUG_INFO* ExitProcess, DebugState* state)
+	void Debugger::exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
 	{
-		puts("> ExitProcessEvent");
-		if (state->DebugEvent.dwProcessId == state->Process.ProcessId)
+		log("Debugger::exitProcessEvent");
+		if (_debugEvent.dwProcessId == _mainProcess.ProcessId)
 		{
-			state->BreakDebugger = true;
+			_breakDebugger = true;
 		}
 	}
 
-	static void CreateThreadEvent(CREATE_THREAD_DEBUG_INFO* CreateThread, DebugState* state)
+	void Debugger::createThreadEvent(CREATE_THREAD_DEBUG_INFO* CreateThread)
 	{
-		puts("> CreateThreadEvent");
+		log("Debugger::createThreadEvent");
 	}
 
-	static void ExitThreadEvent(EXIT_THREAD_DEBUG_INFO* ExitThread, DebugState* state)
+	void Debugger::exitThreadEvent(EXIT_THREAD_DEBUG_INFO* ExitThread)
 	{
-		puts("> ExitThreadEvent");
+		log("Debugger::exitThreadEvent");
 	}
 
-	static void LoadDllEvent(LOAD_DLL_DEBUG_INFO* LoadDll, DebugState* state)
+	void Debugger::loadDllEvent(LOAD_DLL_DEBUG_INFO* LoadDll)
 	{
-		puts("> LoadDllEvent");
+		log("Debugger::loadDllEvent");
 	}
 
-	static void UnloadDllEvent(UNLOAD_DLL_DEBUG_INFO* UnloadDll, DebugState* state)
+	void Debugger::unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
 	{
-		puts("> UnloadDllEvent");
+		log("Debugger::unloadDllEvent");
 	}
 
-	static void ExceptionEvent(EXCEPTION_DEBUG_INFO* Exception, DebugState* state)
+	void Debugger::exceptionEvent(EXCEPTION_DEBUG_INFO* Exception)
 	{
-		puts("> ExceptionEvent");
+		log("Debugger::exceptionEvent");
 	}
 
-	static void DebugStringEvent(OUTPUT_DEBUG_STRING_INFO* DebugString, DebugState* state)
+	void Debugger::debugStringEvent(OUTPUT_DEBUG_STRING_INFO* DebugString)
 	{
-		puts("> DebugStringEvent");
+		log("Debugger::debugStringEvent");
 	}
 
-	static void RipEvent(RIP_INFO* Rip, DebugState* state)
+	void Debugger::ripEvent(RIP_INFO* Rip)
 	{
-		puts("> RipEvent");
+		log("Debugger::ripEvent");
 	}
 
-	void Loop()
+	void Debugger::Start()
 	{
-		DebugState* state = State();
-		state->ContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
-		while (!state->BreakDebugger)
+		_continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+		_breakDebugger = false;
+		while (!_breakDebugger)
 		{
-			if (!WaitForDebugEvent(&state->DebugEvent, INFINITE))
+			if (!WaitForDebugEvent(&_debugEvent, INFINITE))
 				break;
 
-			switch (state->DebugEvent.dwDebugEventCode)
+			switch (_debugEvent.dwDebugEventCode)
 			{
 			case CREATE_PROCESS_DEBUG_EVENT:
-				CreateProcessEvent(&state->DebugEvent.u.CreateProcessInfo, state);
+				createProcessEvent(&_debugEvent.u.CreateProcessInfo);
 				break;
 			case EXIT_PROCESS_DEBUG_EVENT:
-				ExitProcessEvent(&state->DebugEvent.u.ExitProcess, state);
+				exitProcessEvent(&_debugEvent.u.ExitProcess);
 				break;
 			case CREATE_THREAD_DEBUG_EVENT:
-				CreateThreadEvent(&state->DebugEvent.u.CreateThread, state);
+				createThreadEvent(&_debugEvent.u.CreateThread);
 				break;
 			case EXIT_THREAD_DEBUG_EVENT:
-				ExitThreadEvent(&state->DebugEvent.u.ExitThread, state);
+				exitThreadEvent(&_debugEvent.u.ExitThread);
 				break;
 			case LOAD_DLL_DEBUG_EVENT:
-				LoadDllEvent(&state->DebugEvent.u.LoadDll, state);
+				loadDllEvent(&_debugEvent.u.LoadDll);
 				break;
 			case UNLOAD_DLL_DEBUG_EVENT:
-				UnloadDllEvent(&state->DebugEvent.u.UnloadDll, state);
+				unloadDllEvent(&_debugEvent.u.UnloadDll);
 				break;
 			case EXCEPTION_DEBUG_EVENT:
-				ExceptionEvent(&state->DebugEvent.u.Exception, state);
+				exceptionEvent(&_debugEvent.u.Exception);
 				break;
 			case OUTPUT_DEBUG_STRING_EVENT:
-				DebugStringEvent(&state->DebugEvent.u.DebugString, state);
+				debugStringEvent(&_debugEvent.u.DebugString);
 				break;
 			case RIP_EVENT:
-				RipEvent(&state->DebugEvent.u.RipInfo, state);
+				ripEvent(&_debugEvent.u.RipInfo);
 				break;
 			}
 
-			if (!ContinueDebugEvent(state->DebugEvent.dwProcessId, state->DebugEvent.dwThreadId, state->ContinueStatus))
+			if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))
 				break;
 		}
 	}
-}
+};
