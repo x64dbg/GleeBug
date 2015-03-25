@@ -136,7 +136,6 @@
   <ItemGroup>
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Debugger.Loop.cpp" />
-    <ClCompile Include="Debugger.Misc.cpp" />
     <ClCompile Include="_global.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -71,7 +71,6 @@ namespace GleeBug
 		virtual void exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo);
 		virtual void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString);
 		virtual void ripEvent(RIP_INFO* rip);
-		virtual void log(std::string msg);
 
 		ProcessInfo _mainProcess;
 		DWORD _continueStatus;
