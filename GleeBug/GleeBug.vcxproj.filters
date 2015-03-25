@@ -29,10 +29,13 @@
     <ClInclude Include="_global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debugger.Data.h">
+    <ClInclude Include="Debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debugger.h">
+    <ClInclude Include="Debugger.Process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugger.Thread.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

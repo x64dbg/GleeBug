@@ -4,26 +4,47 @@ namespace GleeBug
 {
 	void Debugger::createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess)
 	{
+		//process housekeeping
+		ProcessInfo process(createProcess->hProcess,
+			createProcess->hThread,
+			_debugEvent.dwProcessId,
+			_debugEvent.dwThreadId);
+		_processes.insert({ process.dwProcessId, process });
+
+		//call the callback
 		cbCreateProcessEvent(createProcess);
 	}
 
 	void Debugger::exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess)
 	{
-		if (_debugEvent.dwProcessId == _mainProcess.ProcessId)
-		{
+		//check if the terminated process is the main debuggee
+		if (_debugEvent.dwProcessId == _mainProcess.dwProcessId)
 			_breakDebugger = true;
-		}
+
+		//call the callback
 		cbExitProcessEvent(exitProcess);
+
+		//process housekeeping
+		_processes.erase(_debugEvent.dwProcessId);
 	}
 
 	void Debugger::createThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread)
 	{
+		//thread housekeeping
+		ThreadInfo thread(_debugEvent.dwThreadId, createThread->hThread, createThread->lpThreadLocalBase, createThread->lpStartAddress);
+		_processes[_debugEvent.dwProcessId].threads.insert({ thread.dwThreadId, thread });
+
+		//call the callback
 		cbCreateThreadEvent(createThread);
 	}
 
 	void Debugger::exitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread)
 	{
+		//call the callback
 		cbExitThreadEvent(exitThread);
+
+		//thread housekeeping
+		_processes[_debugEvent.dwProcessId].threads.erase(_debugEvent.dwThreadId);
 	}
 
 	void Debugger::loadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll)
