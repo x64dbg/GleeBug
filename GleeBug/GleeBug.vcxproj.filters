@@ -13,32 +13,41 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\GleeBug">
+      <UniqueIdentifier>{20ccba34-8c87-490a-8bd3-5195e625d009}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GleeBug">
+      <UniqueIdentifier>{91ea9bea-4704-4816-a885-8afd0e3ff974}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="_global.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\GleeBug</Filter>
     </ClCompile>
     <ClCompile Include="Debugger.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\GleeBug</Filter>
     </ClCompile>
     <ClCompile Include="Debugger.Loop.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\GleeBug</Filter>
     </ClCompile>
     <ClCompile Include="Debugger.Misc.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\GleeBug</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="_global.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Debugger.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\GleeBug</Filter>
     </ClInclude>
     <ClInclude Include="Debugger.Data.h">
+      <Filter>Header Files\GleeBug</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugger.h">
+      <Filter>Header Files\GleeBug</Filter>
+    </ClInclude>
+    <ClInclude Include="MyDebugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,53 +2,53 @@
 
 namespace GleeBug
 {
-	void Debugger::createProcessEvent(CREATE_PROCESS_DEBUG_INFO* CreateProcess)
+	void Debugger::createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess)
 	{
-		log("Debugger::createProcessEvent");
+		cbCreateProcessEvent(createProcess);
 	}
 
-	void Debugger::exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* ExitProcess)
+	void Debugger::exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess)
 	{
-		log("Debugger::exitProcessEvent");
 		if (_debugEvent.dwProcessId == _mainProcess.ProcessId)
 		{
 			_breakDebugger = true;
 		}
+		cbExitProcessEvent(exitProcess);
 	}
 
-	void Debugger::createThreadEvent(CREATE_THREAD_DEBUG_INFO* CreateThread)
+	void Debugger::createThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread)
 	{
-		log("Debugger::createThreadEvent");
+		cbCreateThreadEvent(createThread);
 	}
 
-	void Debugger::exitThreadEvent(EXIT_THREAD_DEBUG_INFO* ExitThread)
+	void Debugger::exitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread)
 	{
-		log("Debugger::exitThreadEvent");
+		cbExitThreadEvent(exitThread);
 	}
 
-	void Debugger::loadDllEvent(LOAD_DLL_DEBUG_INFO* LoadDll)
+	void Debugger::loadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll)
 	{
-		log("Debugger::loadDllEvent");
+		cbLoadDllEvent(loadDll);
 	}
 
-	void Debugger::unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* UnloadDll)
+	void Debugger::unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll)
 	{
-		log("Debugger::unloadDllEvent");
+		cbUnloadDllEvent(unloadDll);
 	}
 
-	void Debugger::exceptionEvent(EXCEPTION_DEBUG_INFO* Exception)
+	void Debugger::exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo)
 	{
-		log("Debugger::exceptionEvent");
+		cbExceptionEvent(exceptionInfo);
 	}
 
-	void Debugger::debugStringEvent(OUTPUT_DEBUG_STRING_INFO* DebugString)
+	void Debugger::debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString)
 	{
-		log("Debugger::debugStringEvent");
+		cbDebugStringEvent(debugString);
 	}
 
-	void Debugger::ripEvent(RIP_INFO* Rip)
+	void Debugger::ripEvent(RIP_INFO* rip)
 	{
-		log("Debugger::ripEvent");
+		cbRipEvent(rip);
 	}
 
 	void Debugger::Start()

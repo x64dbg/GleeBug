@@ -52,18 +52,27 @@ namespace GleeBug
 		const ProcessInfo & GetMainProcess();
 
 	protected:
-		void createProcessEvent(CREATE_PROCESS_DEBUG_INFO* CreateProcess);
-		void exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* ExitProcess);
-		void createThreadEvent(CREATE_THREAD_DEBUG_INFO* CreateThread);
-		void exitThreadEvent(EXIT_THREAD_DEBUG_INFO* ExitThread);
-		void loadDllEvent(LOAD_DLL_DEBUG_INFO* LoadDll);
-		void unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* UnloadDll);
-		void exceptionEvent(EXCEPTION_DEBUG_INFO* Exception);
-		void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* DebugString);
-		void ripEvent(RIP_INFO* Rip);
-		void log(std::string msg);
+		virtual void cbCreateProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess) {};
+		virtual void cbExitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess) {};
+		virtual void cbCreateThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread) {};
+		virtual void cbExitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread) {};
+		virtual void cbLoadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll) {};
+		virtual void cbUnloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll) {};
+		virtual void cbExceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo) {};
+		virtual void cbDebugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString) {};
+		virtual void cbRipEvent(RIP_INFO* rip) {};
 
-	private:
+		virtual void createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess);
+		virtual void exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess);
+		virtual void createThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread);
+		virtual void exitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread);
+		virtual void loadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll);
+		virtual void unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll);
+		virtual void exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo);
+		virtual void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString);
+		virtual void ripEvent(RIP_INFO* rip);
+		virtual void log(std::string msg);
+
 		ProcessInfo _mainProcess;
 		DWORD _continueStatus;
 		bool _breakDebugger;
