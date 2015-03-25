@@ -52,15 +52,60 @@ namespace GleeBug
 		const ProcessInfo & GetMainProcess();
 
 	protected:
-		virtual void cbCreateProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess) {};
-		virtual void cbExitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess) {};
-		virtual void cbCreateThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread) {};
-		virtual void cbExitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread) {};
-		virtual void cbLoadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll) {};
-		virtual void cbUnloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll) {};
-		virtual void cbExceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo) {};
-		virtual void cbDebugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString) {};
-		virtual void cbRipEvent(RIP_INFO* rip) {};
+		/**
+		\brief Process creation debug event callback. Provide an implementation to use this callback.
+		\param createProcess Information about the process created.
+		*/
+		virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO* createProcess) {};
+
+		/**
+		\brief Process termination debug event callback. Provide an implementation to use this callback.
+		\param exitProcess Information about the process terminated.
+		*/
+		virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO* exitProcess) {};
+
+		/**
+		\brief Thread creation debug event callback. Provide an implementation to use this callback.
+		\param createThread Information about the thread created.
+		*/
+		virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO* createThread) {};
+
+		/**
+		\brief Thread termination debug event callback. Provide an implementation to use this callback.
+		\param exitThread Information about the thread terminated.
+		*/
+		virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO* exitThread) {};
+
+		/**
+		\brief DLL load debug event callback. Provide an implementation to use this callback.
+		\param loadDll Information about the DLL loaded.
+		*/
+		virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO* loadDll) {};
+
+		/**
+		\brief DLL unload debug event callback. Provide an implementation to use this callback.
+		\param unloadDll Information about the DLL unloaded.
+		*/
+		virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO* unloadDll) {};
+
+		/**
+		\brief Exception debug event callback. Provide an implementation to use this callback.
+		\param exceptionInfo Information about the exception.
+		*/
+		virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO* exceptionInfo) {};
+
+		/**
+		\brief Debug string debug event callback. Provide an implementation to use this callback.
+		\param debugString Information about the debug string.
+		*/
+		virtual void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO* debugString) {};
+
+		/**
+		\brief RIP debug event callback. Provide an implementation to use this callback.
+		\param rip Information about the RIP event.
+		*/
+		virtual void cbRipEvent(const RIP_INFO* rip) {};
+
 
 		virtual void createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess);
 		virtual void exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess);
