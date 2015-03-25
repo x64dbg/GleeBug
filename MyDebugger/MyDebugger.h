@@ -21,6 +21,16 @@ protected:
 		printf("Thread %d created with entry 0x%p\n", _debugEvent.dwThreadId, createThread->lpStartAddress);
 	};
 
+	virtual void cbException_single_spep(EXCEPTION_RECORD* except_inf) 
+	{
+		printf("a single step occurred at location 0x%X", except_inf->ExceptionAddress);
+	};
+
+	virtual void cbExcpetion_breakpoint(EXCEPTION_RECORD* except_inf) 
+	{
+		printf("a breakpoint occurred at location 0x%X", except_inf->ExceptionAddress);
+	};
+
 	virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO* exitThread)
 	{
 		printf("Thread %d terminated with exit code 0x%08X\n", _debugEvent.dwThreadId, exitThread->dwExitCode);

@@ -94,6 +94,18 @@ namespace GleeBug
 		*/
 		virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO* exceptionInfo) {};
 
+		/*
+		single step event
+		these will execute instead of cbExceptionEvent.
+		*/
+		virtual void cbException_single_spep(EXCEPTION_RECORD* except_inf) {};
+		
+		/*
+		breakpoint event
+		Will also execute instead of cbExceptionEvent.
+		*/
+		virtual void cbExcpetion_breakpoint(EXCEPTION_RECORD* except_inf) {};
+
 		/**
 		\brief Debug string debug event callback. Provide an implementation to use this callback.
 		\param debugString Information about the debug string.
@@ -116,6 +128,8 @@ namespace GleeBug
 		virtual void exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo);
 		virtual void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString);
 		virtual void ripEvent(RIP_INFO* rip);
+
+
 
 		ProcessInfo _mainProcess;
 		DWORD _continueStatus;

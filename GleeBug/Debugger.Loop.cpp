@@ -38,7 +38,17 @@ namespace GleeBug
 
 	void Debugger::exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo)
 	{
-		cbExceptionEvent(exceptionInfo);
+		switch (exceptionInfo->ExceptionRecord.ExceptionCode){
+		case EXCEPTION_SINGLE_STEP:
+			cbException_single_spep(&exceptionInfo->ExceptionRecord);
+			break;
+		case EXCEPTION_BREAKPOINT:
+			cbExcpetion_breakpoint(&exceptionInfo->ExceptionRecord);
+			break;
+		default:
+			cbExceptionEvent(exceptionInfo);
+			break;
+		}
 	}
 
 	void Debugger::debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString)
