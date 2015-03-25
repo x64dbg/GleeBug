@@ -2,7 +2,7 @@
 #define _DEBUGGER_H
 
 #include "_global.h"
-#include "Debugger.Data.h"
+#include "Debugger.Process.h"
 
 namespace GleeBug
 {
@@ -44,12 +44,6 @@ namespace GleeBug
 		\brief Run the debug loop (does not return until the debuggee is detached or terminated).
 		*/
 		void Start();
-
-		/**
-		\brief Gets main process info.
-		\return The main process info.
-		*/
-		const ProcessInfo & GetMainProcess();
 
 	protected:
 		/**
@@ -129,12 +123,11 @@ namespace GleeBug
 		virtual void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString);
 		virtual void ripEvent(RIP_INFO* rip);
 
-
-
-		ProcessInfo _mainProcess;
+		PROCESS_INFORMATION _mainProcess;
 		DWORD _continueStatus;
 		bool _breakDebugger;
 		DEBUG_EVENT _debugEvent;
+		ProcessMap _processes;
 	};
 };
 

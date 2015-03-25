@@ -139,8 +139,9 @@
     <ClCompile Include="_global.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Debugger.Data.h" />
+    <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />
+    <ClInclude Include="Debugger.Thread.h" />
     <ClInclude Include="_global.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

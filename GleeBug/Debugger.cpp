@@ -4,6 +4,7 @@ namespace GleeBug
 {
 	Debugger::Debugger()
 	{
+		_processes.clear();
 	}
 
 	bool Debugger::Init(const wchar_t* szFilePath,
@@ -12,8 +13,6 @@ namespace GleeBug
 	{
 		STARTUPINFOW si;
 		memset(&si, 0, sizeof(si));
-		PROCESS_INFORMATION pi;
-		memset(&pi, 0, sizeof(pi));
 		const wchar_t* szFileNameCreateProcess;
 		wchar_t* szCommandLineCreateProcess;
 		if (szCommandLine == NULL || !wcslen(szCommandLine))
@@ -29,7 +28,7 @@ namespace GleeBug
 			szFileNameCreateProcess = 0;
 		}
 
-		if (!CreateProcessW(szFileNameCreateProcess,
+		return !!CreateProcessW(szFileNameCreateProcess,
 			szCommandLineCreateProcess,
 			NULL,
 			NULL,
@@ -38,15 +37,7 @@ namespace GleeBug
 			NULL,
 			szCurrentDirectory,
 			&si,
-			&pi))
-		{
-			return false;
-		}
-		_mainProcess.hProcess = pi.hProcess;
-		_mainProcess.hThread = pi.hThread;
-		_mainProcess.ProcessId = pi.dwProcessId;
-		_mainProcess.MainThreadId = pi.dwThreadId;
-		return true;
+			&_mainProcess);
 	}
 
 	bool Debugger::Stop()
@@ -56,11 +47,6 @@ namespace GleeBug
 
 	bool Debugger::Detach()
 	{
-		return !!DebugActiveProcessStop(_mainProcess.ProcessId);
-	}
-
-	const ProcessInfo & Debugger::GetMainProcess()
-	{
-		return _mainProcess;
+		return !!DebugActiveProcessStop(_mainProcess.dwProcessId);
 	}
 };
