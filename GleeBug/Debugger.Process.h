@@ -1,8 +1,9 @@
 #ifndef _DEBUGGER_PROCESS_H
 #define _DEBUGGER_PROCESS_H
 
-#include "_global.h"
+#include "Debugger.Global.h"
 #include "Debugger.Thread.h"
+#include "Debugger.Dll.h"
 
 namespace GleeBug
 {
@@ -18,6 +19,7 @@ namespace GleeBug
 
 		ThreadMap threads;
 		ThreadInfo* curThread;
+		DllMap dlls;
 
 		ProcessInfo() {} //fixes a 'no default constructor available' error
 

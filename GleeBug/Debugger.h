@@ -1,7 +1,7 @@
 #ifndef _DEBUGGER_H
 #define _DEBUGGER_H
 
-#include "_global.h"
+#include "Debugger.Global.h"
 #include "Debugger.Process.h"
 
 namespace GleeBug
@@ -50,37 +50,37 @@ namespace GleeBug
 		\brief Process creation debug event callback. Provide an implementation to use this callback.
 		\param createProcess Information about the process created.
 		*/
-		virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess) {};
+		virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) {};
 
 		/**
 		\brief Process termination debug event callback. Provide an implementation to use this callback.
 		\param exitProcess Information about the process terminated.
 		*/
-		virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess) {};
+		virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) {};
 
 		/**
 		\brief Thread creation debug event callback. Provide an implementation to use this callback.
 		\param createThread Information about the thread created.
 		*/
-		virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread) {};
+		virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) {};
 
 		/**
 		\brief Thread termination debug event callback. Provide an implementation to use this callback.
 		\param exitThread Information about the thread terminated.
 		*/
-		virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread) {};
+		virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) {};
 
 		/**
 		\brief DLL load debug event callback. Provide an implementation to use this callback.
 		\param loadDll Information about the DLL loaded.
 		*/
-		virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) {};
+		virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll) {};
 
 		/**
 		\brief DLL unload debug event callback. Provide an implementation to use this callback.
 		\param unloadDll Information about the DLL unloaded.
 		*/
-		virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) {};
+		virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll) {};
 
 		/**
 		\brief Exception debug event callback. Provide an implementation to use this callback.

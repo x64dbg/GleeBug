@@ -16,7 +16,10 @@ namespace GleeBug
 		_curProcess->curThread = &_curProcess->threads[process.dwMainThreadId];
 
 		//call the callback
-		cbCreateProcessEvent(createProcess);
+		cbCreateProcessEvent(createProcess, *_curProcess);
+
+		//close the file handle
+		CloseHandle(createProcess.hFile);
 	}
 
 	void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)
@@ -26,7 +29,7 @@ namespace GleeBug
 			_breakDebugger = true;
 
 		//call the callback
-		cbExitProcessEvent(exitProcess);
+		cbExitProcessEvent(exitProcess, *_curProcess);
 
 		//process housekeeping
 		_processes.erase(_debugEvent.dwProcessId);
@@ -45,13 +48,13 @@ namespace GleeBug
 		_curProcess->curThread = &_curProcess->threads[thread.dwThreadId];
 
 		//call the callback
-		cbCreateThreadEvent(createThread);
+		cbCreateThreadEvent(createThread, *_curProcess->curThread);
 	}
 
 	void Debugger::exitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread)
 	{
 		//call the callback
-		cbExitThreadEvent(exitThread);
+		cbExitThreadEvent(exitThread, *_curProcess->curThread);
 
 		//thread housekeeping
 		_curProcess->threads.erase(_debugEvent.dwThreadId);
@@ -62,12 +65,36 @@ namespace GleeBug
 
 	void Debugger::loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll)
 	{
-		cbLoadDllEvent(loadDll);
+		//DLL housekeeping
+		MODULEINFO modinfo;
+		memset(&modinfo, 0, sizeof(MODULEINFO));
+		GetModuleInformation(_curProcess->hProcess,
+			(HMODULE)loadDll.lpBaseOfDll,
+			&modinfo,
+			sizeof(MODULEINFO));
+		DllInfo dll(loadDll.lpBaseOfDll, modinfo.SizeOfImage, modinfo.EntryPoint);
+		_curProcess->dlls.insert({ Range(dll.lpBaseOfDll, dll.lpBaseOfDll + dll.sizeOfImage - 1), dll });
+
+		//call the callback
+		cbLoadDllEvent(loadDll, dll);
+
+		//close the file handle
+		CloseHandle(loadDll.hFile);
 	}
 
 	void Debugger::unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll)
 	{
-		cbUnloadDllEvent(unloadDll);
+		//call the callback
+		ULONG_PTR lpBaseOfDll = (ULONG_PTR)unloadDll.lpBaseOfDll;
+		auto dll = _curProcess->dlls.find(Range(lpBaseOfDll, lpBaseOfDll));
+		if (dll != _curProcess->dlls.end())
+			cbUnloadDllEvent(unloadDll, dll->second);
+		else
+			cbUnloadDllEvent(unloadDll, DllInfo(unloadDll.lpBaseOfDll, 0, 0));
+
+		//DLL housekeeping
+		if (dll != _curProcess->dlls.end())
+			_curProcess->dlls.erase(dll);
 	}
 
 	void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
@@ -140,5 +167,8 @@ namespace GleeBug
 			if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))
 				break;
 		}
+
+		_processes.clear();
+		_curProcess = nullptr;
 	}
 };

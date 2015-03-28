@@ -1,7 +1,7 @@
 #ifndef _DEBUGGER_THREADS_H
 #define _DEBUGGER_THREADS_H
 
-#include "_global.h"
+#include "Debugger.Global.h"
 
 namespace GleeBug
 {

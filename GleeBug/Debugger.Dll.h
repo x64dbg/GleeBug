@@ -1,7 +1,7 @@
 #ifndef _DEBUGGER_DLL_H
 #define _DEBUGGER_DLL_H
 
-#include "_global.h"
+#include "Debugger.Global.h"
 
 namespace GleeBug
 {
@@ -10,8 +10,21 @@ namespace GleeBug
 	*/
 	struct DllInfo
 	{
+		ULONG_PTR lpBaseOfDll;
+		DWORD sizeOfImage;
+		ULONG_PTR entryPoint;
 
+		DllInfo() {}
+
+		DllInfo(LPVOID lpBaseOfDll, DWORD sizeOfImage, LPVOID entryPoint)
+		{
+			this->lpBaseOfDll = (ULONG_PTR)lpBaseOfDll;
+			this->sizeOfImage = sizeOfImage;
+			this->entryPoint = (ULONG_PTR)entryPoint;
+		}
 	};
+
+	typedef std::map<Range, DllInfo, RangeCompare> DllMap;
 };
 
 #endif //_DEBUGGER_DLL_H
