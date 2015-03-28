@@ -1,8 +1,9 @@
 #ifndef _DEBUGGER_PROCESS_H
 #define _DEBUGGER_PROCESS_H
 
-#include "_global.h"
+#include "Debugger.Global.h"
 #include "Debugger.Thread.h"
+#include "Debugger.Dll.h"
 
 namespace GleeBug
 {
@@ -12,23 +13,18 @@ namespace GleeBug
 	struct ProcessInfo
 	{
 		HANDLE hProcess;
-		HANDLE hThread;
 		DWORD dwProcessId;
 		DWORD dwMainThreadId;
 
-		ThreadMap threads;
 		ThreadInfo* curThread;
+		bool systemBreakpoint;
 
-		ProcessInfo() {} //fixes a 'no default constructor available' error
+		ThreadMap threads;
+		DllMap dlls;
 
-		ProcessInfo(HANDLE hProcess, HANDLE hThread, DWORD dwProcessId, DWORD dwMainThreadId)
-		{
-			this->hProcess = hProcess;
-			this->hThread = hThread;
-			this->dwProcessId = dwProcessId;
-			this->dwMainThreadId = dwMainThreadId;
-			this->threads.clear();
-		}
+		ProcessInfo();
+		ProcessInfo(DWORD dwProcessId, DWORD dwMainThreadId);
+		~ProcessInfo();
 	};
 
 	typedef std::map<DWORD, ProcessInfo> ProcessMap;

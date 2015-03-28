@@ -2,97 +2,21 @@
 
 namespace GleeBug
 {
-	void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
-	{
-		//process housekeeping
-		ProcessInfo process(createProcess.hProcess,
-			createProcess.hThread,
-			_debugEvent.dwProcessId,
-			_debugEvent.dwThreadId);
-		_processes.insert({ process.dwProcessId, process });
-
-		//set the current process and current thread
-		_curProcess = &_processes[process.dwProcessId];
-		_curProcess->curThread = &_curProcess->threads[process.dwMainThreadId];
-
-		//call the callback
-		cbCreateProcessEvent(createProcess);
-	}
-
-	void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)
-	{
-		//check if the terminated process is the main debuggee
-		if (_debugEvent.dwProcessId == _mainProcess.dwProcessId)
-			_breakDebugger = true;
-
-		//call the callback
-		cbExitProcessEvent(exitProcess);
-
-		//process housekeeping
-		_processes.erase(_debugEvent.dwProcessId);
-
-		//set the current process
-		_curProcess = nullptr;
-	}
-
-	void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
-	{
-		//thread housekeeping
-		ThreadInfo thread(_debugEvent.dwThreadId, createThread.hThread, createThread.lpThreadLocalBase, createThread.lpStartAddress);
-		_curProcess->threads.insert({ thread.dwThreadId, thread });
-
-		//set the current thread
-		_curProcess->curThread = &_curProcess->threads[thread.dwThreadId];
-
-		//call the callback
-		cbCreateThreadEvent(createThread);
-	}
-
-	void Debugger::exitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread)
-	{
-		//call the callback
-		cbExitThreadEvent(exitThread);
-
-		//thread housekeeping
-		_curProcess->threads.erase(_debugEvent.dwThreadId);
-
-		//set the current thread
-		_curProcess->curThread = nullptr;
-	}
-
-	void Debugger::loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll)
-	{
-		cbLoadDllEvent(loadDll);
-	}
-
-	void Debugger::unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll)
-	{
-		cbUnloadDllEvent(unloadDll);
-	}
-
-	void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
-	{
-		cbExceptionEvent(exceptionInfo);
-	}
-
-	void Debugger::debugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString)
-	{
-		cbDebugStringEvent(debugString);
-	}
-
-	void Debugger::ripEvent(const RIP_INFO & rip)
-	{
-		cbRipEvent(rip);
-	}
-
 	void Debugger::Start()
 	{
-		_continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+		//initialize loop variables
 		_breakDebugger = false;
+
 		while (!_breakDebugger)
 		{
+			//wait for a debug event
+			_isRunning = true;
 			if (!WaitForDebugEvent(&_debugEvent, INFINITE))
 				break;
+			_isRunning = false;
+
+			//set default continue status
+			_continueStatus = DBG_CONTINUE;
 
 			//set the current process and thread
 			if (_processes.count(_debugEvent.dwProcessId))
@@ -106,6 +30,7 @@ namespace GleeBug
 			else
 				_curProcess = nullptr;
 
+			//dispatch the debug event
 			switch (_debugEvent.dwDebugEventCode)
 			{
 			case CREATE_PROCESS_DEBUG_EVENT:
@@ -137,8 +62,13 @@ namespace GleeBug
 				break;
 			}
 
+			//continue the debug event
 			if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))
 				break;
 		}
+
+		//cleanup
+		_processes.clear();
+		_curProcess = nullptr;
 	}
 };

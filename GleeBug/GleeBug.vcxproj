@@ -91,6 +91,9 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -102,6 +105,9 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -117,6 +123,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -132,17 +141,29 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <Lib>
+      <AdditionalDependencies>psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Debugger.cpp" />
+    <ClCompile Include="Debugger.Dll.cpp" />
     <ClCompile Include="Debugger.Loop.cpp" />
-    <ClCompile Include="_global.cpp" />
+    <ClCompile Include="Debugger.Loop.DebugString.cpp" />
+    <ClCompile Include="Debugger.Loop.Dll.cpp" />
+    <ClCompile Include="Debugger.Loop.Exception.cpp" />
+    <ClCompile Include="Debugger.Loop.Process.cpp" />
+    <ClCompile Include="Debugger.Loop.Rip.cpp" />
+    <ClCompile Include="Debugger.Loop.Thread.cpp" />
+    <ClCompile Include="Debugger.Process.cpp" />
+    <ClCompile Include="Debugger.Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Debugger.Dll.h" />
     <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Debugger.Thread.h" />
-    <ClInclude Include="_global.h" />
+    <ClInclude Include="Debugger.Global.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
