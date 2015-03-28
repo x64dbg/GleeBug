@@ -32,6 +32,6 @@ namespace GleeBug
 	};
 
 	typedef std::map<DWORD, ProcessInfo> ProcessMap;
-}
+};
 
 #endif //_DEBUGGER_PROCESS_H
