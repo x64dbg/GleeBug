@@ -51,7 +51,7 @@ namespace GleeBug
 		cbExitThreadEvent(exitThread);
 
 		//thread housekeeping
-		_processes[_debugEvent.dwProcessId].threads.erase(_debugEvent.dwThreadId);
+		_curProcess->threads.erase(_debugEvent.dwThreadId);
 	}
 
 	void Debugger::loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll)
