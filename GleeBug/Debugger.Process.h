@@ -13,7 +13,6 @@ namespace GleeBug
 	struct ProcessInfo
 	{
 		HANDLE hProcess;
-		HANDLE hThread;
 		DWORD dwProcessId;
 		DWORD dwMainThreadId;
 
@@ -21,16 +20,9 @@ namespace GleeBug
 		ThreadInfo* curThread;
 		DllMap dlls;
 
-		ProcessInfo() {} //fixes a 'no default constructor available' error
-
-		ProcessInfo(HANDLE hProcess, HANDLE hThread, DWORD dwProcessId, DWORD dwMainThreadId)
-		{
-			this->hProcess = hProcess;
-			this->hThread = hThread;
-			this->dwProcessId = dwProcessId;
-			this->dwMainThreadId = dwMainThreadId;
-			this->threads.clear();
-		}
+		ProcessInfo();
+		ProcessInfo(DWORD dwProcessId, DWORD dwMainThreadId);
+		~ProcessInfo();
 	};
 
 	typedef std::map<DWORD, ProcessInfo> ProcessMap;

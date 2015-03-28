@@ -5,9 +5,7 @@ namespace GleeBug
 	void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
 	{
 		//process housekeeping
-		ProcessInfo process(createProcess.hProcess,
-			createProcess.hThread,
-			_debugEvent.dwProcessId,
+		ProcessInfo process(_debugEvent.dwProcessId,
 			_debugEvent.dwThreadId);
 		_processes.insert({ process.dwProcessId, process });
 
@@ -41,7 +39,7 @@ namespace GleeBug
 	void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
 	{
 		//thread housekeeping
-		ThreadInfo thread(_debugEvent.dwThreadId, createThread.hThread, createThread.lpThreadLocalBase, createThread.lpStartAddress);
+		ThreadInfo thread(_debugEvent.dwThreadId, createThread.lpThreadLocalBase, createThread.lpStartAddress);
 		_curProcess->threads.insert({ thread.dwThreadId, thread });
 
 		//set the current thread
