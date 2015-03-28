@@ -30,6 +30,9 @@ namespace GleeBug
 
 		//process housekeeping
 		_processes.erase(_debugEvent.dwProcessId);
+
+		//set the current process
+		_curProcess = nullptr;
 	}
 
 	void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
@@ -52,6 +55,9 @@ namespace GleeBug
 
 		//thread housekeeping
 		_curProcess->threads.erase(_debugEvent.dwThreadId);
+
+		//set the current thread
+		_curProcess->curThread = nullptr;
 	}
 
 	void Debugger::loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll)
