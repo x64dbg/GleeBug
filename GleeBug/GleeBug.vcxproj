@@ -139,6 +139,7 @@
     <ClCompile Include="_global.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Debugger.Dll.h" />
     <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Debugger.Thread.h" />
