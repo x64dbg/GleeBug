@@ -40,7 +40,7 @@ protected:
 
 	virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
 	{
-		printf("Exception with code 0x%08X\n", exceptionInfo.ExceptionRecord);
+		printf("Exception with code 0x%08X\n", exceptionInfo.ExceptionRecord.ExceptionCode);
 	};
 
 	virtual void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString)
@@ -52,6 +52,11 @@ protected:
 	{
 		printf("RIP event type 0x%X, error 0x%X", rip.dwType, rip.dwError);
 	};
+
+	virtual void cbSystemBreakpoint()
+	{
+		printf("System breakpoint reached!");
+	}
 };
 
 #endif //_MYDEBUGGER_H

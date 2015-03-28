@@ -45,7 +45,7 @@ namespace GleeBug
 		*/
 		void Start();
 
-	protected: //callbacks
+	protected: //debug event callbacks
 		/**
 		\brief Process creation debug event callback. Provide an implementation to use this callback.
 		\param createProcess Information about the process created.
@@ -100,7 +100,20 @@ namespace GleeBug
 		*/
 		virtual void cbRipEvent(const RIP_INFO & rip) {};
 
-	protected: //core functionality
+	protected: //other callbacks
+		/**
+		\brief Unhandled exception callback. Provide an implementation to use this callback.
+		\param exceptionRecord The exception record.
+		\param firstChance True if the exception is a first chance exception, false otherwise.
+		*/
+		virtual void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance) {};
+
+		/**
+		\brief System breakpoint callback. Provide an implementation to use this callback.
+		*/
+		virtual void cbSystemBreakpoint() {};
+
+	protected: //core debug event handlers
 		/**
 		\brief Process creation debug event. Do not override this unless you know what you are doing!
 		\param createProcess Information about the process created.
@@ -155,6 +168,21 @@ namespace GleeBug
 		*/
 		virtual void ripEvent(const RIP_INFO & rip);
 
+	protected: //core exception handlers
+		/**
+		\brief Breakpoint exception handler. Do not override this unless you know what you are doing!
+		\param exceptionRecord The exception record.
+		\param firstChance True if the exception is a first chance exception, false otherwise.
+		*/
+		virtual void exceptionBreakpoint(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance);
+
+		/**
+		\brief Single step exception handler. Do not override this unless you know what you are doing!
+		\param exceptionRecord The exception record.
+		\param firstChance True if the exception is a first chance exception, false otherwise.
+		*/
+		virtual void exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance);
+
 	protected: //variables
 		PROCESS_INFORMATION _mainProcess;
 		DWORD _continueStatus;
@@ -162,6 +190,7 @@ namespace GleeBug
 		DEBUG_EVENT _debugEvent;
 		ProcessMap _processes;
 		ProcessInfo* _curProcess;
+		bool _isRunning;
 	};
 };
 

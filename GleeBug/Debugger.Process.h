@@ -16,8 +16,10 @@ namespace GleeBug
 		DWORD dwProcessId;
 		DWORD dwMainThreadId;
 
-		ThreadMap threads;
 		ThreadInfo* curThread;
+		bool systemBreakpoint;
+
+		ThreadMap threads;
 		DllMap dlls;
 
 		ProcessInfo();
