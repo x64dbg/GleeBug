@@ -15,6 +15,8 @@ namespace GleeBug
 		ULONG_PTR lpThreadLocalBase;
 		ULONG_PTR lpStartAddress;
 
+		ThreadInfo() {}
+
 		ThreadInfo(DWORD dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress)
 		{
 			this->dwThreadId = dwThreadId;

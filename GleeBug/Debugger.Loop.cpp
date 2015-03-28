@@ -2,20 +2,24 @@
 
 namespace GleeBug
 {
-	void Debugger::createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess)
+	void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
 	{
 		//process housekeeping
-		ProcessInfo process(createProcess->hProcess,
-			createProcess->hThread,
+		ProcessInfo process(createProcess.hProcess,
+			createProcess.hThread,
 			_debugEvent.dwProcessId,
 			_debugEvent.dwThreadId);
 		_processes.insert({ process.dwProcessId, process });
+
+		//set the current process and current thread
+		_curProcess = &_processes[process.dwProcessId];
+		_curProcess->curThread = &_curProcess->threads[process.dwMainThreadId];
 
 		//call the callback
 		cbCreateProcessEvent(createProcess);
 	}
 
-	void Debugger::exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess)
+	void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)
 	{
 		//check if the terminated process is the main debuggee
 		if (_debugEvent.dwProcessId == _mainProcess.dwProcessId)
@@ -28,17 +32,20 @@ namespace GleeBug
 		_processes.erase(_debugEvent.dwProcessId);
 	}
 
-	void Debugger::createThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread)
+	void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
 	{
 		//thread housekeeping
-		ThreadInfo thread(_debugEvent.dwThreadId, createThread->hThread, createThread->lpThreadLocalBase, createThread->lpStartAddress);
-		_processes[_debugEvent.dwProcessId].threads.insert({ thread.dwThreadId, thread });
+		ThreadInfo thread(_debugEvent.dwThreadId, createThread.hThread, createThread.lpThreadLocalBase, createThread.lpStartAddress);
+		_curProcess->threads.insert({ thread.dwThreadId, thread });
+
+		//set the current thread
+		_curProcess->curThread = &_curProcess->threads[thread.dwThreadId];
 
 		//call the callback
 		cbCreateThreadEvent(createThread);
 	}
 
-	void Debugger::exitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread)
+	void Debugger::exitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread)
 	{
 		//call the callback
 		cbExitThreadEvent(exitThread);
@@ -47,37 +54,27 @@ namespace GleeBug
 		_processes[_debugEvent.dwProcessId].threads.erase(_debugEvent.dwThreadId);
 	}
 
-	void Debugger::loadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll)
+	void Debugger::loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll)
 	{
 		cbLoadDllEvent(loadDll);
 	}
 
-	void Debugger::unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll)
+	void Debugger::unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll)
 	{
 		cbUnloadDllEvent(unloadDll);
 	}
 
-	void Debugger::exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo)
+	void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
 	{
-		switch (exceptionInfo->ExceptionRecord.ExceptionCode){
-		case EXCEPTION_SINGLE_STEP:
-			cbException_single_spep(&exceptionInfo->ExceptionRecord);
-			break;
-		case EXCEPTION_BREAKPOINT:
-			cbExcpetion_breakpoint(&exceptionInfo->ExceptionRecord);
-			break;
-		default:
-			cbExceptionEvent(exceptionInfo);
-			break;
-		}
+		cbExceptionEvent(exceptionInfo);
 	}
 
-	void Debugger::debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString)
+	void Debugger::debugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString)
 	{
 		cbDebugStringEvent(debugString);
 	}
 
-	void Debugger::ripEvent(RIP_INFO* rip)
+	void Debugger::ripEvent(const RIP_INFO & rip)
 	{
 		cbRipEvent(rip);
 	}
@@ -91,34 +88,46 @@ namespace GleeBug
 			if (!WaitForDebugEvent(&_debugEvent, INFINITE))
 				break;
 
+			//set the current process and thread
+			if (_processes.count(_debugEvent.dwProcessId))
+			{
+				_curProcess = &_processes[_debugEvent.dwProcessId];
+				if (_curProcess->threads.count(_debugEvent.dwThreadId))
+					_curProcess->curThread = &_curProcess->threads[_debugEvent.dwThreadId];
+				else
+					_curProcess->curThread = nullptr;
+			}
+			else
+				_curProcess = nullptr;
+
 			switch (_debugEvent.dwDebugEventCode)
 			{
 			case CREATE_PROCESS_DEBUG_EVENT:
-				createProcessEvent(&_debugEvent.u.CreateProcessInfo);
+				createProcessEvent(_debugEvent.u.CreateProcessInfo);
 				break;
 			case EXIT_PROCESS_DEBUG_EVENT:
-				exitProcessEvent(&_debugEvent.u.ExitProcess);
+				exitProcessEvent(_debugEvent.u.ExitProcess);
 				break;
 			case CREATE_THREAD_DEBUG_EVENT:
-				createThreadEvent(&_debugEvent.u.CreateThread);
+				createThreadEvent(_debugEvent.u.CreateThread);
 				break;
 			case EXIT_THREAD_DEBUG_EVENT:
-				exitThreadEvent(&_debugEvent.u.ExitThread);
+				exitThreadEvent(_debugEvent.u.ExitThread);
 				break;
 			case LOAD_DLL_DEBUG_EVENT:
-				loadDllEvent(&_debugEvent.u.LoadDll);
+				loadDllEvent(_debugEvent.u.LoadDll);
 				break;
 			case UNLOAD_DLL_DEBUG_EVENT:
-				unloadDllEvent(&_debugEvent.u.UnloadDll);
+				unloadDllEvent(_debugEvent.u.UnloadDll);
 				break;
 			case EXCEPTION_DEBUG_EVENT:
-				exceptionEvent(&_debugEvent.u.Exception);
+				exceptionEvent(_debugEvent.u.Exception);
 				break;
 			case OUTPUT_DEBUG_STRING_EVENT:
-				debugStringEvent(&_debugEvent.u.DebugString);
+				debugStringEvent(_debugEvent.u.DebugString);
 				break;
 			case RIP_EVENT:
-				ripEvent(&_debugEvent.u.RipInfo);
+				ripEvent(_debugEvent.u.RipInfo);
 				break;
 			}
 

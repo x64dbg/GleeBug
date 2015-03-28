@@ -17,6 +17,7 @@ namespace GleeBug
 		DWORD dwMainThreadId;
 
 		ThreadMap threads;
+		ThreadInfo* curThread;
 
 		ProcessInfo() {} //fixes a 'no default constructor available' error
 

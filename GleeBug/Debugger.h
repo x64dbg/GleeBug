@@ -11,7 +11,7 @@ namespace GleeBug
 	*/
 	class Debugger
 	{
-	public:
+	public: //public functionality
 		/**
 		\brief Constructs the Debugger instance.
 		*/
@@ -45,89 +45,123 @@ namespace GleeBug
 		*/
 		void Start();
 
-	protected:
+	protected: //callbacks
 		/**
 		\brief Process creation debug event callback. Provide an implementation to use this callback.
 		\param createProcess Information about the process created.
 		*/
-		virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO* createProcess) {};
+		virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess) {};
 
 		/**
 		\brief Process termination debug event callback. Provide an implementation to use this callback.
 		\param exitProcess Information about the process terminated.
 		*/
-		virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO* exitProcess) {};
+		virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess) {};
 
 		/**
 		\brief Thread creation debug event callback. Provide an implementation to use this callback.
 		\param createThread Information about the thread created.
 		*/
-		virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO* createThread) {};
+		virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread) {};
 
 		/**
 		\brief Thread termination debug event callback. Provide an implementation to use this callback.
 		\param exitThread Information about the thread terminated.
 		*/
-		virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO* exitThread) {};
+		virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread) {};
 
 		/**
 		\brief DLL load debug event callback. Provide an implementation to use this callback.
 		\param loadDll Information about the DLL loaded.
 		*/
-		virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO* loadDll) {};
+		virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) {};
 
 		/**
 		\brief DLL unload debug event callback. Provide an implementation to use this callback.
 		\param unloadDll Information about the DLL unloaded.
 		*/
-		virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO* unloadDll) {};
+		virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) {};
 
 		/**
 		\brief Exception debug event callback. Provide an implementation to use this callback.
 		\param exceptionInfo Information about the exception.
 		*/
-		virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO* exceptionInfo) {};
-
-		/*
-		single step event
-		these will execute instead of cbExceptionEvent.
-		*/
-		virtual void cbException_single_spep(EXCEPTION_RECORD* except_inf) {};
-		
-		/*
-		breakpoint event
-		Will also execute instead of cbExceptionEvent.
-		*/
-		virtual void cbExcpetion_breakpoint(EXCEPTION_RECORD* except_inf) {};
+		virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo) {};
 
 		/**
 		\brief Debug string debug event callback. Provide an implementation to use this callback.
 		\param debugString Information about the debug string.
 		*/
-		virtual void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO* debugString) {};
+		virtual void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString) {};
 
 		/**
 		\brief RIP debug event callback. Provide an implementation to use this callback.
 		\param rip Information about the RIP event.
 		*/
-		virtual void cbRipEvent(const RIP_INFO* rip) {};
+		virtual void cbRipEvent(const RIP_INFO & rip) {};
 
+	protected: //core functionality
+		/**
+		\brief Process creation debug event. Do not override this unless you know what you are doing!
+		\param createProcess Information about the process created.
+		*/
+		virtual void createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess);
 
-		virtual void createProcessEvent(CREATE_PROCESS_DEBUG_INFO* createProcess);
-		virtual void exitProcessEvent(EXIT_PROCESS_DEBUG_INFO* exitProcess);
-		virtual void createThreadEvent(CREATE_THREAD_DEBUG_INFO* createThread);
-		virtual void exitThreadEvent(EXIT_THREAD_DEBUG_INFO* exitThread);
-		virtual void loadDllEvent(LOAD_DLL_DEBUG_INFO* loadDll);
-		virtual void unloadDllEvent(UNLOAD_DLL_DEBUG_INFO* unloadDll);
-		virtual void exceptionEvent(EXCEPTION_DEBUG_INFO* exceptionInfo);
-		virtual void debugStringEvent(OUTPUT_DEBUG_STRING_INFO* debugString);
-		virtual void ripEvent(RIP_INFO* rip);
+		/**
+		\brief Process termination debug event. Do not override this unless you know what you are doing!
+		\param exitProcess Information about the process terminated.
+		*/
+		virtual void exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess);
 
+		/**
+		\brief Thread creation debug event. Do not override this unless you know what you are doing!
+		\param createThread Information about the thread created.
+		*/
+		virtual void createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread);
+
+		/**
+		\brief Thread termination debug event. Do not override this unless you know what you are doing!
+		\param exitThread Information about the thread terminated.
+		*/
+		virtual void exitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread);
+
+		/**
+		\brief DLL load debug event. Do not override this unless you know what you are doing!
+		\param loadDll Information about the DLL loaded.
+		*/
+		virtual void loadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll);
+
+		/**
+		\brief DLL unload debug event. Do not override this unless you know what you are doing!
+		\param unloadDll Information about the DLL unloaded.
+		*/
+		virtual void unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll);
+
+		/**
+		\brief Exception debug event. Do not override this unless you know what you are doing!
+		\param exceptionInfo Information about the exception.
+		*/
+		virtual void exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo);
+
+		/**
+		\brief Debug string debug event. Do not override this unless you know what you are doing!
+		\param debugString Information about the debug string.
+		*/
+		virtual void debugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString);
+
+		/**
+		\brief RIP debug event. Do not override this unless you know what you are doing!
+		\param rip Information about the RIP event.
+		*/
+		virtual void ripEvent(const RIP_INFO & rip);
+
+	protected: //variables
 		PROCESS_INFORMATION _mainProcess;
 		DWORD _continueStatus;
 		bool _breakDebugger;
 		DEBUG_EVENT _debugEvent;
 		ProcessMap _processes;
+		ProcessInfo* _curProcess;
 	};
 };
 
