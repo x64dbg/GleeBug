@@ -65,5 +65,11 @@
     <ClInclude Include="Debugger.Global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Debugger.Breakpoints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugger.Breakpoint.Types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
 
 #include "Debugger.Global.h"
 #include "Debugger.Process.h"
+#include "Debugger.Breakpoints.h"
 
 namespace GleeBug
 {
@@ -45,6 +46,11 @@ namespace GleeBug
 		*/
 		void Start();
 
+		/*
+		adds a brakpoint on the main process being debugger;
+		*/
+		bool SetBreakPointMainProcess(LPVOID address, uint32_t bp_type);
+		bool DelBreakPointMainProcess(LPVOID address, uint32_t bp_type);
 	protected: //debug event callbacks
 		/**
 		\brief Process creation debug event callback. Provide an implementation to use this callback.
@@ -184,6 +190,7 @@ namespace GleeBug
 		virtual void exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance);
 
 	protected: //variables
+		BreakPointManager _breakPoints;
 		PROCESS_INFORMATION _mainProcess;
 		DWORD _continueStatus;
 		bool _breakDebugger;

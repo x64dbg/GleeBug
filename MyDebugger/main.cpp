@@ -6,10 +6,10 @@ int main()
 #ifdef _WIN64
 	wchar_t szFilePath[256] = L"c:\\test64.exe";
 #else //x86
-	wchar_t szFilePath[256] = L"c:\\test32.exe";
+	wchar_t szFilePath[256] = L"C:\\Users\\JOAO\\Favorites\\Desktop\\crackmes\\chakravyuha\\_sol\\CHAKRAVYUHA.exe";
 #endif //_WIN64
 	wchar_t szCommandLine[256] = L"";
-	wchar_t szCurrentDir[256] = L"c:\\";
+	wchar_t szCurrentDir[256] = L"C:\\Users\\JOAO\\Favorites\\Desktop\\crackmes\\chakravyuha\\_sol\\";
 	MyDebugger dbg;
 	if (dbg.Init(szFilePath, szCommandLine, szCurrentDir))
 	{
