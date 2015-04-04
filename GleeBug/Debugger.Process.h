@@ -25,6 +25,8 @@ namespace GleeBug
 		ProcessInfo();
 		ProcessInfo(DWORD dwProcessId, DWORD dwMainThreadId);
 		~ProcessInfo();
+		bool MemRead(ULONG_PTR address, const size_t size, void* buffer);
+		bool MemWrite(ULONG_PTR address, const size_t size, const void* buffer);
 	};
 
 	typedef std::map<DWORD, ProcessInfo> ProcessMap;

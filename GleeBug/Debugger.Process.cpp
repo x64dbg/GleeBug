@@ -23,4 +23,14 @@ namespace GleeBug
 		if (this->hProcess != INVALID_HANDLE_VALUE)
 			CloseHandle(hProcess);
 	}
+
+	bool ProcessInfo::MemRead(ULONG_PTR address, const size_t size, void* buffer)
+	{
+		return !!ReadProcessMemory(this->hProcess, (const void*)address, buffer, size, NULL);
+	}
+
+	bool ProcessInfo::MemWrite(ULONG_PTR address, const size_t size, const void* buffer)
+	{
+		return !!WriteProcessMemory(this->hProcess, (void*)address, buffer, size, NULL);
+	}
 };
