@@ -10,6 +10,7 @@ namespace GleeBug
 
 		//set the current thread
 		_curProcess->curThread = &_curProcess->threads[thread.dwThreadId];
+		_curProcess->curThread->RegReadContext();
 
 		//call the debug event callback
 		cbCreateThreadEvent(createThread, *_curProcess->curThread);

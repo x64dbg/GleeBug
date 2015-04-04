@@ -55,7 +55,7 @@ protected:
 
 	virtual void cbSystemBreakpoint()
 	{
-		printf("System breakpoint reached!");
+		printf("System breakpoint reached!\n");
 	}
 };
 

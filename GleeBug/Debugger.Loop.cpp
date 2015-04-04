@@ -23,7 +23,10 @@ namespace GleeBug
 			{
 				_curProcess = &_processes[_debugEvent.dwProcessId];
 				if (_curProcess->threads.count(_debugEvent.dwThreadId))
+				{
 					_curProcess->curThread = &_curProcess->threads[_debugEvent.dwThreadId];
+					_curProcess->curThread->RegReadContext();
+				}
 				else
 					_curProcess->curThread = nullptr;
 			}
@@ -61,6 +64,10 @@ namespace GleeBug
 				ripEvent(_debugEvent.u.RipInfo);
 				break;
 			}
+
+			//write the register context
+			if (_curProcess->curThread)
+				_curProcess->curThread->RegWriteContext();
 
 			//continue the debug event
 			if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))

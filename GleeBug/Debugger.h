@@ -113,6 +113,12 @@ namespace GleeBug
 		*/
 		virtual void cbSystemBreakpoint() {};
 
+		/**
+		\brief Internal error callback. Provide an implementation to use this callback.
+		\param error The error message.
+		*/
+		virtual void cbInternalError(const std::string & error) {};
+
 	protected: //core debug event handlers
 		/**
 		\brief Process creation debug event. Do not override this unless you know what you are doing!
