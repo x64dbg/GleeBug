@@ -159,8 +159,6 @@
     <ClCompile Include="Debugger.Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Debugger.Breakpoint.Types.h" />
-    <ClInclude Include="Debugger.Breakpoints.h" />
     <ClInclude Include="Debugger.Dll.h" />
     <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />

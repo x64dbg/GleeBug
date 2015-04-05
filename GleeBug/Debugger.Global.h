@@ -6,10 +6,9 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
-#include <stdint.h>
+
 #include <windows.h>
 #include <psapi.h>
-#include "Debugger.Breakpoint.Types.h"
 
 namespace GleeBug
 {
