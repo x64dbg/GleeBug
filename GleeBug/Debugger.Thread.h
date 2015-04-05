@@ -67,10 +67,7 @@ namespace GleeBug
 		void StepInto(T* debugger, void(T::*callback)())
 		{
 			static_cast<void>(static_cast<Debugger *>(debugger));
-			StepInto(std::bind([](void (T::*callback)(), T* debugger)
-			{
-				(debugger->*callback)();
-			}, callback, debugger));
+			StepInto(std::bind(callback, debugger));
 		}
 
 	private:
