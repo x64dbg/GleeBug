@@ -6,15 +6,25 @@ namespace GleeBug
 	{
 		//process housekeeping
 		ProcessInfo process(_debugEvent.dwProcessId,
+			createProcess.hProcess,
 			_debugEvent.dwThreadId);
 		_processes.insert({ process.dwProcessId, process });
+		_process = &_processes.find(process.dwProcessId)->second;
 
-		//set the current process and current thread
-		_curProcess = &_processes[process.dwProcessId];
-		_curProcess->curThread = &_curProcess->threads[process.dwMainThreadId];
+		//thread housekeeping (main thread is created implicitly)
+		ThreadInfo thread(_debugEvent.dwThreadId,
+			createProcess.hThread,
+			createProcess.lpThreadLocalBase,
+			createProcess.lpStartAddress);
+		_process->threads.insert({ thread.dwThreadId, thread });
+		_thread = _process->thread = &_process->threads.find(thread.dwThreadId)->second;
+
+		//read thread context from main thread
+		if (!_thread->RegReadContext())
+			cbInternalError("ThreadInfo::RegReadContext() failed!");
 
 		//call the debug event callback
-		cbCreateProcessEvent(createProcess, *_curProcess);
+		cbCreateProcessEvent(createProcess, *_process);
 
 		//close the file handle
 		CloseHandle(createProcess.hFile);
@@ -27,12 +37,12 @@ namespace GleeBug
 			_breakDebugger = true;
 
 		//call the debug event callback
-		cbExitProcessEvent(exitProcess, *_curProcess);
+		cbExitProcessEvent(exitProcess, *_process);
 
 		//process housekeeping
 		_processes.erase(_debugEvent.dwProcessId);
 
 		//set the current process
-		_curProcess = nullptr;
+		_process = nullptr;
 	}
 };

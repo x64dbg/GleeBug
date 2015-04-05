@@ -10,24 +10,49 @@ namespace GleeBug
 	/**
 	\brief Process information structure.
 	*/
-	struct ProcessInfo
+	class ProcessInfo
 	{
+	public:
 		HANDLE hProcess;
 		DWORD dwProcessId;
 		DWORD dwMainThreadId;
 
-		ThreadInfo* curThread;
+		ThreadInfo* thread;
 		bool systemBreakpoint;
 
 		ThreadMap threads;
 		DllMap dlls;
 
+		/**
+		\brief Default constructor.
+		*/
 		ProcessInfo();
-		ProcessInfo(DWORD dwProcessId, DWORD dwMainThreadId);
-		~ProcessInfo();
-	};
 
-	typedef std::map<DWORD, ProcessInfo> ProcessMap;
+		/**
+		\brief Constructor.
+		\param dwProcessId Identifier for the process.
+		\param dwMainThreadId Identifier for the main thread.
+		*/
+		ProcessInfo(DWORD dwProcessId, HANDLE hProcess, DWORD dwMainThreadId);
+
+		/**
+		\brief Read memory from the process.
+		\param address The virtual address to read from.
+		\param size The size to read.
+		\param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
+		\return true if it succeeds, false if it fails.
+		*/
+		bool MemRead(ULONG_PTR address, const size_t size, void* buffer);
+
+		/**
+		\brief Write memory to the process.
+		\param address The virtual address to write to.
+		\param size The size to write.
+		\param [in] buffer Source buffer. Cannot be null.
+		\return true if it succeeds, false if it fails.
+		*/
+		bool MemWrite(ULONG_PTR address, const size_t size, const void* buffer);
+	};
 };
 
 #endif //_DEBUGGER_PROCESS_H

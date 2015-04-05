@@ -4,9 +4,9 @@ namespace GleeBug
 {
 	void Debugger::exceptionBreakpoint(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
 	{
-		if (!_curProcess->systemBreakpoint) //handle system breakpoint
+		if (!_process->systemBreakpoint) //handle system breakpoint
 		{
-			_curProcess->systemBreakpoint = true;
+			_process->systemBreakpoint = true;
 			_continueStatus = DBG_CONTINUE;
 
 			//call the callback
@@ -19,6 +19,21 @@ namespace GleeBug
 
 	void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
 	{
+		if (_thread->isSingleStepping) //handle single step
+		{
+			_thread->isSingleStepping = false;
+			_continueStatus = DBG_CONTINUE;
+
+			//call the callbacks
+			StepCallbackVector cbStepCopy = _thread->stepCallbacks;
+			_thread->stepCallbacks.clear();
+			for (auto cbStep : cbStepCopy)
+				cbStep();
+			cbStep();			
+		}
+		else //handle other single step exceptions
+		{
+		}
 	}
 
 	void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)

@@ -10,52 +10,82 @@ class MyDebugger : public Debugger
 protected:
 	virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process)
 	{
-		printf("Process %d created with entry 0x%p\n", _debugEvent.dwProcessId, createProcess.lpStartAddress);
+		printf("Process %d created with entry 0x%p\n",
+			_debugEvent.dwProcessId,
+			createProcess.lpStartAddress);
 	};
 
 	virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process)
 	{
-		printf("Process %d terminated with exit code 0x%08X\n", _debugEvent.dwProcessId, exitProcess.dwExitCode);
+		printf("Process %d terminated with exit code 0x%08X\n",
+			_debugEvent.dwProcessId,
+			exitProcess.dwExitCode);
 	}
 
 	virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread)
 	{
-		printf("Thread %d created with entry 0x%p\n", _debugEvent.dwThreadId, createThread.lpStartAddress);
+		printf("Thread %d created with entry 0x%p\n",
+			_debugEvent.dwThreadId,
+			createThread.lpStartAddress);
 	};
 
 	virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread)
 	{
-		printf("Thread %d terminated with exit code 0x%08X\n", _debugEvent.dwThreadId, exitThread.dwExitCode);
+		printf("Thread %d terminated with exit code 0x%08X\n",
+			_debugEvent.dwThreadId,
+			exitThread.dwExitCode);
 	};
 
 	virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll)
 	{
-		printf("DLL loaded at 0x%p\n", loadDll.lpBaseOfDll);
+		printf("DLL loaded at 0x%p\n",
+			loadDll.lpBaseOfDll);
 	};
 
 	virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll)
 	{
-		printf("DLL 0x%p unloaded\n", unloadDll.lpBaseOfDll);
+		printf("DLL 0x%p unloaded\n",
+			unloadDll.lpBaseOfDll);
 	};
 
 	virtual void cbExceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
 	{
-		printf("Exception with code 0x%08X\n", exceptionInfo.ExceptionRecord.ExceptionCode);
+		printf("Exception with code 0x%08X at 0x%p\n",
+			exceptionInfo.ExceptionRecord.ExceptionCode,
+			exceptionInfo.ExceptionRecord.ExceptionAddress);
 	};
 
 	virtual void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString)
 	{
-		printf("Debug string at 0x%p with length %d\n", debugString.lpDebugStringData, debugString.nDebugStringLength);
+		printf("Debug string at 0x%p with length %d\n",
+			debugString.lpDebugStringData,
+			debugString.nDebugStringLength);
 	};
 
 	virtual void cbRipEvent(const RIP_INFO & rip)
 	{
-		printf("RIP event type 0x%X, error 0x%X", rip.dwType, rip.dwError);
+		printf("RIP event type 0x%X, error 0x%X",
+			rip.dwType,
+			rip.dwError);
 	};
+
+	void boobs()
+	{
+		printf("(.)Y(.) 0x%p\n",
+			_thread->registers.Rip);
+	}
 
 	virtual void cbSystemBreakpoint()
 	{
-		printf("System breakpoint reached!");
+		printf("System breakpoint reached, CIP: 0x%p\n",
+			_thread->registers.Rip);
+		_thread->StepInto(BIND(this, MyDebugger::boobs));
+	}
+
+	virtual void cbInternalError(const std::string & error)
+	{
+		printf("Internal Error: %s\n",
+			error.c_str());
 	}
 };
 
