@@ -46,9 +46,32 @@ namespace GleeBug
 		*/
 		bool RegWriteContext();
 
+		/**
+		\brief Step into.
+		*/
+		void StepInto();
+
+		/**
+		\brief Step into.
+		\param cbStep StepCallback. Can be written using BIND(this, MyDebugger::cb).
+		*/
 		void StepInto(StepCallback cbStep);
 
-		void StepInto();
+		/**
+		\brief Step into.
+		\tparam T Generic type parameter. Must be a subclass of Debugger.
+		\param debugger This pointer to a subclass of Debugger.
+		\param callback Pointer to the callback. Written like: &MyDebugger::cb
+		*/
+		template <typename T>
+		void StepInto(T* debugger, void(T::*callback)())
+		{
+			static_cast<void>(static_cast<Debugger *>(debugger));
+			StepInto(std::bind([](void (T::*callback)(), T* debugger)
+			{
+				(debugger->*callback)();
+			}, callback, debugger));
+		}
 
 	private:
 		CONTEXT _oldContext;
