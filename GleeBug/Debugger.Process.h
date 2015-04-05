@@ -10,8 +10,9 @@ namespace GleeBug
 	/**
 	\brief Process information structure.
 	*/
-	struct ProcessInfo
+	class ProcessInfo
 	{
+	public:
 		HANDLE hProcess;
 		DWORD dwProcessId;
 		DWORD dwMainThreadId;
@@ -32,12 +33,7 @@ namespace GleeBug
 		\param dwProcessId Identifier for the process.
 		\param dwMainThreadId Identifier for the main thread.
 		*/
-		ProcessInfo(DWORD dwProcessId, DWORD dwMainThreadId);
-
-		/**
-		\brief Destructor.
-		*/
-		~ProcessInfo();
+		ProcessInfo(DWORD dwProcessId, HANDLE hProcess, DWORD dwMainThreadId);
 
 		/**
 		\brief Read memory from the process.

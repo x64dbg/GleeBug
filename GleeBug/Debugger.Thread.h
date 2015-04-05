@@ -9,8 +9,9 @@ namespace GleeBug
 	/**
 	\brief Thread information structure.
 	*/
-	struct ThreadInfo
+	class ThreadInfo
 	{
+	public:
 		DWORD dwThreadId;
 		HANDLE hThread;
 		ULONG_PTR lpThreadLocalBase;
@@ -28,12 +29,7 @@ namespace GleeBug
 		\param lpThreadLocalBase The thread local base.
 		\param lpStartAddress The start address.
 		*/
-		ThreadInfo(DWORD dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
-
-		/**
-		\brief Destructor.
-		*/
-		~ThreadInfo();
+		ThreadInfo(DWORD dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
 
 		/**
 		\brief Read the register context from the thread. This fills the RegistersInfo member.

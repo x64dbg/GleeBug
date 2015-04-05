@@ -7,38 +7,41 @@ namespace GleeBug
 {
 	CONTEXT;
 	/**
-	\brief Thread register context. #lovethetrash
+	\brief Thread register context.
 	*/
-	struct RegistersInfo
+	class RegistersInfo
 	{
+	public:
 #ifdef _WIN64
-		ULONG_PTR & Rax = _context.Rax;
-		ULONG_PTR & Rbx = _context.Rbx;
-		ULONG_PTR & Rcx = _context.Rcx;
-		ULONG_PTR & Rdx = _context.Rdx;
-		ULONG_PTR & Rsi = _context.Rsi;
-		ULONG_PTR & Rdi = _context.Rdi;
-		ULONG_PTR & Rbp = _context.Rbp;
-		ULONG_PTR & Rsp = _context.Rsp;
-		ULONG_PTR & Rip = _context.Rip;
-		ULONG_PTR & R8 = _context.R8;
-		ULONG_PTR & R9 = _context.R9;
-		ULONG_PTR & R10 = _context.R10;
-		ULONG_PTR & R11 = _context.R11;
-		ULONG_PTR & R12 = _context.R12;
-		ULONG_PTR & R13 = _context.R13;
-		ULONG_PTR & R14 = _context.R14;
-		ULONG_PTR & R15 = _context.R15;
+		DWORD64 Rax;
+		DWORD64 Rbx;
+		DWORD64 Rcx;
+		DWORD64 Rdx;
+		DWORD64 Rsi;
+		DWORD64 Rdi;
+		DWORD64 Rbp;
+		DWORD64 Rsp;
+		DWORD64 Rip;
+		DWORD64 R8;
+		DWORD64 R9;
+		DWORD64 R10;
+		DWORD64 R11;
+		DWORD64 R12;
+		DWORD64 R13;
+		DWORD64 R14;
+		DWORD64 R15;
+		DWORD EFlags;
 #else //x86
-		ULONG_PTR & Eax = _context.Eax;
-		ULONG_PTR & Ebx = _context.Ebx;
-		ULONG_PTR & Ecx = _context.Ecx;
-		ULONG_PTR & Edx = _context.Edx;
-		ULONG_PTR & Esi = _context.Esi;
-		ULONG_PTR & Edi = _context.Edi;
-		ULONG_PTR & Ebp = _context.Ebp;
-		ULONG_PTR & Esp = _context.Esp;
-		ULONG_PTR & Eip = _context.Eip;
+		DWORD Eax;
+		DWORD Ebx;
+		DWORD Ecx;
+		DWORD Edx;
+		DWORD Esi;
+		DWORD Edi;
+		DWORD Ebp;
+		DWORD Esp;
+		DWORD Eip;
+		DWORD EFlags;
 #endif //_WIN64
 
 		/**
@@ -58,8 +61,34 @@ namespace GleeBug
 		*/
 		void SetContext(const CONTEXT & context);
 
+		/**
+		\brief Sets trap flag.
+		\param set (Optional) true to set, false to unset.
+		*/
+		void SetTrapFlag(bool set = true);
+
+		/**
+		\brief Gets trap flag.
+		\return true if the flag is set, false otherwise.
+		*/
+		bool GetTrapFlag();
+
+		/**
+		\brief Sets resume flag.
+		\param set (Optional) true to set, false to unset.
+		*/
+		void SetResumeFlag(bool set = true);
+
+		/**
+		\brief Gets resume flag.
+		\return true if the flag is set, false otherwise.
+		*/
+		bool GetResumeFlag();
+
 	private:
 		CONTEXT _context;
+		const int TRAP_FLAG = 0x100;
+		const int RESUME_FLAG = 0x10000;
 	};
 };
 

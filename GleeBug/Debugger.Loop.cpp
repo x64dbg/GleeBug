@@ -16,7 +16,7 @@ namespace GleeBug
 			_isRunning = false;
 
 			//set default continue status
-			_continueStatus = DBG_CONTINUE;
+			_continueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
 			//set the current process and thread
 			if (_processes.count(_debugEvent.dwProcessId))
@@ -25,7 +25,8 @@ namespace GleeBug
 				if (_curProcess->threads.count(_debugEvent.dwThreadId))
 				{
 					_curProcess->curThread = &_curProcess->threads[_debugEvent.dwThreadId];
-					_curProcess->curThread->RegReadContext();
+					if (!_curProcess->curThread->RegReadContext())
+						cbInternalError("ThreadInfo::RegReadContext() failed!");
 				}
 				else
 					_curProcess->curThread = nullptr;
@@ -66,8 +67,11 @@ namespace GleeBug
 			}
 
 			//write the register context
-			if (_curProcess->curThread)
-				_curProcess->curThread->RegWriteContext();
+			if (_curProcess && _curProcess->curThread)
+			{
+				if (!_curProcess->curThread->RegWriteContext())
+					cbInternalError("ThreadInfo::RegWriteContext() failed!");
+			}
 
 			//continue the debug event
 			if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))

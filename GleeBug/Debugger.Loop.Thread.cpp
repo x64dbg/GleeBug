@@ -5,12 +5,13 @@ namespace GleeBug
 	void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
 	{
 		//thread housekeeping
-		ThreadInfo thread(_debugEvent.dwThreadId, createThread.lpThreadLocalBase, createThread.lpStartAddress);
-		_curProcess->threads.insert({ thread.dwThreadId, thread });
+		_curProcess->threads.insert({ _debugEvent.dwThreadId,
+			ThreadInfo(_debugEvent.dwThreadId, createThread.hThread, createThread.lpThreadLocalBase, createThread.lpStartAddress) });
 
 		//set the current thread
-		_curProcess->curThread = &_curProcess->threads[thread.dwThreadId];
-		_curProcess->curThread->RegReadContext();
+		_curProcess->curThread = &_curProcess->threads.find(_debugEvent.dwThreadId)->second;
+		if (!_curProcess->curThread->RegReadContext())
+			cbInternalError("ThreadInfo::RegReadContext() failed!");
 
 		//call the debug event callback
 		cbCreateThreadEvent(createThread, *_curProcess->curThread);

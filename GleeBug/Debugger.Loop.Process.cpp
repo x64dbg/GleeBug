@@ -6,12 +6,22 @@ namespace GleeBug
 	{
 		//process housekeeping
 		ProcessInfo process(_debugEvent.dwProcessId,
+			createProcess.hProcess,
 			_debugEvent.dwThreadId);
 		_processes.insert({ process.dwProcessId, process });
+		_curProcess = &_processes.find(process.dwProcessId)->second;
 
-		//set the current process and current thread
-		_curProcess = &_processes[process.dwProcessId];
-		_curProcess->curThread = &_curProcess->threads[process.dwMainThreadId];
+		//thread housekeeping (main thread is created implicitly)
+		ThreadInfo thread(_debugEvent.dwThreadId,
+			createProcess.hThread,
+			createProcess.lpThreadLocalBase,
+			createProcess.lpStartAddress);
+		_curProcess->threads.insert({ thread.dwThreadId, thread });
+		_curProcess->curThread = &_curProcess->threads.find(thread.dwThreadId)->second;
+
+		//read thread context from main thread
+		if (!_curProcess->curThread->RegReadContext())
+			cbInternalError("ThreadInfo::RegReadContext() failed!");
 
 		//call the debug event callback
 		cbCreateProcessEvent(createProcess, *_curProcess);

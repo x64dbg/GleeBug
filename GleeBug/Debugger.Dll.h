@@ -8,8 +8,9 @@ namespace GleeBug
 	/**
 	\brief DLL information structure.
 	*/
-	struct DllInfo
+	class DllInfo
 	{
+	public:
 		ULONG_PTR lpBaseOfDll;
 		DWORD sizeOfImage;
 		ULONG_PTR entryPoint;
