@@ -36,8 +36,13 @@ namespace GleeBug
 	typedef std::map<DWORD, ThreadInfo> ThreadMap;
 	
 	//callback function typedefs
-	typedef std::function<void(const Debugger &)> StepCallback;
-	
+	typedef std::function<void()> StepCallback;
+
+	//vector typedefs
+	typedef std::vector<StepCallback> StepCallbackVector;
+
+	//macros
+	#define BIND(thisPtr, funcPtr) std::bind(&funcPtr, thisPtr)
 };
 
 #endif //_DEBUGGER_GLOBAL_H

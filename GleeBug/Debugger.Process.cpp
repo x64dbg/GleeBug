@@ -4,7 +4,7 @@ namespace GleeBug
 {
 	ProcessInfo::ProcessInfo()
 	{
-		this->curThread = nullptr;
+		this->thread = nullptr;
 		this->systemBreakpoint = false;
 		this->hProcess = INVALID_HANDLE_VALUE;
 	}

@@ -41,4 +41,16 @@ namespace GleeBug
 		ResumeThread(this->hThread);
 		return bReturn;
 	}
+
+	void ThreadInfo::StepInto(StepCallback cbStep)
+	{
+		StepInto();
+		stepCallbacks.push_back(cbStep);
+	}
+
+	void ThreadInfo::StepInto()
+	{
+		registers.SetTrapFlag();
+		isSingleStepping = true;
+	}
 };

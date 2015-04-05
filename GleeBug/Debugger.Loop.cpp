@@ -21,18 +21,18 @@ namespace GleeBug
 			//set the current process and thread
 			if (_processes.count(_debugEvent.dwProcessId))
 			{
-				_curProcess = &_processes[_debugEvent.dwProcessId];
-				if (_curProcess->threads.count(_debugEvent.dwThreadId))
+				_process = &_processes[_debugEvent.dwProcessId];
+				if (_process->threads.count(_debugEvent.dwThreadId))
 				{
-					_curProcess->curThread = &_curProcess->threads[_debugEvent.dwThreadId];
-					if (!_curProcess->curThread->RegReadContext())
+					_thread = _process->thread = &_process->threads[_debugEvent.dwThreadId];
+					if (!_thread->RegReadContext())
 						cbInternalError("ThreadInfo::RegReadContext() failed!");
 				}
 				else
-					_curProcess->curThread = nullptr;
+					_thread = _process->thread = nullptr;
 			}
 			else
-				_curProcess = nullptr;
+				_process = nullptr;
 
 			//dispatch the debug event
 			switch (_debugEvent.dwDebugEventCode)
@@ -67,9 +67,9 @@ namespace GleeBug
 			}
 
 			//write the register context
-			if (_curProcess && _curProcess->curThread)
+			if (_thread)
 			{
-				if (!_curProcess->curThread->RegWriteContext())
+				if (!_thread->RegWriteContext())
 					cbInternalError("ThreadInfo::RegWriteContext() failed!");
 			}
 
@@ -80,6 +80,6 @@ namespace GleeBug
 
 		//cleanup
 		_processes.clear();
-		_curProcess = nullptr;
+		_process = nullptr;
 	}
 };

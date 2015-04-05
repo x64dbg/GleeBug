@@ -16,7 +16,10 @@ namespace GleeBug
 		HANDLE hThread;
 		ULONG_PTR lpThreadLocalBase;
 		ULONG_PTR lpStartAddress;
+
 		RegistersInfo registers;
+		StepCallbackVector stepCallbacks;
+		bool isSingleStepping;
 
 		/**
 		\brief Default constructor.
@@ -42,6 +45,10 @@ namespace GleeBug
 		\return true if it succeeds, false if it fails.
 		*/
 		bool RegWriteContext();
+
+		void StepInto(StepCallback cbStep);
+
+		void StepInto();
 
 	private:
 		CONTEXT _oldContext;

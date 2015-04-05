@@ -69,10 +69,17 @@ protected:
 			rip.dwError);
 	};
 
+	void boobs()
+	{
+		printf("(.)Y(.) 0x%p\n",
+			_thread->registers.Rip);
+	}
+
 	virtual void cbSystemBreakpoint()
 	{
 		printf("System breakpoint reached, CIP: 0x%p\n",
-			_curProcess->curThread->registers.Rip);
+			_thread->registers.Rip);
+		_thread->StepInto(BIND(this, MyDebugger::boobs));
 	}
 
 	virtual void cbInternalError(const std::string & error)

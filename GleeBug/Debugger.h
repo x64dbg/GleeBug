@@ -102,6 +102,12 @@ namespace GleeBug
 
 	protected: //other callbacks
 		/**
+		\brief Internal error callback. Provide an implementation to use this callback.
+		\param error The error message.
+		*/
+		virtual void cbInternalError(const std::string & error) {};
+
+		/**
 		\brief Unhandled exception callback. Provide an implementation to use this callback.
 		\param exceptionRecord The exception record.
 		\param firstChance True if the exception is a first chance exception, false otherwise.
@@ -114,10 +120,9 @@ namespace GleeBug
 		virtual void cbSystemBreakpoint() {};
 
 		/**
-		\brief Internal error callback. Provide an implementation to use this callback.
-		\param error The error message.
+		\brief Step callback. Provide an implementation to use this callback.
 		*/
-		virtual void cbInternalError(const std::string & error) {};
+		virtual void cbStep() {};
 
 	protected: //core debug event handlers
 		/**
@@ -195,8 +200,17 @@ namespace GleeBug
 		bool _breakDebugger;
 		DEBUG_EVENT _debugEvent;
 		ProcessMap _processes;
-		ProcessInfo* _curProcess;
 		bool _isRunning;
+
+		/**
+		\brief The current process (can be null in some cases).
+		*/
+		ProcessInfo* _process;
+
+		/**
+		\brief The current thread (can be null in some cases). Should be a copy of _process->thread.
+		*/
+		ThreadInfo* _thread;
 	};
 };
 
