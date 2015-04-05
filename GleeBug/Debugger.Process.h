@@ -53,8 +53,6 @@ namespace GleeBug
 		*/
 		bool MemWrite(ULONG_PTR address, const size_t size, const void* buffer);
 	};
-
-	typedef std::map<DWORD, ProcessInfo> ProcessMap;
 };
 
 #endif //_DEBUGGER_PROCESS_H

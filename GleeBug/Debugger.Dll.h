@@ -28,8 +28,6 @@ namespace GleeBug
 		*/
 		DllInfo(LPVOID lpBaseOfDll, DWORD sizeOfImage, LPVOID entryPoint);
 	};
-
-	typedef std::map<Range, DllInfo, RangeCompare> DllMap;
 };
 
 #endif //_DEBUGGER_DLL_H

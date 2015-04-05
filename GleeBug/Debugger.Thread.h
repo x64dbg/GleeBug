@@ -46,8 +46,6 @@ namespace GleeBug
 	private:
 		CONTEXT _oldContext;
 	};
-
-	typedef std::map<DWORD, ThreadInfo> ThreadMap;
 };
 
 #endif //_DEBUGGER_THREADS_H
