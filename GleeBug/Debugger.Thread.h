@@ -22,11 +22,6 @@ namespace GleeBug
         bool isSingleStepping;
 
         /**
-        \brief Default constructor.
-        */
-        ThreadInfo();
-
-        /**
         \brief Constructor.
         \param dwThreadId Identifier for the thread.
         \param lpThreadLocalBase The thread local base.
@@ -35,16 +30,21 @@ namespace GleeBug
         ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
 
         /**
+        \brief Copy constructor.
+        */
+        ThreadInfo(const ThreadInfo & other);
+
+        /**
         \brief Read the register context from the thread. This fills the RegistersInfo member.
         \return true if it succeeds, false if it fails.
         */
         bool RegReadContext();
 
         /**
-        \brief Write the register context to the thread. This does nothing if the RegistersInfo member did not change.
+        \brief Write the register context to the thread. This does nothing if the registers did not change.
         \return true if it succeeds, false if it fails.
         */
-        bool RegWriteContext();
+        bool RegWriteContext() const;
 
         /**
         \brief Step into.

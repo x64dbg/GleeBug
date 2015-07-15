@@ -194,12 +194,12 @@ public:
         return operator++();
     }
 
-    bool  operator==(const Type & other)
+    bool  operator==(const Type & other) const
     {
         return Get() == other;
     }
 
-    bool operator!=(const Type & other)
+    bool operator!=(const Type & other) const
     {
         return !operator==(other);
     }

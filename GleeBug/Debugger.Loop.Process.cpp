@@ -5,19 +5,19 @@ namespace GleeBug
     void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
     {
         //process housekeeping
-        ProcessInfo process(_debugEvent.dwProcessId,
+        _processes.insert({ _debugEvent.dwProcessId,
+            ProcessInfo(_debugEvent.dwProcessId,
             createProcess.hProcess,
-            _debugEvent.dwThreadId);
-        _processes.insert({ process.dwProcessId, process });
-        _process = &_processes.find(process.dwProcessId)->second;
+            _debugEvent.dwThreadId) });
+        _process = &_processes.find(_debugEvent.dwProcessId)->second;
 
         //thread housekeeping (main thread is created implicitly)
-        ThreadInfo thread(_debugEvent.dwThreadId,
+        _process->threads.insert({ _debugEvent.dwThreadId,
+            ThreadInfo(_debugEvent.dwThreadId,
             createProcess.hThread,
             createProcess.lpThreadLocalBase,
-            createProcess.lpStartAddress);
-        _process->threads.insert({ thread.dwThreadId, thread });
-        _thread = _process->thread = &_process->threads.find(thread.dwThreadId)->second;
+            createProcess.lpStartAddress) });
+        _thread = _process->thread = &_process->threads.find(_debugEvent.dwThreadId)->second;
         _registers = &_thread->registers;
 
         //read thread context from main thread

@@ -19,12 +19,14 @@ namespace GleeBug
             _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
             //set the current process and thread
-            if (_processes.count(_debugEvent.dwProcessId))
+            auto processFound = _processes.find(_debugEvent.dwProcessId);
+            if (processFound != _processes.end())
             {
-                _process = &_processes[_debugEvent.dwProcessId];
-                if (_process->threads.count(_debugEvent.dwThreadId))
+                _process = &processFound->second;
+                auto threadFound = _process->threads.find(_debugEvent.dwThreadId);
+                if (threadFound != _process->threads.end())
                 {
-                    _thread = _process->thread = &_process->threads[_debugEvent.dwThreadId];
+                    _thread = _process->thread = &threadFound->second;
                     _registers = &_thread->registers;
                     if (!_thread->RegReadContext())
                         cbInternalError("ThreadInfo::RegReadContext() failed!");
@@ -37,9 +39,13 @@ namespace GleeBug
             }
             else
             {
-                _process = nullptr;
-                _thread = nullptr;
                 _registers = nullptr;
+                _thread = nullptr;
+                if (_process)
+                {
+                    _process->thread = nullptr;
+                    _process = nullptr;
+                }
             }
 
             //dispatch the debug event

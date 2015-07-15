@@ -24,11 +24,6 @@ namespace GleeBug
         DllMap dlls;
 
         /**
-        \brief Default constructor.
-        */
-        ProcessInfo();
-
-        /**
         \brief Constructor.
         \param dwProcessId Identifier for the process.
         \param dwMainThreadId Identifier for the main thread.
@@ -38,20 +33,20 @@ namespace GleeBug
         /**
         \brief Read memory from the process.
         \param address The virtual address to read from.
-        \param size The size to read.
         \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
+        \param size The size to read.
         \return true if it succeeds, false if it fails.
         */
-        bool MemRead(ptr address, const size_t size, void* buffer);
+        bool MemRead(ptr address, void* buffer, const size_t size) const;
 
         /**
         \brief Write memory to the process.
         \param address The virtual address to write to.
-        \param size The size to write.
         \param [in] buffer Source buffer. Cannot be null.
+        \param size The size to write.
         \return true if it succeeds, false if it fails.
         */
-        bool MemWrite(ptr address, const size_t size, const void* buffer);
+        bool MemWrite(ptr address, const void* buffer, const size_t size) const;
     };
 };
 

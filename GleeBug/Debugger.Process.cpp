@@ -2,13 +2,6 @@
 
 namespace GleeBug
 {
-    ProcessInfo::ProcessInfo()
-    {
-        this->thread = nullptr;
-        this->systemBreakpoint = false;
-        this->hProcess = INVALID_HANDLE_VALUE;
-    }
-
     ProcessInfo::ProcessInfo(uint32 dwProcessId, HANDLE hProcess, uint32 dwMainThreadId)
     {
         this->systemBreakpoint = false;
@@ -17,12 +10,12 @@ namespace GleeBug
         this->dwMainThreadId = dwMainThreadId;
     }
 
-    bool ProcessInfo::MemRead(ptr address, const size_t size, void* buffer)
+    bool ProcessInfo::MemRead(ptr address, void* buffer, const size_t size) const
     {
         return !!ReadProcessMemory(this->hProcess, reinterpret_cast<const void*>(address), buffer, size, nullptr);
     }
 
-    bool ProcessInfo::MemWrite(ptr address, const size_t size, const void* buffer)
+    bool ProcessInfo::MemWrite(ptr address, const void* buffer, const size_t size) const
     {
         return !!WriteProcessMemory(this->hProcess, reinterpret_cast<void*>(address), buffer, size, nullptr);
     }

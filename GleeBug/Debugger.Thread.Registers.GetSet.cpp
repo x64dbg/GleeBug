@@ -257,7 +257,7 @@ namespace GleeBug
             break;
 
         case R::EFlags:
-            _context.EFlags = (DWORD)value;
+            _context.EFlags = uint32(value);
             break;
 
         case R::EAX:

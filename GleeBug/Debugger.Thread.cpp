@@ -2,17 +2,23 @@
 
 namespace GleeBug
 {
-    ThreadInfo::ThreadInfo()
-    {
-        this->hThread = INVALID_HANDLE_VALUE;
-    }
-
     ThreadInfo::ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress)
     {
         this->dwThreadId = dwThreadId;
         this->hThread = hThread;
         this->lpThreadLocalBase = ptr(lpThreadLocalBase);
         this->lpStartAddress = ptr(lpStartAddress);
+    }
+
+    ThreadInfo::ThreadInfo(const ThreadInfo & other) :
+        dwThreadId(other.dwThreadId),
+        hThread(other.hThread),
+        lpThreadLocalBase(other.lpThreadLocalBase),
+        lpStartAddress(other.lpStartAddress),
+        registers(), //create new registers
+        stepCallbacks(other.stepCallbacks),
+        isSingleStepping(other.isSingleStepping)
+    {
     }
 
     bool ThreadInfo::RegReadContext()
@@ -30,7 +36,7 @@ namespace GleeBug
         return bReturn;
     }
 
-    bool ThreadInfo::RegWriteContext()
+    bool ThreadInfo::RegWriteContext() const
     {
         //check if something actually changed
         if (memcmp(&this->_oldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)

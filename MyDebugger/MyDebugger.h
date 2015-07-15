@@ -85,24 +85,6 @@ protected:
 
     void cbSystemBreakpoint() override
     {
-        printf("%p\n", _registers->Gcx());
-        gax();
-        _registers->Gax.Set(123);
-        gax();
-        _registers->Gax = 0x1234;
-        if (_registers->Gax == _registers->Gcx())
-        {
-            puts("test== okay!");
-        }
-        if (_registers->Gax != 1)
-            puts("test!= okay!");
-        gax();
-        _registers->Gax++;
-        gax();
-        ++_registers->Gax;
-        gax();
-
-
         printf("System breakpoint reached, CIP: 0x%p\n",
             _registers->Gip.Get());
         _thread->StepInto(BIND(this, MyDebugger::boobs));

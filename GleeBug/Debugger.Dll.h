@@ -16,11 +16,6 @@ namespace GleeBug
         ptr entryPoint;
 
         /**
-        \brief Default constructor.
-        */
-        DllInfo();
-
-        /**
         \brief Constructor.
         \param lpBaseOfDll The base of DLL.
         \param sizeOfImage Size of the image.

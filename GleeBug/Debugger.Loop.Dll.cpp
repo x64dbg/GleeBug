@@ -8,7 +8,7 @@ namespace GleeBug
         MODULEINFO modinfo;
         memset(&modinfo, 0, sizeof(MODULEINFO));
         GetModuleInformation(_process->hProcess,
-            reinterpret_cast<HMODULE>(loadDll.lpBaseOfDll),
+            HMODULE(loadDll.lpBaseOfDll),
             &modinfo,
             sizeof(MODULEINFO));
         DllInfo dll(loadDll.lpBaseOfDll, modinfo.SizeOfImage, modinfo.EntryPoint);

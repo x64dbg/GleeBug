@@ -11,6 +11,11 @@ namespace GleeBug
     class Registers
     {
     public:
+        /**
+        \brief Default constructor.
+        */
+        Registers();
+
 #include "Debugger.Thread.Registers.Register.h"
 
         Register<R::DR0, ptr> Dr0;
@@ -110,11 +115,6 @@ namespace GleeBug
 
         Flag<F::Trap> TrapFlag;
         Flag<F::Resume> ResumeFlag;
-
-        /**
-        \brief Default constructor.
-        */
-        Registers();
 
         /**
         \brief Gets the given register.
