@@ -166,6 +166,7 @@
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Debugger.Thread.h" />
     <ClInclude Include="Debugger.Global.h" />
+    <ClInclude Include="Debugger.Thread.Registers.Flag.h" />
     <ClInclude Include="Debugger.Thread.Registers.h" />
     <ClInclude Include="Debugger.Thread.Registers.Register.h" />
     <ClInclude Include="GleeBug.h" />

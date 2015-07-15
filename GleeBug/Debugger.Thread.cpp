@@ -50,7 +50,7 @@ namespace GleeBug
 
     void ThreadInfo::StepInto()
     {
-        registers.SetTrapFlag();
+        registers.TrapFlag.Set();
         isSingleStepping = true;
     }
 };

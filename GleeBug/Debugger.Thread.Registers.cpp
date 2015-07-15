@@ -94,7 +94,10 @@ namespace GleeBug
         Gsi(this),
         Gbp(this),
         Gsp(this),
-        Gip(this)
+        Gip(this),
+
+        TrapFlag(this),
+        ResumeFlag(this)
     {
         memset(&this->_context, 0, sizeof(CONTEXT));
     }
@@ -107,33 +110,5 @@ namespace GleeBug
     void Registers::SetContext(const CONTEXT & context)
     {
         this->_context = context;
-    }
-
-    void Registers::SetTrapFlag(bool set)
-    {
-        /*if (set)
-            this->EFlags |= TRAP_FLAG;
-            else
-            this->EFlags &= ~TRAP_FLAG;*/
-    }
-
-    bool Registers::GetTrapFlag() const
-    {
-        return true;
-        //return (this->EFlags & TRAP_FLAG) == TRAP_FLAG;
-    }
-
-    void Registers::SetResumeFlag(bool set)
-    {
-        /*if (set)
-            this->EFlags |= RESUME_FLAG;
-            else
-            this->EFlags &= ~RESUME_FLAG;*/
-    }
-
-    bool Registers::GetResumeFlag() const
-    {
-        return true;
-        //return (this->EFlags & RESUME_FLAG) == RESUME_FLAG;
     }
 };

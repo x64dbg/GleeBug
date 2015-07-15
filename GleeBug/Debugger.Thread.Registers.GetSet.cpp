@@ -40,6 +40,9 @@
 #define set_uint8_hi(x, y) x = (x & ~0xFF00) | (uint8_lo(y) << 8)
 #define set_uint8_lo(x, y) x = (x & ~0xFF) | uint8_lo(y)
 
+#define TRAP_FLAG 0x100
+#define RESUME_FLAG 0x10000
+
 namespace GleeBug
 {
     ptr Registers::Get(R reg) const
@@ -499,5 +502,18 @@ namespace GleeBug
             contextGip = value;
             break;
         }
+    }
+
+    bool Registers::GetFlag(F flag) const
+    {
+        return (_context.EFlags & ptr(flag)) == ptr(flag);
+    }
+
+    void Registers::SetFlag(F flag, bool set)
+    {
+        if (set)
+            _context.EFlags |= ptr(flag);
+        else
+            _context.EFlags &= ~ptr(flag);
     }
 }

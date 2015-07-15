@@ -11,102 +11,6 @@ namespace GleeBug
     class Registers
     {
     public:
-        enum class R
-        {
-            DR0,
-            DR1,
-            DR2,
-            DR3,
-            DR6,
-            DR7,
-
-            EFlags,
-
-            EAX,
-            AX,
-            AH,
-            AL,
-            EBX,
-            BX,
-            BH,
-            BL,
-            ECX,
-            CX,
-            CH,
-            CL,
-            EDX,
-            DX,
-            DH,
-            DL,
-            EDI,
-            DI,
-            ESI,
-            SI,
-            EBP,
-            BP,
-            ESP,
-            SP,
-            EIP,
-
-#ifdef _WIN64
-            RAX,
-            RBX,
-            RCX,
-            RDX,
-            RSI,
-            SIL,
-            RDI,
-            DIL,
-            RBP,
-            BPL,
-            RSP,
-            SPL,
-            RIP,
-            R8,
-            R8D,
-            R8W,
-            R8B,
-            R9,
-            R9D,
-            R9W,
-            R9B,
-            R10,
-            R10D,
-            R10W,
-            R10B,
-            R11,
-            R11D,
-            R11W,
-            R11B,
-            R12,
-            R12D,
-            R12W,
-            R12B,
-            R13,
-            R13D,
-            R13W,
-            R13B,
-            R14,
-            R14D,
-            R14W,
-            R14B,
-            R15,
-            R15D,
-            R15W,
-            R15B,
-#endif //_WIN64
-
-            GAX,
-            GBX,
-            GCX,
-            GDX,
-            GDI,
-            GSI,
-            GBP,
-            GSP,
-            GIP,
-        }; //RegisterEnum
-
 #include "Debugger.Thread.Registers.Register.h"
 
         Register<R::DR0, ptr> Dr0;
@@ -202,6 +106,11 @@ namespace GleeBug
         Register<R::GSP, ptr> Gsp;
         Register<R::GIP, ptr> Gip;
 
+#include "Debugger.Thread.Registers.Flag.h"
+
+        Flag<F::Trap> TrapFlag;
+        Flag<F::Resume> ResumeFlag;
+
         /**
         \brief Default constructor.
         */
@@ -222,6 +131,19 @@ namespace GleeBug
         void Set(R reg, ptr value);
 
         /**
+        \brief Gets a flag.
+        \param flag The flag to get.
+        \return true if the flag is set, false otherwise.
+        */
+        bool GetFlag(F flag) const;
+
+        /**
+        \brief Sets a flag.
+        \param set (Optional) true to set the flag, false to unset the flag.
+        */
+        void SetFlag(F flag, bool set = true);
+
+        /**
         \brief Gets a pointer to the context object.
         \return This function will never return a nullptr.
         */
@@ -233,34 +155,8 @@ namespace GleeBug
         */
         void SetContext(const CONTEXT & context);
 
-        /**
-        \brief Sets trap flag.
-        \param set (Optional) true to set, false to unset.
-        */
-        void SetTrapFlag(bool set = true);
-
-        /**
-        \brief Gets trap flag.
-        \return true if the flag is set, false otherwise.
-        */
-        bool GetTrapFlag() const;
-
-        /**
-        \brief Sets resume flag.
-        \param set (Optional) true to set, false to unset.
-        */
-        void SetResumeFlag(bool set = true);
-
-        /**
-        \brief Gets resume flag.
-        \return true if the flag is set, false otherwise.
-        */
-        bool GetResumeFlag() const;
-
     private:
         CONTEXT _context;
-        const int TRAP_FLAG = 0x100;
-        const int RESUME_FLAG = 0x10000;
     };
 };
 
