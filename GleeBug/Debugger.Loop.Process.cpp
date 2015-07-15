@@ -18,6 +18,7 @@ namespace GleeBug
             createProcess.lpStartAddress);
         _process->threads.insert({ thread.dwThreadId, thread });
         _thread = _process->thread = &_process->threads.find(thread.dwThreadId)->second;
+        _registers = &_thread->registers;
 
         //read thread context from main thread
         if (!_thread->RegReadContext())
@@ -44,5 +45,7 @@ namespace GleeBug
 
         //set the current process
         _process = nullptr;
+        _thread = nullptr;
+        _registers = nullptr;
     }
 };

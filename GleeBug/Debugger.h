@@ -201,7 +201,7 @@ namespace GleeBug
 
     protected: //variables
         PROCESS_INFORMATION _mainProcess;
-        DWORD _continueStatus;
+        uint32 _continueStatus;
         bool _breakDebugger;
         DEBUG_EVENT _debugEvent;
         ProcessMap _processes;
@@ -216,6 +216,11 @@ namespace GleeBug
         \brief The current thread (can be null in some cases). Should be a copy of _process->thread.
         */
         ThreadInfo* _thread;
+
+        /**
+        \brief The current thread registers (can be null in some cases). Should be a copy of _thread->registers.
+        */
+        Registers* _registers;
     };
 };
 

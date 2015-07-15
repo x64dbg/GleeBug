@@ -7,12 +7,12 @@ namespace GleeBug
         this->hThread = INVALID_HANDLE_VALUE;
     }
 
-    ThreadInfo::ThreadInfo(DWORD dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress)
+    ThreadInfo::ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress)
     {
         this->dwThreadId = dwThreadId;
         this->hThread = hThread;
-        this->lpThreadLocalBase = reinterpret_cast<ULONG_PTR>(lpThreadLocalBase);
-        this->lpStartAddress = reinterpret_cast<ULONG_PTR>(lpStartAddress);
+        this->lpThreadLocalBase = ptr(lpThreadLocalBase);
+        this->lpStartAddress = ptr(lpStartAddress);
     }
 
     bool ThreadInfo::RegReadContext()

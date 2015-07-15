@@ -24,7 +24,7 @@ namespace GleeBug
     void Debugger::unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll)
     {
         //call the debug event callback
-        ULONG_PTR lpBaseOfDll = reinterpret_cast<ULONG_PTR>(unloadDll.lpBaseOfDll);
+        ptr lpBaseOfDll = ptr(unloadDll.lpBaseOfDll);
         auto dll = _process->dlls.find(Range(lpBaseOfDll, lpBaseOfDll));
         if (dll != _process->dlls.end())
             cbUnloadDllEvent(unloadDll, dll->second);

@@ -12,12 +12,12 @@ namespace GleeBug
     class ThreadInfo
     {
     public:
-        DWORD dwThreadId;
+        uint32 dwThreadId;
         HANDLE hThread;
-        ULONG_PTR lpThreadLocalBase;
-        ULONG_PTR lpStartAddress;
+        ptr lpThreadLocalBase;
+        ptr lpStartAddress;
 
-        RegistersInfo registers;
+        Registers registers;
         StepCallbackVector stepCallbacks;
         bool isSingleStepping;
 
@@ -32,7 +32,7 @@ namespace GleeBug
         \param lpThreadLocalBase The thread local base.
         \param lpStartAddress The start address.
         */
-        ThreadInfo(DWORD dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
+        ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
 
         /**
         \brief Read the register context from the thread. This fills the RegistersInfo member.

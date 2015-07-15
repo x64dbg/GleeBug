@@ -11,9 +11,9 @@ namespace GleeBug
     class DllInfo
     {
     public:
-        ULONG_PTR lpBaseOfDll;
-        ULONG_PTR sizeOfImage;
-        ULONG_PTR entryPoint;
+        ptr lpBaseOfDll;
+        ptr sizeOfImage;
+        ptr entryPoint;
 
         /**
         \brief Default constructor.
@@ -26,7 +26,7 @@ namespace GleeBug
         \param sizeOfImage Size of the image.
         \param entryPoint The entry point.
         */
-        DllInfo(LPVOID lpBaseOfDll, ULONG_PTR sizeOfImage, LPVOID entryPoint);
+        DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
     };
 };
 

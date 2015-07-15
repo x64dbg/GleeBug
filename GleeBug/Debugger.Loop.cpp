@@ -25,14 +25,22 @@ namespace GleeBug
                 if (_process->threads.count(_debugEvent.dwThreadId))
                 {
                     _thread = _process->thread = &_process->threads[_debugEvent.dwThreadId];
+                    _registers = &_thread->registers;
                     if (!_thread->RegReadContext())
                         cbInternalError("ThreadInfo::RegReadContext() failed!");
                 }
                 else
+                {
                     _thread = _process->thread = nullptr;
+                    _registers = nullptr;
+                }
             }
             else
+            {
                 _process = nullptr;
+                _thread = nullptr;
+                _registers = nullptr;
+            }
 
             //dispatch the debug event
             switch (_debugEvent.dwDebugEventCode)

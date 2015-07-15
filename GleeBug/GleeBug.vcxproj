@@ -158,6 +158,7 @@
     <ClCompile Include="Debugger.Process.cpp" />
     <ClCompile Include="Debugger.Thread.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.cpp" />
+    <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.Dll.h" />
@@ -166,6 +167,8 @@
     <ClInclude Include="Debugger.Thread.h" />
     <ClInclude Include="Debugger.Global.h" />
     <ClInclude Include="Debugger.Thread.Registers.h" />
+    <ClInclude Include="Debugger.Thread.Registers.Register.h" />
+    <ClInclude Include="GleeBug.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

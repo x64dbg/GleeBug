@@ -10,6 +10,7 @@ namespace GleeBug
 
         //set the current thread
         _thread = _process->thread = &_process->threads.find(_debugEvent.dwThreadId)->second;
+        _registers = &_thread->registers;
         if (!_thread->RegReadContext())
             cbInternalError("ThreadInfo::RegReadContext() failed!");
 
@@ -27,5 +28,6 @@ namespace GleeBug
 
         //set the current thread
         _thread = _process->thread = nullptr;
+        _registers = nullptr;
     }
 };

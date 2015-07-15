@@ -47,6 +47,9 @@
     <ClCompile Include="Debugger.Thread.Registers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.h">
@@ -65,6 +68,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Debugger.Thread.Registers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugger.Thread.Registers.Register.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GleeBug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

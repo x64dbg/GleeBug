@@ -6,10 +6,10 @@ namespace GleeBug
     {
     }
 
-    DllInfo::DllInfo(LPVOID lpBaseOfDll, ULONG_PTR sizeOfImage, LPVOID entryPoint)
+    DllInfo::DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint)
     {
-        this->lpBaseOfDll = reinterpret_cast<ULONG_PTR>(lpBaseOfDll);
+        this->lpBaseOfDll = ptr(lpBaseOfDll);
         this->sizeOfImage = sizeOfImage;
-        this->entryPoint = reinterpret_cast<ULONG_PTR>(entryPoint);
+        this->entryPoint = ptr(entryPoint);
     }
 };

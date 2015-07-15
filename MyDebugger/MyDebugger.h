@@ -72,17 +72,39 @@ protected:
     void boobs()
     {
         printf("(.)Y(.) 0x%p\n",
-#ifdef _WIN64
-            _thread->registers.Rip);
-#else //x32
-            _thread->registers.Eip);
-#endif //_WIN64
+            _registers->Gip.Get());
+    }
+
+    void gax()
+    {
+        printf("GAX: 0x%p = 0x%p = 0x%p\n",
+            _registers->Get(Registers::R::GAX),
+            _registers->Gax.Get(),
+            _registers->Gax());
     }
 
     void cbSystemBreakpoint() override
     {
+        printf("%p\n", _registers->Gcx());
+        gax();
+        _registers->Gax.Set(123);
+        gax();
+        _registers->Gax = 0x1234;
+        if (_registers->Gax == _registers->Gcx())
+        {
+            puts("test== okay!");
+        }
+        if (_registers->Gax != 1)
+            puts("test!= okay!");
+        gax();
+        _registers->Gax++;
+        gax();
+        ++_registers->Gax;
+        gax();
+
+
         printf("System breakpoint reached, CIP: 0x%p\n",
-            _thread->registers.Rip);
+            _registers->Gip.Get());
         _thread->StepInto(BIND(this, MyDebugger::boobs));
     }
 

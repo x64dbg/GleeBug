@@ -14,8 +14,8 @@ namespace GleeBug
     {
     public:
         HANDLE hProcess;
-        DWORD dwProcessId;
-        DWORD dwMainThreadId;
+        uint32 dwProcessId;
+        uint32 dwMainThreadId;
 
         ThreadInfo* thread;
         bool systemBreakpoint;
@@ -33,7 +33,7 @@ namespace GleeBug
         \param dwProcessId Identifier for the process.
         \param dwMainThreadId Identifier for the main thread.
         */
-        ProcessInfo(DWORD dwProcessId, HANDLE hProcess, DWORD dwMainThreadId);
+        ProcessInfo(uint32 dwProcessId, HANDLE hProcess, uint32 dwMainThreadId);
 
         /**
         \brief Read memory from the process.
@@ -42,7 +42,7 @@ namespace GleeBug
         \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
         \return true if it succeeds, false if it fails.
         */
-        bool MemRead(ULONG_PTR address, const size_t size, void* buffer);
+        bool MemRead(ptr address, const size_t size, void* buffer);
 
         /**
         \brief Write memory to the process.
@@ -51,7 +51,7 @@ namespace GleeBug
         \param [in] buffer Source buffer. Cannot be null.
         \return true if it succeeds, false if it fails.
         */
-        bool MemWrite(ULONG_PTR address, const size_t size, const void* buffer);
+        bool MemWrite(ptr address, const size_t size, const void* buffer);
     };
 };
 
