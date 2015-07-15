@@ -66,7 +66,7 @@ namespace GleeBug
         template <typename T>
         void StepInto(T* debugger, void(T::*callback)())
         {
-            static_cast<void>(static_cast<Debugger *>(debugger));
+            static_cast<void>(static_cast<Debugger*>(debugger));
             StepInto(std::bind(callback, debugger));
         }
 

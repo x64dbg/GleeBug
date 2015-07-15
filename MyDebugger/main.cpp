@@ -1,36 +1,6 @@
 #include <cstdio>
 #include "MyDebugger.h"
 
-/*
-static ptr GetRegister(RegisterEnum reg)
-{
-    return 0;
-}
-
-static void SetRegister(RegisterEnum reg, ptr value)
-{
-}
-
-template <RegisterEnum RegisterIndex, typename Type>
-class Register
-{
-public:
-    Type Get()
-    {
-        return reinterpret_cast<Type>(GetRegister(RegisterIndex));
-    }
-
-    void Set(Type value)
-    {
-        SetRegister(RegisterIndex, ptr(value));
-    }
-};
-
-static void test()
-{
-    
-}*/
-
 int main()
 {
 #ifdef _WIN64
