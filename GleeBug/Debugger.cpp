@@ -45,8 +45,7 @@ namespace GleeBug
             &si,
             &_mainProcess);
 
-        if (szCreateWithCmdLine)
-            delete[] szCreateWithCmdLine;
+        delete[] szCreateWithCmdLine;
 
         return result;
     }

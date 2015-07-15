@@ -35,6 +35,13 @@ namespace GleeBug
         ThreadInfo(const ThreadInfo & other);
 
         /**
+        \brief Assignment operator.
+        \param other The other object.
+        \return A shallow copy of this object.
+        */
+        ThreadInfo & operator=(const ThreadInfo & other);
+
+        /**
         \brief Read the register context from the thread. This fills the RegistersInfo member.
         \return true if it succeeds, false if it fails.
         */

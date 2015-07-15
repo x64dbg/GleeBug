@@ -21,6 +21,18 @@ namespace GleeBug
     {
     }
 
+    ThreadInfo & ThreadInfo::operator=(const ThreadInfo& other)
+    {
+        dwThreadId = other.dwThreadId;
+        hThread = other.hThread;
+        lpThreadLocalBase = other.lpThreadLocalBase;
+        lpStartAddress = other.lpStartAddress;
+        registers = Registers(); //create new registers
+        stepCallbacks = other.stepCallbacks;
+        isSingleStepping = other.isSingleStepping;
+        return *this;
+    }
+
     bool ThreadInfo::RegReadContext()
     {
         SuspendThread(this->hThread);
