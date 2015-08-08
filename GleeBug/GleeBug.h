@@ -15,6 +15,7 @@
 
 //macros
 #define BIND(thisPtr, funcPtr) std::bind(&funcPtr, thisPtr)
+#define BIND1(thisPtr, funcPtr) std::bind(&funcPtr, thisPtr, std::placeholders::_1)
 
 namespace GleeBug
 {

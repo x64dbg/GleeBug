@@ -6,11 +6,31 @@ namespace GleeBug
     {
         if (!_process->systemBreakpoint) //handle system breakpoint
         {
+            //set internal state
             _process->systemBreakpoint = true;
             _continueStatus = DBG_CONTINUE;
 
             //call the callback
             cbSystemBreakpoint();
+        }
+        else
+        {
+            //check if the breakpoint exists
+            auto foundInfo = _process->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
+            if (foundInfo == _process->breakpoints.end())
+                return;
+            const auto & info = foundInfo->second;
+
+            //set continue status
+            _continueStatus = DBG_CONTINUE;
+
+            //call the generic callback
+            cbBreakpoint(info);
+
+            //call the user callback
+            auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Software, info.address });
+            if (foundCallback != _process->breakpointCallbacks.end())
+                foundCallback->second(info);
         }
     }
 
@@ -18,15 +38,18 @@ namespace GleeBug
     {
         if (_thread->isSingleStepping) //handle single step
         {
+            //set internal status
             _thread->isSingleStepping = false;
             _continueStatus = DBG_CONTINUE;
 
-            //call the callbacks
-            StepCallbackVector cbStepCopy = _thread->stepCallbacks;
+            //call the generic callback
+            cbStep();
+
+            //call the user callbacks
+            auto cbStepCopy = _thread->stepCallbacks;
             _thread->stepCallbacks.clear();
             for (auto cbStep : cbStepCopy)
                 cbStep();
-            cbStep();
         }
         else //handle other single step exceptions
         {
@@ -39,7 +62,10 @@ namespace GleeBug
         _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
         const EXCEPTION_RECORD & exceptionRecord = exceptionInfo.ExceptionRecord;
-        const bool firstChance = exceptionInfo.dwFirstChance == 1;
+        bool firstChance = exceptionInfo.dwFirstChance == 1;
+
+        //call the debug event callback
+        cbExceptionEvent(exceptionInfo);
 
         //dispatch the exception
         switch (exceptionInfo.ExceptionRecord.ExceptionCode)
@@ -55,8 +81,5 @@ namespace GleeBug
         //call the unhandled exception callback
         if (_continueStatus == DBG_EXCEPTION_NOT_HANDLED)
             cbUnhandledException(exceptionRecord, firstChance);
-
-        //call the debug event callback
-        cbExceptionEvent(exceptionInfo);
     }
 };

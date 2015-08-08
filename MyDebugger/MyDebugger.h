@@ -8,11 +8,21 @@ using namespace GleeBug;
 class MyDebugger : public Debugger
 {
 protected:
+    void myBreakpoint(const BreakpointInfo & info)
+    {
+        puts("myBreakpoint()");
+    }
+
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
     {
+        ptr entry = ptr(createProcess.lpStartAddress);
         printf("Process %d created with entry 0x%p\n",
             _debugEvent.dwProcessId,
-            createProcess.lpStartAddress);
+            entry);
+        if(_process->SetBreakpoint(entry, this, &MyDebugger::myBreakpoint))
+            printf("Breakpoint set at 0x%p!\n", entry);
+        else
+            printf("Failed to set breakpoint at 0x%p...\b", entry);
     }
 
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
@@ -50,7 +60,9 @@ protected:
 
     void cbExceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo) override
     {
-        printf("Exception with code 0x%08X at 0x%p\n",
+        const char* exceptionType = exceptionInfo.dwFirstChance ? "First Chance" : "Second Chance";
+        printf("%s exception with code 0x%08X at 0x%p\n",
+            exceptionType,
             exceptionInfo.ExceptionRecord.ExceptionCode,
             exceptionInfo.ExceptionRecord.ExceptionAddress);
     }
@@ -87,13 +99,19 @@ protected:
     {
         printf("System breakpoint reached, CIP: 0x%p\n",
             _registers->Gip.Get());
-        _thread->StepInto(BIND(this, MyDebugger::boobs));
+        _thread->StepInto(this, &MyDebugger::boobs);
     }
 
     void cbInternalError(const std::string & error) override
     {
         printf("Internal Error: %s\n",
             error.c_str());
+    }
+
+    void cbBreakpoint(const BreakpointInfo & info) override
+    {
+        printf("Breakpoint on 0x%p!\n",
+            info.address);
     }
 };
 

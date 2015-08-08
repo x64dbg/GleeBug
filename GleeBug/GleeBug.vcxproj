@@ -155,12 +155,15 @@
     <ClCompile Include="Debugger.Loop.Process.cpp" />
     <ClCompile Include="Debugger.Loop.Rip.cpp" />
     <ClCompile Include="Debugger.Loop.Thread.cpp" />
+    <ClCompile Include="Debugger.Process.Breakpoint.cpp" />
     <ClCompile Include="Debugger.Process.cpp" />
+    <ClCompile Include="Debugger.Process.Memory.cpp" />
     <ClCompile Include="Debugger.Thread.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Debugger.Breakpoint.h" />
     <ClInclude Include="Debugger.Dll.h" />
     <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />
