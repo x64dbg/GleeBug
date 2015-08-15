@@ -8,9 +8,15 @@ using namespace GleeBug;
 class MyDebugger : public Debugger
 {
 protected:
-    void myBreakpoint(const BreakpointInfo & info)
+    void cbEntryBreakpoint(const BreakpointInfo & info)
     {
-        puts("myBreakpoint()");
+        printf("Reached entry breakpoint! GIP: 0x%p\n",
+            _registers->Gip());
+        _thread->StepInto(std::bind([this]()
+        {
+            printf("Step after entry breakpoint! GIP: 0x%p\n",
+                _registers->Gip());
+        }));
     }
 
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
@@ -19,7 +25,7 @@ protected:
         printf("Process %d created with entry 0x%p\n",
             _debugEvent.dwProcessId,
             entry);
-        if(_process->SetBreakpoint(entry, this, &MyDebugger::myBreakpoint))
+        if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
             printf("Failed to set breakpoint at 0x%p...\b", entry);
@@ -81,25 +87,17 @@ protected:
             rip.dwError);
     }
 
-    void boobs()
+    void cbStepSystem()
     {
-        printf("(.)Y(.) 0x%p\n",
-            _registers->Gip.Get());
-    }
-
-    void gax()
-    {
-        printf("GAX: 0x%p = 0x%p = 0x%p\n",
-            _registers->Get(Registers::R::GAX),
-            _registers->Gax.Get(),
-            _registers->Gax());
+        printf("Reached step after system breakpoint, GIP: 0x%p!\n",
+            _registers->Gip());
     }
 
     void cbSystemBreakpoint() override
     {
-        printf("System breakpoint reached, CIP: 0x%p\n",
+        printf("System breakpoint reached, GIP: 0x%p\n",
             _registers->Gip.Get());
-        _thread->StepInto(this, &MyDebugger::boobs);
+        _thread->StepInto(this, &MyDebugger::cbStepSystem);
     }
 
     void cbInternalError(const std::string & error) override

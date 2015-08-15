@@ -24,6 +24,16 @@ namespace GleeBug
             //set continue status
             _continueStatus = DBG_CONTINUE;
 
+            //set back the instruction pointer
+            _registers->Gip = info.address;
+
+            //restore the original breakpoint byte and do an internal step
+            _process->MemWrite(info.address, info.internal.software.oldbytes, info.internal.software.size);
+            _thread->StepInternal(std::bind([this, info]()
+            {
+                _process->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
+            }));
+
             //call the generic callback
             cbBreakpoint(info);
 
@@ -39,7 +49,7 @@ namespace GleeBug
         if (_thread->isInternalStepping) //handle internal steps
         {
             //set internal status
-            _thread->isSingleStepping = false;
+            _thread->isInternalStepping = false;
             _continueStatus = DBG_CONTINUE;
 
             //call the internal step callback
