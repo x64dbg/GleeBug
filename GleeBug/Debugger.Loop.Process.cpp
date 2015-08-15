@@ -6,15 +6,15 @@ namespace GleeBug
     {
         //process housekeeping
         _processes.insert({ _debugEvent.dwProcessId,
-            ProcessInfo(_debugEvent.dwProcessId,
-            createProcess.hProcess,
+            ProcessInfo(createProcess.hProcess,
+            _debugEvent.dwProcessId,
             _debugEvent.dwThreadId) });
         _process = &_processes.find(_debugEvent.dwProcessId)->second;
 
         //thread housekeeping (main thread is created implicitly)
         _process->threads.insert({ _debugEvent.dwThreadId,
-            ThreadInfo(_debugEvent.dwThreadId,
-            createProcess.hThread,
+            ThreadInfo(createProcess.hThread,
+            _debugEvent.dwThreadId,
             createProcess.lpThreadLocalBase,
             createProcess.lpStartAddress) });
         _thread = _process->thread = &_process->threads.find(_debugEvent.dwThreadId)->second;

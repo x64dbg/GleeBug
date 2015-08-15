@@ -12,22 +12,25 @@ namespace GleeBug
     class ThreadInfo
     {
     public:
-        uint32 dwThreadId;
         HANDLE hThread;
+        uint32 dwThreadId;
         ptr lpThreadLocalBase;
         ptr lpStartAddress;
 
         Registers registers;
         StepCallbackVector stepCallbacks;
         bool isSingleStepping;
+        bool isInternalStepping;
+        StepCallback cbInternalStep;
 
         /**
         \brief Constructor.
+        \param hThread Thread handle.
         \param dwThreadId Identifier for the thread.
         \param lpThreadLocalBase The thread local base.
         \param lpStartAddress The start address.
         */
-        ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
+        explicit ThreadInfo(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
 
         /**
         \brief Copy constructor.
@@ -60,7 +63,7 @@ namespace GleeBug
 
         /**
         \brief Step into.
-        \param cbStep StepCallback. Can be written using BIND(this, MyDebugger::cb).
+        \param cbStep Step callback. Can be written using BIND(this, MyDebugger::cb).
         */
         void StepInto(const StepCallback & cbStep);
 
@@ -70,11 +73,30 @@ namespace GleeBug
         \param debugger This pointer to a subclass of Debugger.
         \param callback Pointer to the callback. Written like: &MyDebugger::cb
         */
-        template <typename T>
+        template<typename T>
         void StepInto(T* debugger, void(T::*callback)())
         {
             static_cast<void>(static_cast<Debugger*>(debugger));
             StepInto(std::bind(callback, debugger));
+        }
+
+        /**
+        \brief Perform an internal step (not reported to the outside)
+        \param cbStep Step callback. Can be written using BIND(this, MyDebugger::cb).
+        */
+        void StepInternal(const StepCallback & cbStep);
+
+        /**
+        \brief Perform an internal step (not reported to the outside)
+        \tparam T Generic type parameter. Must be a subclass of Debugger.
+        \param debugger This pointer to a subclass of Debugger.
+        \param callback Pointer to the callback. Written like: &MyDebugger::cb
+        */
+        template<typename T>
+        void StepInternal(T* debugger, void(T::*callback)())
+        {
+            static_cast<void>(static_cast<Debugger*>(debugger));
+            StepInternal(std::bind(callback, debugger));
         }
 
     private:

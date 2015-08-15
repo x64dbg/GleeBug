@@ -21,7 +21,7 @@ namespace GleeBug
         \param sizeOfImage Size of the image.
         \param entryPoint The entry point.
         */
-        DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
+        explicit DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
     };
 };
 

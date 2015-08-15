@@ -2,10 +2,10 @@
 
 namespace GleeBug
 {
-    DllInfo::DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint)
+    DllInfo::DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint) :
+        lpBaseOfDll(ptr(lpBaseOfDll)),
+        sizeOfImage(sizeOfImage),
+        entryPoint(ptr(entryPoint))
     {
-        this->lpBaseOfDll = ptr(lpBaseOfDll);
-        this->sizeOfImage = sizeOfImage;
-        this->entryPoint = ptr(entryPoint);
     }
 };

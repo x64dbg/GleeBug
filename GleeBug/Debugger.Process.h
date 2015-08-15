@@ -25,13 +25,15 @@ namespace GleeBug
         DllMap dlls;
         BreakpointMap breakpoints;
         BreakpointCallbackMap breakpointCallbacks;
+        BreakpointInfo restoreSoftwareBreakpoint;
 
         /**
         \brief Constructor.
+        \param hProcess Process handle.
         \param dwProcessId Identifier for the process.
         \param dwMainThreadId Identifier for the main thread.
         */
-        ProcessInfo(uint32 dwProcessId, HANDLE hProcess, uint32 dwMainThreadId);
+        explicit ProcessInfo(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId);
 
         /**
         \brief Read memory from the process.

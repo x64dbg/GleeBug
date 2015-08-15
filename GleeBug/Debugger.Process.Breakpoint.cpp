@@ -34,6 +34,7 @@ namespace GleeBug
 
         if (!MemWrite(address, info.internal.software.newbytes, info.internal.software.size))
             return false;
+        FlushInstructionCache(hProcess, nullptr, 0);
 
         //insert in the breakpoint map
         breakpoints.insert({ { info.type, info.address }, info });

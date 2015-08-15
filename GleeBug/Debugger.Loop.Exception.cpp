@@ -36,6 +36,15 @@ namespace GleeBug
 
     void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
+        if (_thread->isInternalStepping) //handle internal steps
+        {
+            //set internal status
+            _thread->isSingleStepping = false;
+            _continueStatus = DBG_CONTINUE;
+
+            //call the internal step callback
+            _thread->cbInternalStep();
+        }
         if (_thread->isSingleStepping) //handle single step
         {
             //set internal status

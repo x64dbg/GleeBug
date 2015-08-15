@@ -6,8 +6,8 @@ namespace GleeBug
     {
         //thread housekeeping
         _process->threads.insert({ _debugEvent.dwThreadId,
-            ThreadInfo(_debugEvent.dwThreadId,
-            createThread.hThread,
+            ThreadInfo(createThread.hThread,
+            _debugEvent.dwThreadId,
             createThread.lpThreadLocalBase,
             createThread.lpStartAddress) });
 

@@ -2,11 +2,12 @@
 
 namespace GleeBug
 {
-    ProcessInfo::ProcessInfo(uint32 dwProcessId, HANDLE hProcess, uint32 dwMainThreadId)
+    ProcessInfo::ProcessInfo(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId) :
+        hProcess(hProcess),
+        dwProcessId(dwProcessId),
+        dwMainThreadId(dwMainThreadId),
+        thread(nullptr),
+        systemBreakpoint(false)
     {
-        this->systemBreakpoint = false;
-        this->hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwProcessId);
-        this->dwProcessId = dwProcessId;
-        this->dwMainThreadId = dwMainThreadId;
     }
 };

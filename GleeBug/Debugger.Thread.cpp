@@ -2,34 +2,41 @@
 
 namespace GleeBug
 {
-    ThreadInfo::ThreadInfo(uint32 dwThreadId, HANDLE hThread, LPVOID lpThreadLocalBase, LPVOID lpStartAddress)
+    ThreadInfo::ThreadInfo(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress) :
+        hThread(hThread),
+        dwThreadId(dwThreadId),
+        lpThreadLocalBase(ptr(lpThreadLocalBase)),
+        lpStartAddress(ptr(lpStartAddress)),
+        isSingleStepping(false),
+        isInternalStepping(false),
+        cbInternalStep(nullptr)
     {
-        this->dwThreadId = dwThreadId;
-        this->hThread = hThread;
-        this->lpThreadLocalBase = ptr(lpThreadLocalBase);
-        this->lpStartAddress = ptr(lpStartAddress);
     }
 
     ThreadInfo::ThreadInfo(const ThreadInfo & other) :
-        dwThreadId(other.dwThreadId),
         hThread(other.hThread),
+        dwThreadId(other.dwThreadId),
         lpThreadLocalBase(other.lpThreadLocalBase),
         lpStartAddress(other.lpStartAddress),
         registers(), //create new registers
         stepCallbacks(other.stepCallbacks),
-        isSingleStepping(other.isSingleStepping)
+        isSingleStepping(other.isSingleStepping),
+        isInternalStepping(other.isInternalStepping),
+        cbInternalStep(other.cbInternalStep)
     {
     }
 
     ThreadInfo & ThreadInfo::operator=(const ThreadInfo& other)
     {
-        dwThreadId = other.dwThreadId;
         hThread = other.hThread;
+        dwThreadId = other.dwThreadId;
         lpThreadLocalBase = other.lpThreadLocalBase;
         lpStartAddress = other.lpStartAddress;
         registers = Registers(); //create new registers
         stepCallbacks = other.stepCallbacks;
         isSingleStepping = other.isSingleStepping;
+        isInternalStepping = other.isInternalStepping;
+        cbInternalStep = other.cbInternalStep;
         return *this;
     }
 
@@ -60,15 +67,22 @@ namespace GleeBug
         return bReturn;
     }
 
+    void ThreadInfo::StepInto()
+    {
+        registers.TrapFlag.Set();
+        isSingleStepping = true;
+    }
+
     void ThreadInfo::StepInto(const StepCallback & cbStep)
     {
         StepInto();
         stepCallbacks.push_back(cbStep);
     }
 
-    void ThreadInfo::StepInto()
+    void ThreadInfo::StepInternal(const StepCallback & cbStep)
     {
         registers.TrapFlag.Set();
-        isSingleStepping = true;
+        isInternalStepping = true;
+        cbInternalStep = cbStep;
     }
 };
