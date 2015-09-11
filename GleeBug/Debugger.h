@@ -106,6 +106,12 @@ namespace GleeBug
         */
         virtual void cbRipEvent(const RIP_INFO & rip) {};
 
+        /**
+        \brief Unknown event callback. Called before the event is internally processed. Provide an implementation to use this callback.
+        \param debugEventCode The debug event code.
+        */
+        virtual void cbUnknownEvent(DWORD debugEventCode) {};
+
     protected: //other callbacks
         /**
         \brief Internal error callback. Provide an implementation to use this callback.
@@ -191,6 +197,12 @@ namespace GleeBug
         */
         virtual void ripEvent(const RIP_INFO & rip);
 
+        /**
+        \brief Unknown event. Do not override this unless you know what you are doing!
+        \param debugEventCode The debug event code.
+        */
+        virtual void unknownEvent(DWORD debugEventCode);
+
     protected: //core exception handlers
         /**
         \brief Breakpoint exception handler. Do not override this unless you know what you are doing!
@@ -205,6 +217,12 @@ namespace GleeBug
         \param firstChance True if the exception is a first chance exception, false otherwise.
         */
         virtual void exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, bool firstChance);
+
+        /**
+        \brief Hardware breakpoint (single step) exception handler. Do not override this unless you know what you are doing!
+        \param exceptionAddress The exception address.
+        */
+        virtual void exceptionHardwareBreakpoint(ptr exceptionAddress);
 
     protected: //variables
         PROCESS_INFORMATION _mainProcess;

@@ -78,6 +78,9 @@ namespace GleeBug
             case RIP_EVENT:
                 ripEvent(_debugEvent.u.RipInfo);
                 break;
+            default:
+                unknownEvent(_debugEvent.dwDebugEventCode);
+                break;
             }
 
             //write the register context

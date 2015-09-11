@@ -70,9 +70,66 @@ namespace GleeBug
             for (auto cbStep : cbStepCopy)
                 cbStep();
         }
-        else //handle other single step exceptions
+        else //handle hardware breakpoint single step exceptions
         {
+            exceptionHardwareBreakpoint(ptr(exceptionRecord.ExceptionAddress));
         }
+    }
+
+    void Debugger::exceptionHardwareBreakpoint(ptr exceptionAddress)
+    {
+        //determine the hardware breakpoint triggered
+        ptr dr6 = _registers->Dr6();
+        HardwareBreakpointSlot breakpointSlot;
+        ptr breakpointAddress;
+        if (exceptionAddress == _registers->Dr0() || dr6 & 0x1)
+        {
+            breakpointAddress = _registers->Dr0();
+            breakpointSlot = HardwareBreakpointSlot::Dr0;
+        }
+        else if (exceptionAddress == _registers->Dr1() || dr6 & 0x2)
+        {
+            breakpointAddress = _registers->Dr1();
+            breakpointSlot = HardwareBreakpointSlot::Dr1;
+        }
+        else if (exceptionAddress == _registers->Dr2() || dr6 & 0x4)
+        {
+            breakpointAddress = _registers->Dr2();
+            breakpointSlot = HardwareBreakpointSlot::Dr2;
+        }
+        else if (exceptionAddress == _registers->Dr3() || dr6 & 0x8)
+        {
+            breakpointAddress = _registers->Dr3();
+            breakpointSlot = HardwareBreakpointSlot::Dr3;
+        }
+        else
+            return; //not a hardware breakpoint
+
+        //find the breakpoint in the internal structures
+        auto foundInfo = _process->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
+        if (foundInfo == _process->breakpoints.end())
+            return; //not a valid hardware breakpoint
+        const auto & info = foundInfo->second;
+        if (info.internal.hardware.slot != breakpointSlot)
+            return; //not a valid hardware breakpoint
+
+        //set continue status
+        _continueStatus = DBG_CONTINUE;
+
+        //delete the hardware breakpoint and do an internal step (TODO: maybe delete from all threads?)
+        _thread->DeleteHardwareBreakpoint(breakpointSlot);
+        _thread->StepInternal(std::bind([this, info]()
+        {
+            _thread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
+        }));
+
+        //call the generic callback
+        cbBreakpoint(info);
+
+        //call the user callback
+        auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
+        if (foundCallback != _process->breakpointCallbacks.end())
+            foundCallback->second(info);
     }
 
     void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)

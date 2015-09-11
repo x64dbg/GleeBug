@@ -17,6 +17,14 @@ namespace GleeBug
         ShortInt3
     };
 
+    enum class HardwareBreakpointSlot
+    {
+        Dr0 = 0,
+        Dr1 = 1,
+        Dr2 = 2,
+        Dr3 = 3
+    };
+
     enum class HardwareBreakpointType
     {
         Access,
@@ -26,11 +34,11 @@ namespace GleeBug
 
     enum class HardwareBreakpointSize
     {
-        SizeByte,
-        SizeWord,
-        SizeDword,
+        SizeByte = 1,
+        SizeWord = 2,
+        SizeDword = 4,
 #ifdef _WIN64
-        SizeQword
+        SizeQword = 8
 #endif //_WIN64
     };
 
@@ -54,6 +62,7 @@ namespace GleeBug
             } software;
             struct
             {
+                HardwareBreakpointSlot slot;
                 HardwareBreakpointType type;
                 HardwareBreakpointSize size;
             } hardware;

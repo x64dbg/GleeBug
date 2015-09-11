@@ -21,11 +21,11 @@ namespace GleeBug
         ThreadInfo* thread;
         bool systemBreakpoint;
 
-        ThreadMap threads;
+        ThreadMap threads; //DO NOT COPY THESE OBJECTS!
         DllMap dlls;
         BreakpointMap breakpoints;
         BreakpointCallbackMap breakpointCallbacks;
-        BreakpointInfo restoreSoftwareBreakpoint;
+        BreakpointInfo hardwareBreakpoints[4];
 
         /**
         \brief Constructor.
@@ -62,7 +62,7 @@ namespace GleeBug
 
         /**
         \brief Sets a software breakpoint.
-        \param address The address to put the breakpoint on.
+        \param address The address to set the breakpoint on.
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \param type (Optional) The software breakpoint type.
         \return true if the breakpoint was set, false otherwise.
@@ -71,7 +71,7 @@ namespace GleeBug
 
         /**
         \brief Sets a software breakpoint.
-        \param address The address to put the breakpoint on.
+        \param address The address to set the breakpoint on.
         \param cbBreakpoint The breakpoint callback. Can be written using BIND1(this, MyDebugger::cb).
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \param type (Optional) The software breakpoint type.
@@ -82,7 +82,7 @@ namespace GleeBug
         /**
         \brief Sets a software breakpoint.
         \tparam T Generic type parameter. Must be a subclass of Debugger.
-        \param address The address to put the breakpoint on.
+        \param address The address to set the breakpoint on.
         \param debugger This pointer to a subclass of Debugger.
         \param callback Pointer to the callback. Written like: &MyDebugger::cb
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
@@ -95,6 +95,34 @@ namespace GleeBug
             static_cast<void>(static_cast<Debugger*>(debugger));
             return SetBreakpoint(address, std::bind(callback, debugger, std::placeholders::_1), singleshoot, type);
         }
+
+        /**
+        \brief Attempts to find a free hardware breakpoint slot.
+        \param [out] slot First free slot found, has no meaning when the function fails.
+        \return true if a free slot was found, false otherwise.
+        */
+        bool GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot);
+
+        /**
+        \brief Sets a hardware breakpoint.
+        \param address The address to set the hardware breakpoint on.
+        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param type The hardware breakpoint type.
+        \param size The hardware breakpoint size.
+        \return true if the hardware breakpoint was set, false otherwise.
+        */
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte);
+
+        /**
+        \brief Sets a hardware breakpoint.
+        \param address The address to set the hardware breakpoint on.
+        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param cbBreakpoint The breakpoint callback. Can be written using BIND1(this, MyDebugger::cb).
+        \param type The hardware breakpoint type.
+        \param size The hardware breakpoint size.
+        \return true if the hardware breakpoint was set, false otherwise.
+        */
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte);
     };
 };
 

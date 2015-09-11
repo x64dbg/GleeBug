@@ -19,16 +19,38 @@ protected:
         }));
     }
 
+    void cbEntryHardwareBreakpoint(const BreakpointInfo & info)
+    {
+        printf("Reached entry hardware breakpoint! GIP: 0x%p\n",
+            _registers->Gip());
+        _thread->StepInto(std::bind([this]()
+        {
+            printf("Step after entry hardware breakpoint! GIP: 0x%p\n",
+                _registers->Gip());
+        }));
+    }
+
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
     {
         ptr entry = ptr(createProcess.lpStartAddress);
         printf("Process %d created with entry 0x%p\n",
             _debugEvent.dwProcessId,
             entry);
-        if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
+        HardwareBreakpointSlot slot;
+        if (_process->GetFreeHardwareBreakpointSlot(slot))
+        {
+            if (_process->SetHardwareBreakpoint(entry, slot, BIND1(this, MyDebugger::cbEntryHardwareBreakpoint), HardwareBreakpointType::Execute, HardwareBreakpointSize::SizeByte))
+                printf("Hardware breakpoint set at 0x%p!\n", entry);
+            else
+                printf("Failed to set hardware breakpoint at 0x%p\n", entry);
+        }
+        else
+            printf("No free hardware breakpoint slot...\n");
+
+        /*if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
-            printf("Failed to set breakpoint at 0x%p...\b", entry);
+            printf("Failed to set breakpoint at 0x%p...\b", entry);*/
     }
 
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
@@ -96,7 +118,7 @@ protected:
     void cbSystemBreakpoint() override
     {
         printf("System breakpoint reached, GIP: 0x%p\n",
-            _registers->Gip.Get());
+            _registers->Gip());
         _thread->StepInto(this, &MyDebugger::cbStepSystem);
     }
 
@@ -110,6 +132,15 @@ protected:
     {
         printf("Breakpoint on 0x%p!\n",
             info.address);
+    }
+
+    void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) override
+    {
+        printf("Unhandled exception (%s) 0x%08X on 0x%p, GIP: 0x%p\n",
+            firstChance ? "first chance" : "second chance",
+            exceptionRecord.ExceptionCode,
+            exceptionRecord.ExceptionAddress,
+            _registers->Gip());
     }
 };
 

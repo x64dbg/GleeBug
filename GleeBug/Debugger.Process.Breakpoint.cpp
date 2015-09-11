@@ -44,12 +44,86 @@ namespace GleeBug
 
     bool ProcessInfo::SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot, SoftwareBreakpointType type)
     {
+        //check if a callback on this address was already found
+        if (breakpointCallbacks.find({ BreakpointType::Software, address }) != breakpointCallbacks.end())
+            return false;
+        //set the breakpoint
         if (!SetBreakpoint(address, singleshoot, type))
             return false;
-        auto found = breakpointCallbacks.find({ BreakpointType::Software, address });
-        if (found != breakpointCallbacks.end())
-            return false;
+        //insert the callback
         breakpointCallbacks.insert({ { BreakpointType::Software, address }, cbBreakpoint });
+        return true;
+    }
+
+    bool ProcessInfo::GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot)
+    {
+        //find a free hardware breakpoint slot
+        for (int i = 0; i < 4;i++)
+        {
+            if (!hardwareBreakpoints[i].enabled)
+            {
+                slot = HardwareBreakpointSlot(i);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size)
+    {
+        //check the address
+        if (!MemIsValidPtr(address) ||
+            breakpoints.find({ BreakpointType::Hardware, address }) != breakpoints.end())
+            return false;
+
+        //attempt to set the hardware breakpoint in every thread
+        bool success = true;
+        for (auto & thread : threads)
+        {
+            if (!thread.second.SetHardwareBreakpoint(address, slot, type, size))
+            {
+                success = false;
+                break;
+            }
+        }
+
+        //if setting failed, unset all
+        if (!success)
+        {
+            for (auto & thread : threads)
+                thread.second.DeleteHardwareBreakpoint(slot);
+            return false;
+        }
+
+        //setup the breakpoint information struct
+        BreakpointInfo info = {};
+        info.address = address;
+        info.enabled = true;
+        info.singleshoot = false;
+        info.type = BreakpointType::Hardware;
+        info.internal.hardware.slot = slot;
+        info.internal.hardware.type = type;
+        info.internal.hardware.size = size;
+
+        //insert in the breakpoint map
+        breakpoints.insert({ { info.type, info.address }, info });
+
+        //insert in the hardware breakpoint cache
+        hardwareBreakpoints[int(slot)] = info;
+
+        return true;
+    }
+
+    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type, HardwareBreakpointSize size)
+    {
+        //check if a callback on this address was already found
+        if (breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
+            return false;
+        //set the hardware breakpoint
+        if (!SetHardwareBreakpoint(address, slot, type, size))
+            return false;
+        //insert the callback
+        breakpointCallbacks.insert({ { BreakpointType::Hardware, address }, cbBreakpoint });
         return true;
     }
 };

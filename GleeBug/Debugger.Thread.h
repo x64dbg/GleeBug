@@ -3,6 +3,7 @@
 
 #include "Debugger.Global.h"
 #include "Debugger.Thread.Registers.h"
+#include "Debugger.Breakpoint.h"
 
 namespace GleeBug
 {
@@ -98,6 +99,23 @@ namespace GleeBug
             static_cast<void>(static_cast<Debugger*>(debugger));
             StepInternal(std::bind(callback, debugger));
         }
+
+        /**
+        \brief Sets a hardware breakpoint.
+        \param address The address to set the hardware breakpoint on.
+        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param type The hardware breakpoint type.
+        \param size The hardware breakpoint size.
+        \return true if the hardware breakpoint was set, false otherwise.
+        */
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size);
+
+        /**
+        \brief Deletes a hardware breakpoint.
+        \param slot The slot to remove the hardware breakpoint from.
+        \return true if the hardware breakpoint was deleted, false otherwise.
+        */
+        bool DeleteHardwareBreakpoint(HardwareBreakpointSlot slot);
 
     private:
         CONTEXT _oldContext;
