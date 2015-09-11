@@ -30,6 +30,12 @@ protected:
         }));
     }
 
+    void cbStepSystem()
+    {
+        printf("Reached step after system breakpoint, GIP: 0x%p!\n",
+            _registers->Gip());
+    }
+
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
     {
         ptr entry = ptr(createProcess.lpStartAddress);
@@ -107,12 +113,6 @@ protected:
         printf("RIP event type 0x%X, error 0x%X",
             rip.dwType,
             rip.dwError);
-    }
-
-    void cbStepSystem()
-    {
-        printf("Reached step after system breakpoint, GIP: 0x%p!\n",
-            _registers->Gip());
     }
 
     void cbSystemBreakpoint() override
