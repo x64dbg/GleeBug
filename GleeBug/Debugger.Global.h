@@ -3,6 +3,9 @@
 
 #include "GleeBug.h"
 
+//defines
+#define GLEEBUG_HWBP_COUNT 4
+
 namespace GleeBug
 {
     //forward declarations
@@ -12,6 +15,9 @@ namespace GleeBug
     class ThreadInfo;
     enum class BreakpointType;
     struct BreakpointInfo;
+
+    //constants
+    const int HWBP_COUNT = GLEEBUG_HWBP_COUNT;
 
     //key typedefs
     typedef std::pair<BreakpointType, ptr> BreakpointKey;

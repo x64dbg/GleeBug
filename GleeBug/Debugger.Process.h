@@ -101,7 +101,7 @@ namespace GleeBug
         \param [out] slot First free slot found, has no meaning when the function fails.
         \return true if a free slot was found, false otherwise.
         */
-        bool GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot);
+        bool GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot) const;
 
         /**
         \brief Sets a hardware breakpoint.

@@ -55,10 +55,10 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot)
+    bool ProcessInfo::GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot) const
     {
         //find a free hardware breakpoint slot
-        for (int i = 0; i < 4;i++)
+        for (int i = 0; i < HWBP_COUNT; i++)
         {
             if (!hardwareBreakpoints[i].enabled)
             {

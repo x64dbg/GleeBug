@@ -18,7 +18,7 @@ namespace GleeBug
         STARTUPINFOW si;
         memset(&si, 0, sizeof(si));
         const wchar_t* szFileNameCreateProcess;
-        wchar_t* szCommandLineCreateProcess = nullptr;
+        wchar_t* szCommandLineCreateProcess;
         wchar_t* szCreateWithCmdLine = nullptr;
         if (szCommandLine == nullptr || !wcslen(szCommandLine))
         {
@@ -50,12 +50,12 @@ namespace GleeBug
         return result;
     }
 
-    bool Debugger::Stop()
+    bool Debugger::Stop() const
     {
         return !!TerminateProcess(_mainProcess.hProcess, 0);
     }
 
-    bool Debugger::Detach()
+    bool Debugger::Detach() const
     {
         return !!DebugActiveProcessStop(_mainProcess.dwProcessId);
     }

@@ -32,9 +32,9 @@ namespace GleeBug
 #pragma pack(1)
     struct DR7
     {
-        BYTE DR7_MODE[4];
-        BYTE DR7_TYPE[4];
-        BYTE DR7_SIZE[4];
+        BYTE DR7_MODE[HWBP_COUNT];
+        BYTE DR7_TYPE[HWBP_COUNT];
+        BYTE DR7_SIZE[HWBP_COUNT];
     };
 
     static inline ptr dr7_ptr(const DR7 & dr7)

@@ -38,13 +38,13 @@ namespace GleeBug
         \brief Stops the debuggee (terminate the process)
         \return true if the debuggee was stopped correctly, false otherwise.
         */
-        bool Stop();
+        bool Stop() const;
 
         /**
         \brief Detaches the debuggee.
         \return true if the debuggee was detached correctly, false otherwise.
         */
-        bool Detach();
+        bool Detach() const;
 
         /**
         \brief Run the debug loop (does not return until the debuggee is detached or terminated).
@@ -226,26 +226,26 @@ namespace GleeBug
 
     protected: //variables
         PROCESS_INFORMATION _mainProcess;
-        uint32 _continueStatus;
-        bool _breakDebugger;
+        uint32 _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+        bool _breakDebugger = false;
         DEBUG_EVENT _debugEvent;
         ProcessMap _processes;
-        bool _isRunning;
+        bool _isRunning = false;
 
         /**
         \brief The current process (can be null in some cases).
         */
-        ProcessInfo* _process;
+        ProcessInfo* _process = nullptr;
 
         /**
         \brief The current thread (can be null in some cases). Should be a copy of _process->thread.
         */
-        ThreadInfo* _thread;
+        ThreadInfo* _thread = nullptr;
 
         /**
         \brief The current thread registers (can be null in some cases). Should be a copy of _thread->registers.
         */
-        Registers* _registers;
+        Registers* _registers = nullptr;
     };
 };
 

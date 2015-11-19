@@ -9,7 +9,7 @@ namespace GleeBug
         thread(nullptr),
         systemBreakpoint(false)
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < HWBP_COUNT; i++)
             hardwareBreakpoints[i].enabled = false;
     }
 };
