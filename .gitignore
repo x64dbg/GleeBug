@@ -4,3 +4,4 @@ Release/
 *.sdf
 *.opensdf
 *.orig
+*.vcxproj.user
