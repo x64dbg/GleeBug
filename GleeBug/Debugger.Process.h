@@ -97,6 +97,13 @@ namespace GleeBug
         }
 
         /**
+        \brief Deletes a software breakpoint.
+        \param address The address to delete the breakpoint from.
+        \return true if the breakpoint was deleted, false otherwise.
+        */
+        bool DeleteBreakpoint(ptr address);
+
+        /**
         \brief Attempts to find a free hardware breakpoint slot.
         \param [out] slot First free slot found, has no meaning when the function fails.
         \return true if a free slot was found, false otherwise.
@@ -107,22 +114,57 @@ namespace GleeBug
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
         \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
-        \param type The hardware breakpoint type.
-        \param size The hardware breakpoint size.
+        \param type (Optional) The hardware breakpoint type.
+        \param size (Optional) The hardware breakpoint size.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the hardware breakpoint was set, false otherwise.
         */
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte);
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false);
 
         /**
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
         \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
         \param cbBreakpoint The breakpoint callback. Can be written using BIND1(this, MyDebugger::cb).
-        \param type The hardware breakpoint type.
-        \param size The hardware breakpoint size.
+        \param type (Optional) The hardware breakpoint type.
+        \param size (Optional) The hardware breakpoint size.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the hardware breakpoint was set, false otherwise.
         */
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte);
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false);
+
+        /**
+        \brief Sets a hardware breakpoint.
+        \tparam T Generic type parameter. Must be a subclass of Debugger.
+        \param address The address to set the hardware breakpoint on.
+        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param debugger This pointer to a subclass of Debugger.
+        \param callback Pointer to the callback. Written like: &MyDebugger::cb
+        \param type (Optional) The hardware breakpoint type.
+        \param size (Optional) The hardware breakpoint size.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
+        \return true if the hardware breakpoint was set, false otherwise.
+        */
+        template <typename T>
+        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, T* debugger, void(T::*callback)(const BreakpointInfo & info), HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false)
+        {
+            static_cast<void>(static_cast<Debugger*>(debugger));
+            return SetHardwareBreakpoint(address, slot, std::bind(callback, debugger, std::placeholders::_1), type, size, singleshoot);
+        }
+
+        /**
+        \brief Deletes a hardware breakpoint.
+        \param address The address the hardware breakpoint is set on.
+        \return true if the hardware breakpoint was deleted, false otherwise.
+        */
+        bool DeleteHardwareBreakpoint(ptr address);
+
+        /**
+        \brief Deletes a breakpoint.
+        \param info The breakpoint information.
+        \return true if the breakpoint was deleted, false otherwise.
+        */
+        bool DeleteGenericBreakpoint(const BreakpointInfo & info);
     };
 };
 

@@ -19,7 +19,7 @@ namespace GleeBug
             auto foundInfo = _process->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
             if (foundInfo == _process->breakpoints.end())
                 return;
-            const auto & info = foundInfo->second;
+            const auto info = foundInfo->second;
 
             //set continue status
             _continueStatus = DBG_CONTINUE;
@@ -31,7 +31,9 @@ namespace GleeBug
             _process->MemWrite(info.address, info.internal.software.oldbytes, info.internal.software.size);
             _thread->StepInternal(std::bind([this, info]()
             {
-                _process->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
+                //only restore the bytes if the breakpoint still exists
+                if (_process->breakpoints.find({ BreakpointType::Software, info.address }) != _process->breakpoints.end())
+                    _process->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
             }));
 
             //call the generic callback
@@ -41,6 +43,10 @@ namespace GleeBug
             auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Software, info.address });
             if (foundCallback != _process->breakpointCallbacks.end())
                 foundCallback->second(info);
+
+            //delete the breakpoint if it is singleshoot
+            if (info.singleshoot)
+                _process->DeleteGenericBreakpoint(info);
         }
     }
 
@@ -109,18 +115,20 @@ namespace GleeBug
         auto foundInfo = _process->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
         if (foundInfo == _process->breakpoints.end())
             return; //not a valid hardware breakpoint
-        const auto & info = foundInfo->second;
+        const auto info = foundInfo->second;
         if (info.internal.hardware.slot != breakpointSlot)
             return; //not a valid hardware breakpoint
 
         //set continue status
         _continueStatus = DBG_CONTINUE;
 
-        //delete the hardware breakpoint and do an internal step (TODO: maybe delete from all threads?)
+        //delete the hardware breakpoint from the thread (not the breakpoint buffer) and do an internal step (TODO: maybe delete from all threads?)
         _thread->DeleteHardwareBreakpoint(breakpointSlot);
         _thread->StepInternal(std::bind([this, info]()
         {
-            _thread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
+            //only restore if the breakpoint still exists
+            if (_process->breakpoints.find({ BreakpointType::Hardware, info.address }) != _process->breakpoints.end())
+                _thread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
         }));
 
         //call the generic callback
@@ -130,6 +138,10 @@ namespace GleeBug
         auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
         if (foundCallback != _process->breakpointCallbacks.end())
             foundCallback->second(info);
+
+        //delete the breakpoint if it is singleshoot
+        if (info.singleshoot)
+            _process->DeleteGenericBreakpoint(info);
     }
 
     void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)

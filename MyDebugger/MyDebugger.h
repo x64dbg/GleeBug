@@ -12,6 +12,10 @@ protected:
     {
         printf("Reached entry breakpoint! GIP: 0x%p\n",
             _registers->Gip());
+        if (_process->DeleteBreakpoint(info.address))
+            printf("Entry breakpoint deleted!\n");
+        else
+            printf("Failed to delete entry breakpoint...\n");
         _thread->StepInto(std::bind([this]()
         {
             printf("Step after entry breakpoint! GIP: 0x%p\n",
@@ -23,6 +27,10 @@ protected:
     {
         printf("Reached entry hardware breakpoint! GIP: 0x%p\n",
             _registers->Gip());
+        if (_process->DeleteHardwareBreakpoint(info.address))
+            printf("Entry hardware breakpoint deleted!\n");
+        else
+            printf("Failed to delete entry hardware breakpoint...\n");
         _thread->StepInto(std::bind([this]()
         {
             printf("Step after entry hardware breakpoint! GIP: 0x%p\n",
@@ -45,7 +53,7 @@ protected:
         HardwareBreakpointSlot slot;
         if (_process->GetFreeHardwareBreakpointSlot(slot))
         {
-            if (_process->SetHardwareBreakpoint(entry, slot, BIND1(this, MyDebugger::cbEntryHardwareBreakpoint), HardwareBreakpointType::Execute, HardwareBreakpointSize::SizeByte))
+            if (_process->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareBreakpointType::Execute, HardwareBreakpointSize::SizeByte))
                 printf("Hardware breakpoint set at 0x%p!\n", entry);
             else
                 printf("Failed to set hardware breakpoint at 0x%p\n", entry);

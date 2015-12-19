@@ -6,7 +6,7 @@ namespace GleeBug
     {
         //check the address
         if (!MemIsValidPtr(address) ||
-            breakpoints.find({BreakpointType::Software, address}) != breakpoints.end())
+            breakpoints.find({ BreakpointType::Software, address }) != breakpoints.end())
             return false;
 
         //setup the breakpoint information struct
@@ -15,7 +15,7 @@ namespace GleeBug
         info.enabled = true;
         info.singleshoot = singleshoot;
         info.type = BreakpointType::Software;
-        
+
         //determine breakpoint byte and size from the type
         switch (type)
         {
@@ -55,6 +55,28 @@ namespace GleeBug
         return true;
     }
 
+    bool ProcessInfo::DeleteBreakpoint(ptr address)
+    {
+        //find the breakpoint
+        auto found = breakpoints.find({ BreakpointType::Software, address });
+        if (found == breakpoints.end())
+            return false;
+        const auto & info = found->second;
+
+        //restore the breakpoint bytes if the breakpoint is enabled
+        if (info.enabled)
+        {
+            if (!MemWrite(address, info.internal.software.oldbytes, info.internal.software.size))
+                return false;
+            FlushInstructionCache(hProcess, nullptr, 0);
+        }
+
+        //remove the breakpoint from the maps
+        breakpoints.erase(found);
+        breakpointCallbacks.erase({ BreakpointType::Software, address });
+        return true;
+    }
+
     bool ProcessInfo::GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot) const
     {
         //find a free hardware breakpoint slot
@@ -69,7 +91,7 @@ namespace GleeBug
         return false;
     }
 
-    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size)
+    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size, bool singleshoot)
     {
         //check the address
         if (!MemIsValidPtr(address) ||
@@ -99,7 +121,7 @@ namespace GleeBug
         BreakpointInfo info = {};
         info.address = address;
         info.enabled = true;
-        info.singleshoot = false;
+        info.singleshoot = singleshoot;
         info.type = BreakpointType::Hardware;
         info.internal.hardware.slot = slot;
         info.internal.hardware.type = type;
@@ -114,16 +136,56 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type, HardwareBreakpointSize size)
+    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type, HardwareBreakpointSize size, bool singleshoot)
     {
         //check if a callback on this address was already found
         if (breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
             return false;
         //set the hardware breakpoint
-        if (!SetHardwareBreakpoint(address, slot, type, size))
+        if (!SetHardwareBreakpoint(address, slot, type, size, singleshoot))
             return false;
         //insert the callback
         breakpointCallbacks.insert({ { BreakpointType::Hardware, address }, cbBreakpoint });
         return true;
+    }
+
+    bool ProcessInfo::DeleteHardwareBreakpoint(ptr address)
+    {
+        //find the hardware breakpoint
+        auto found = breakpoints.find({ BreakpointType::Hardware, address });
+        if (found == breakpoints.end())
+            return false;
+        const auto & info = found->second;
+        
+        //delete the hardware breakpoint from the internal buffer
+        hardwareBreakpoints[int(info.internal.hardware.slot)].enabled = false;
+
+        //delete the hardware breakpoint from the registers
+        bool success = true;
+        for (auto & thread : threads)
+        {
+            if (!thread.second.DeleteHardwareBreakpoint(info.internal.hardware.slot))
+                success = false;
+        }
+
+        //delete the breakpoint from the maps
+        breakpoints.erase(found);
+        breakpointCallbacks.erase({ BreakpointType::Hardware, address });
+        return success;
+    }
+
+    bool ProcessInfo::DeleteGenericBreakpoint(const BreakpointInfo & info)
+    {
+        switch (info.type)
+        {
+        case BreakpointType::Software:
+            return DeleteBreakpoint(info.address);
+        case BreakpointType::Hardware:
+            return DeleteHardwareBreakpoint(info.address);
+        case BreakpointType::Memory:
+            return false; //TODO implement this
+        default:
+            return false;
+        }
     }
 };
