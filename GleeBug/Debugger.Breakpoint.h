@@ -49,6 +49,9 @@ namespace GleeBug
         Execute
     };
 
+    /**
+    \brief Structure describing internal breakpoint info.
+    */
     struct BreakpointInternalInfo
     {
         union
@@ -74,6 +77,9 @@ namespace GleeBug
         };
     };
 
+    /**
+    \brief Structure describing a breakpoint.
+    */
     struct BreakpointInfo
     {
         ptr address;

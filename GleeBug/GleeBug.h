@@ -35,8 +35,17 @@ namespace GleeBug
 
     typedef std::pair<ptr, ptr> Range;
 
+    /**
+    \brief A range compare (used in std::map).
+    */
     struct RangeCompare
     {
+        /**
+        \brief Returns if range a comes before range b.
+        \param a First range.
+        \param b Second range.
+        \return True if a comes before b, false otherwise.
+        */
         inline bool operator()(const Range & a, const Range & b) const //a before b?
         {
             return a.second < b.first;

@@ -103,7 +103,7 @@ enum class R
 }; //R
 
 /**
-\brief Class that represents a register.
+\brief Class that represents a register. This class provides an abstraction for a register to allow intuitive operations.
 \tparam RegisterIndex The enum index of the register.
 \tparam Type Type of the register value.
 \tparam ThisPtr Pointer to the Registers class.
@@ -112,96 +112,176 @@ template<R RegisterIndex, typename Type>
 class Register
 {
 public:
+    /**
+    \brief Constructor.
+    \param registers Pointer to the registers.
+    */
     explicit Register(Registers* registers) : _registers(registers) {}
 
+    /**
+    \brief Gets the register value.
+    \return The register value.
+    */
     Type Get() const
     {
         return Type(_registers->Get(RegisterIndex));
     }
 
+    /**
+    \brief Sets the register value.
+    \param value The new register value.
+    */
     void Set(Type value)
     {
         _registers->Set(RegisterIndex, ptr(value));
     }
 
+    /**
+    \brief Gets the register value.
+    \return The register value.
+    */
     Type operator()() const
     {
         return Get();
     }
 
-    Register<RegisterIndex, Type> & operator=(const Type & other)
+    /**
+    \brief Assignment operator.
+    \param value The new register value.
+    \return A shallow copy of this object.
+    */
+    Register<RegisterIndex, Type> & operator=(const Type & value)
     {
-        Set(other);
+        Set(value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator+=(const Type & other)
+    /**
+    \brief Addition assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator+=(const Type & value)
     {
-        Set(Get() + other);
+        Set(Get() + value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator-=(const Type & other)
+    /**
+    \brief Subtraction assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator-=(const Type & value)
     {
-        Set(Get() - other);
+        Set(Get() - value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator*=(const Type & other)
+    /**
+    \brief Multiplication assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator*=(const Type & value)
     {
-        Set(Get() * other);
+        Set(Get() * value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator/=(const Type & other)
+    /**
+    \brief Division assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator/=(const Type & value)
     {
-        Set(Get() / other);
+        Set(Get() / value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator%=(const Type & other)
+    /**
+    \brief Modulus assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator%=(const Type & value)
     {
-        Set(Get() % other);
+        Set(Get() % value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator^=(const Type & other)
+    /**
+    \brief Bitwise 'exclusive or' assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator^=(const Type & value)
     {
-        Set(Get() ^ other);
+        Set(Get() ^ value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator&=(const Type & other)
+    /**
+    \brief Bitwise 'and' assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator&=(const Type & value)
     {
-        Set(Get() & other);
+        Set(Get() & value);
         return *this;
     }
 
-    Register<RegisterIndex, Type> & operator|=(const Type & other)
+    /**
+    \brief Bitwise 'or' assignment operator.
+    \param value The value to perform the operation with.
+    \return The result of the operation.
+    */
+    Register<RegisterIndex, Type> & operator|=(const Type & value)
     {
-        Set(Get() | other);
+        Set(Get() | value);
         return *this;
     }
 
+    /**
+    \brief Increment operator.
+    \return The register before the operation.
+    */
     Register<RegisterIndex, Type> & operator++()
     {
+        auto ret = *this;
         Set(Get() + 1);
-        return *this;
+        return ret;
     }
 
+    /**
+    \brief Increment operator.
+    \return The register before the operation.
+    */
     Register<RegisterIndex, Type> & operator++(int)
     {
         return operator++();
     }
 
-    bool  operator==(const Type & other) const
+    /**
+    \brief Equality operator.
+    \param value The value to compare with.
+    \return true if the register is equal to the value.
+    */
+    bool  operator==(const Type & value) const
     {
-        return Get() == other;
+        return Get() == value;
     }
 
-    bool operator!=(const Type & other) const
+    /**
+    \brief Inequality operator.
+    \param value The value to compare with.
+    \return true if the register is not equal to the value.
+    */
+    bool operator!=(const Type & value) const
     {
-        return !operator==(other);
+        return !operator==(value);
     }
 
 private:
