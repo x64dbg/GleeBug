@@ -50,7 +50,7 @@ protected:
         printf("Process %d created with entry 0x%p\n",
             _debugEvent.dwProcessId,
             entry);
-        HardwareBreakpointSlot slot;
+        /*HardwareBreakpointSlot slot;
         if (_process->GetFreeHardwareBreakpointSlot(slot))
         {
             if (_process->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareBreakpointType::Execute, HardwareBreakpointSize::SizeByte))
@@ -59,12 +59,24 @@ protected:
                 printf("Failed to set hardware breakpoint at 0x%p\n", entry);
         }
         else
-            printf("No free hardware breakpoint slot...\n");
+            printf("No free hardware breakpoint slot...\n");*/
 
-        /*if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
+        if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
-            printf("Failed to set breakpoint at 0x%p...\b", entry);*/
+            printf("Failed to set breakpoint at 0x%p...\b", entry);
+        uint8 test[5];
+        ptr start = entry - 2;
+        printf("unsafe: ");
+        _process->MemRead(start, test, sizeof(test));
+        for (int i = 0; i < sizeof(test); i++)
+            printf("%02X ", test[i]);
+        puts("");
+        _process->MemReadSafe(start, test, sizeof(test));
+        printf("  safe: ");
+        for (int i = 0; i < sizeof(test); i++)
+            printf("%02X ", test[i]);
+        puts("");
     }
 
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override

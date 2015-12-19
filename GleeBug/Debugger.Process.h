@@ -24,6 +24,7 @@ namespace GleeBug
         ThreadMap threads; //DO NOT COPY THESE OBJECTS!
         DllMap dlls;
         BreakpointMap breakpoints;
+        SoftwareBreakpointMap softwareBreakpointReferences;
         BreakpointCallbackMap breakpointCallbacks;
         BreakpointInfo hardwareBreakpoints[4];
 
@@ -45,6 +46,15 @@ namespace GleeBug
         bool MemRead(ptr address, void* buffer, ptr size) const;
 
         /**
+        \brief Safely read memory from the process, filtering out breakpoint bytes.
+        \param address The virtual address to read from.
+        \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
+        \param size The size to read.
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemReadSafe(ptr address, void* buffer, ptr size) const;
+
+        /**
         \brief Write memory to the process.
         \param address The virtual address to write to.
         \param [in] buffer Source buffer. Cannot be null.
@@ -52,6 +62,15 @@ namespace GleeBug
         \return true if it succeeds, false if it fails.
         */
         bool MemWrite(ptr address, const void* buffer, ptr size);
+
+        /**
+        \brief Safely write memory to the process, preserving breakpoint bytes.
+        \param address The virtual address to write to.
+        \param [in] buffer Source buffer. Cannot be null.
+        \param size The size to write.
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemWriteSafe(ptr address, const void* buffer, ptr size);
 
         /**
         \brief Check if an address is a valid read pointer.

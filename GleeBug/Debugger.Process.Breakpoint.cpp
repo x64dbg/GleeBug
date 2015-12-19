@@ -37,7 +37,8 @@ namespace GleeBug
         FlushInstructionCache(hProcess, nullptr, 0);
 
         //insert in the breakpoint map
-        breakpoints.insert({ { info.type, info.address }, info });
+        auto itr = breakpoints.insert({ { info.type, info.address }, info });
+        softwareBreakpointReferences[info.address] = itr.first;
 
         return true;
     }
@@ -72,6 +73,7 @@ namespace GleeBug
         }
 
         //remove the breakpoint from the maps
+        softwareBreakpointReferences.erase(info.address);
         breakpoints.erase(found);
         breakpointCallbacks.erase({ BreakpointType::Software, address });
         return true;
@@ -156,7 +158,7 @@ namespace GleeBug
         if (found == breakpoints.end())
             return false;
         const auto & info = found->second;
-        
+
         //delete the hardware breakpoint from the internal buffer
         hardwareBreakpoints[int(info.internal.hardware.slot)].enabled = false;
 
