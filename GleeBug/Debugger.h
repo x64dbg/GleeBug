@@ -249,6 +249,7 @@ namespace GleeBug
         DEBUG_EVENT _debugEvent;
         ProcessMap _processes;
         bool _isRunning = false;
+        bool _isDebugging = false;
 
         /**
         \brief The current process (can be null in some cases).

@@ -6,6 +6,7 @@ namespace GleeBug
     {
         //initialize loop variables
         _breakDebugger = false;
+        _isDebugging = true;
 
         while (!_breakDebugger)
         {
@@ -104,5 +105,6 @@ namespace GleeBug
         //cleanup
         _processes.clear();
         _process = nullptr;
+        _isDebugging = false;
     }
 };
