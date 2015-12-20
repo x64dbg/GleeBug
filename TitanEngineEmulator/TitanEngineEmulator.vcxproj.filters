@@ -23,5 +23,8 @@
     <ClInclude Include="TitanEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Emulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
