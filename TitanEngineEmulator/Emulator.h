@@ -24,14 +24,14 @@ public:
     {
         if (!_process)
             return false;
-        return _process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize);
+        return _process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesRead);
     }
 
     bool MemoryWriteSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesWritten)
     {
         if (!_process)
             return false;
-        return _process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize);
+        return _process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
@@ -47,9 +47,9 @@ public:
     }
 
     //Engine
-    bool IsFileBeingDebugged()
+    bool IsFileBeingDebugged() const
     {
-        return _isRunning;
+        return _isDebugging;
     }
 
     DEBUG_EVENT* GetDebugData()
