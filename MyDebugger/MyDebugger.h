@@ -1,7 +1,7 @@
 #ifndef _MYDEBUGGER_H
 #define _MYDEBUGGER_H
 
-#include "../GleeBug/Debugger.h"
+#include <GleeBug/Debugger.h>
 
 using namespace GleeBug;
 
