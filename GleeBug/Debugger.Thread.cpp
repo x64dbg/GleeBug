@@ -76,6 +76,16 @@ namespace GleeBug
     void ThreadInfo::StepInto(const StepCallback & cbStep)
     {
         StepInto();
+        
+        auto target = cbStep.target<void()>();
+        for (const auto & cb : stepCallbacks)
+        {
+            if (target == cb.target<void()>())
+            {
+                puts("duplicate StepInto callback detected!");
+                return;
+            }
+        }
         stepCallbacks.push_back(cbStep);
     }
 
