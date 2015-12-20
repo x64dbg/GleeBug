@@ -48,6 +48,9 @@ namespace GleeBug
                 }
             }
 
+            //call the pre debug event callback
+            cbPostDebugEvent(_debugEvent);
+
             //dispatch the debug event
             switch (_debugEvent.dwDebugEventCode)
             {
@@ -82,6 +85,9 @@ namespace GleeBug
                 unknownEvent(_debugEvent.dwDebugEventCode);
                 break;
             }
+
+            //call the post debug event callback
+            cbPostDebugEvent(_debugEvent);
 
             //write the register context
             if (_thread)

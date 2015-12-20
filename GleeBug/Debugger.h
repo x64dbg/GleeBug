@@ -53,6 +53,18 @@ namespace GleeBug
 
     protected: //debug event callbacks
         /**
+        \brief Generic pre debug event callback. Called before the event is internally processed. Provide an implementation to use this callback.
+        \param debugEvent The debug event.
+        */
+        virtual void cbPreDebugEvent(const DEBUG_EVENT & debugEvent) {};
+
+        /**
+        \brief Generic post debug event callback. Called after the event is internally processed. Provide an implementation to use this callback.
+        \param debugEvent The debug event.
+        */
+        virtual void cbPostDebugEvent(const DEBUG_EVENT & debugEvent) {};
+
+        /**
         \brief Process creation debug event callback. Called after the event is internally processed. Provide an implementation to use this callback.
         \param createProcess Information about the process created.
         \param process ProcessInfo of the created process.

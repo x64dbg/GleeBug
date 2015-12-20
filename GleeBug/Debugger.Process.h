@@ -41,36 +41,40 @@ namespace GleeBug
         \param address The virtual address to read from.
         \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
         \param size The size to read.
+        \param bytesRead (Optional) Number of bytes read (should be equal to size on success).
         \return true if it succeeds, false if it fails.
         */
-        bool MemRead(ptr address, void* buffer, ptr size) const;
+        bool MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr) const;
 
         /**
         \brief Safely read memory from the process, filtering out breakpoint bytes.
         \param address The virtual address to read from.
         \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
         \param size The size to read.
+        \param bytesRead (Optional) Number of bytes read (should be equal to size on success).
         \return true if it succeeds, false if it fails.
         */
-        bool MemReadSafe(ptr address, void* buffer, ptr size) const;
+        bool MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr) const;
 
         /**
         \brief Write memory to the process.
         \param address The virtual address to write to.
         \param [in] buffer Source buffer. Cannot be null.
         \param size The size to write.
+        \param bytesWritten (Optional) Number of bytes written (should be equal to size on success).
         \return true if it succeeds, false if it fails.
         */
-        bool MemWrite(ptr address, const void* buffer, ptr size);
+        bool MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr);
 
         /**
         \brief Safely write memory to the process, preserving breakpoint bytes.
         \param address The virtual address to write to.
         \param [in] buffer Source buffer. Cannot be null.
         \param size The size to write.
+        \param bytesWritten (Optional) Number of bytes written (should be equal to size on success).
         \return true if it succeeds, false if it fails.
         */
-        bool MemWriteSafe(ptr address, const void* buffer, ptr size);
+        bool MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr);
 
         /**
         \brief Check if an address is a valid read pointer.

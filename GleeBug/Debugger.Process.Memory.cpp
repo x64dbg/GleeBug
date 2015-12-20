@@ -2,12 +2,12 @@
 
 namespace GleeBug
 {
-    bool ProcessInfo::MemRead(ptr address, void* buffer, ptr size) const
+    bool ProcessInfo::MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
         return !!ReadProcessMemory(this->hProcess, reinterpret_cast<const void*>(address), buffer, size, nullptr);
     }
 
-    bool ProcessInfo::MemReadSafe(ptr address, void* buffer, ptr size) const
+    bool ProcessInfo::MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
         if (!MemRead(address, buffer, size))
             return false;
@@ -51,12 +51,12 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::MemWrite(ptr address, const void* buffer, ptr size)
+    bool ProcessInfo::MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         return !!WriteProcessMemory(this->hProcess, reinterpret_cast<void*>(address), buffer, size, nullptr);
     }
 
-    bool ProcessInfo::MemWriteSafe(ptr address, const void* buffer, ptr size)
+    bool ProcessInfo::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         return false;
     }
