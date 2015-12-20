@@ -283,15 +283,15 @@ __declspec(dllexport) bool TITCALL RemoveAllBreakPoints(DWORD RemoveOption)
 //Stepping
 __declspec(dllexport) void TITCALL StepOver(LPVOID traceCallBack)
 {
-    //TODO
+    emu.StepOver(traceCallBack);
 }
 
 __declspec(dllexport) void TITCALL SingleStep(DWORD StepCount, LPVOID StepCallBack)
 {
-    //TODO
+    emu.SingleStep(StepCount, StepCallBack);
 }
 
 __declspec(dllexport) void TITCALL StepInto(LPVOID traceCallBack)
 {
-    //TODO
+    emu.StepInto(traceCallBack);
 }

@@ -109,7 +109,7 @@ public:
     }
 
     //Stepping
-    void StepOver(LPVOID CallBack)
+    void StepOver(LPVOID CallBack) const
     {
         //TODO
         StepInto(CallBack);
@@ -122,24 +122,24 @@ public:
         _thread->StepInto([this, StepCount, CallBack]()
         {
             if (!StepCount)
-                ((STEPCALLBACK)CallBack)();
+            {
+                if (CallBack)
+                    ((STEPCALLBACK)CallBack)();
+            }
             else
                 SingleStep(StepCount - 1, CallBack);
         });
     }
 
-    void StepInto(LPVOID CallBack)
+    void StepInto(LPVOID CallBack) const
     {
         if (!_thread || !CallBack)
             return;
-        _thread->StepInto([CallBack]()
-        {
-            ((STEPCALLBACK)CallBack)();
-        });
+        _thread->StepInto(STEPCALLBACK(CallBack));
     }
 
     //Registers
-    ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
+    ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister) const
     {
         if (!_thread)
             return 0;
@@ -208,7 +208,7 @@ protected:
     }
 
 private: //functions
-    Registers::R registerFromDword(DWORD IndexOfRegister)
+    static inline Registers::R registerFromDword(DWORD IndexOfRegister)
     {
         switch (IndexOfRegister)
         {
