@@ -58,7 +58,7 @@ namespace GleeBug
         return result;
     }
 
-    bool File::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten) const
+    bool File::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten)
     {
         if (!IsOpen() || SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {

@@ -65,8 +65,8 @@ namespace GleeBug
         \param offset The offset to start reading from.
         \param [out] data Destination buffer.
         \param size The size to read.
-        \param [out] bytesRead (Optional) If set, returns the number of bytes read.
-        \return true if the read was successful, false otherwise.
+        \param [out] bytesRead (Optional) If set, returns the number of bytes read (even on failure).
+        \return true if the read was fully successful, false otherwise.
         */
         virtual bool Read(uint32 offset, void* data, uint32 size, uint32* bytesRead = nullptr) const;
 
@@ -75,10 +75,10 @@ namespace GleeBug
         \param offset The offset to start writing to. Everything after this offset will be truncated!
         \param data The data to write.
         \param size The size to write.
-        \param [out] bytesWritten (Optional) If set, returns the number of bytes written.
-        \return true if the write was successful, false otherwise.
+        \param [out] bytesWritten (Optional) If set, returns the number of bytes written (even on failure)
+        \return true if the write was fully successful, false otherwise.
         */
-        virtual bool Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten = nullptr) const;
+        virtual bool Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten = nullptr);
 
     private:
         bool internalOpen(DWORD creation);
