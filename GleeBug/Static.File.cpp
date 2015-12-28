@@ -38,14 +38,14 @@ namespace GleeBug
         }
     }
 
-    uint32 File::GetSize()
+    uint32 File::GetSize() const
     {
         return IsOpen() ? GetFileSize(_hFile, nullptr) : 0;
     }
 
-    bool File::Read(uint32 offset, uint8* data, uint32 size, uint32* bytesRead)
+    bool File::Read(uint32 offset, void* data, uint32 size, uint32* bytesRead) const
     {
-        if (!IsOpen() || !SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN))
+        if (!IsOpen() || SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
             if (bytesRead)
                 *bytesRead = 0;
@@ -58,9 +58,9 @@ namespace GleeBug
         return result;
     }
 
-    bool File::Write(uint32 offset, const uint8* data, uint32 size, uint32* bytesWritten)
+    bool File::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten) const
     {
-        if (!IsOpen() || !SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN))
+        if (!IsOpen() || SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
             if (bytesWritten)
                 *bytesWritten = 0;
