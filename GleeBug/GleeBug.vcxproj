@@ -164,6 +164,7 @@
     <ClCompile Include="Debugger.Thread.Registers.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp" />
     <ClCompile Include="Static.File.cpp" />
+    <ClCompile Include="Static.Pe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.Breakpoint.h" />
@@ -177,6 +178,9 @@
     <ClInclude Include="Debugger.Thread.Registers.Register.h" />
     <ClInclude Include="GleeBug.h" />
     <ClInclude Include="Static.File.h" />
+    <ClInclude Include="Static.Global.h" />
+    <ClInclude Include="Static.Pe.h" />
+    <ClInclude Include="Static.Region.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
