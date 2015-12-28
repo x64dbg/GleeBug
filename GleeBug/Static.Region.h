@@ -81,6 +81,14 @@ namespace GleeBug
         }
 
         /**
+        \brief Returns if this region is empty (has no data).
+        */
+        bool Empty() const
+        {
+            return Size() == 0;
+        }
+
+        /**
         \brief Returns Valid().
         */
         operator bool() const
@@ -92,6 +100,11 @@ namespace GleeBug
         \brief Returns Data().
         */
         T* operator ()() const
+        {
+            return Data();
+        }
+
+        T* operator ->() const
         {
             return Data();
         }

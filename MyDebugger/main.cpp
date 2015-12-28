@@ -3,14 +3,13 @@
 #include "GleeBug/Static.File.h"
 #include "GleeBug/Static.Pe.h"
 
-#ifdef _WIN64
-wchar_t szFilePath[256] = L"c:\\test64.exe";
-#else //x86
-wchar_t szFilePath[256] = L"c:\\test32.exe";
-#endif //_WIN64
-
 static void testDebugger()
 {
+#ifdef _WIN64
+    wchar_t szFilePath[256] = L"c:\\test64.exe";
+#else //x86
+    wchar_t szFilePath[256] = L"c:\\test32.exe";
+#endif //_WIN64
     wchar_t szCommandLine[256] = L"";
     wchar_t szCurrentDir[256] = L"c:\\";
     MyDebugger dbg;
@@ -26,36 +25,79 @@ static void testDebugger()
     }
 }
 
+template<typename T>
+static void printRegion(const char* str, Region<T> region)
+{
+    printf("\n%s (offset: 0x%X, size: 0x%X, v: %s, e: %s)\n",
+        str,
+        region.Offset(),
+        region.Size(),
+        region.Valid() ? "true" : "false",
+        region.Empty() ? "true" : "false");
+}
+
 static void testStatic()
 {
+#ifdef _WIN64
+    wchar_t szFilePath[256] = L"c:\\test64.exe";
+#else //x86
+    wchar_t szFilePath[256] = L"c:\\!exclude\\pe\\mini.exe";
+#endif //_WIN64
     using namespace GleeBug;
     File file(szFilePath, File::ReadOnly);
     if (file.Open())
     {
         Pe pe(file);
-        if (pe.ParseHeaders())
+        if (pe.ParseHeaders() == Pe::ErrorOk)
         {
-            PIMAGE_DOS_HEADER idh = pe.GetDosHeader().Data();
-            puts("DOS Header:");
+            auto idh = pe.GetDosHeader();
+            printRegion("DOS Header:", idh);
             printf("   e_magic: %02X\n", idh->e_magic);
             printf("  e_lfanew: %08X\n", idh->e_lfanew);
+
+            auto afterDosData = pe.GetAfterDosData();
+            printRegion("After DOS Data", afterDosData);
+
 #ifdef _WIN64
-            PIMAGE_NT_HEADERS64 inth = pe.GetNtHeaders64().Data();
+            auto inth = pe.GetNtHeaders64();
 #else //x32
-            PIMAGE_NT_HEADERS32 inth = pe.GetNtHeaders32().Data();
+            auto inth = pe.GetNtHeaders32();
 #endif //_WIN64
-            puts("\nNT Headers:");
+            printRegion("NT Headers:", inth);
             printf("  Signature: %08X\n", inth->Signature);
+
             PIMAGE_FILE_HEADER ifh = &inth->FileHeader;
             puts("\n  File Header:");
-            printf("    Machine      : %02X\n", ifh->Machine);
-            printf("    TimeDateStamp: %08X\n", ifh->TimeDateStamp);
+            printf("    Machine         : %04X\n", ifh->Machine);
+            printf("    NumberOfSections: %04X\n", ifh->NumberOfSections);
+            printf("    TimeDateStamp   : %08X\n", ifh->TimeDateStamp);
+
             PIMAGE_OPTIONAL_HEADER ioh = &inth->OptionalHeader;
             puts("\n  Optional Header:");
-            printf("    Magic    : %04X\n", ioh->Magic);
-            printf("    ImageBase: %p\n", ioh->ImageBase);
-            printf("    Subsystem: %04X\n", ioh->Subsystem);
-            puts("\n  Section Headers:");
+            printf("    Magic     : %04X\n", ioh->Magic);
+            printf("    EntryPoint: %08X\n", ioh->AddressOfEntryPoint);
+            printf("    ImageBase : %p\n", ioh->ImageBase);
+            printf("    Subsystem : %04X\n", ioh->Subsystem);
+
+            auto afterOptionalData = pe.GetAfterOptionalData();
+            printRegion("After Optional Data", afterOptionalData);
+
+            auto ish = pe.GetSectionHeaders();
+            printRegion("Section Headers:", ish);
+            for (auto i = 0; i < ifh->NumberOfSections; i++)
+            {
+                if (i)
+                    puts("");
+                auto cur = ish.Data() + i;
+                printf("  Section %d:\n", i + 1);
+                char name[9] = "";
+                memcpy(name, cur->Name, sizeof(cur->Name));
+                printf("    Name : %s\n", name);
+                printf("    VSize: %08X\n", cur->Misc.VirtualSize);
+                printf("    VAddr: %08X\n", cur->VirtualAddress);
+                printf("    RSize: %08X\n", cur->SizeOfRawData);
+                printf("    RAddr: %08X\n", cur->PointerToRawData);
+            }
         }
         else
             puts("Pe::ParseHeaders failed!");
