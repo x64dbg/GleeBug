@@ -68,6 +68,9 @@
     <ClCompile Include="Static.Pe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Static.BufferFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.h">
@@ -110,6 +113,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Static.Global.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Static.BufferFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
