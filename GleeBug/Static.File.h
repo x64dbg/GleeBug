@@ -1,7 +1,7 @@
 #ifndef _STATIC_FILE_H
 #define _STATIC_FILE_H
 
-#include "Static.Global.h"
+#include "GleeBug.h"
 
 namespace GleeBug
 {
