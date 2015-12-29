@@ -37,15 +37,11 @@ static void printRegion(const char* str, Region<T> region)
         region.Empty() ? "true" : "false");
 }
 
-static void testStatic()
+static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
 {
-#ifdef _WIN64
-    wchar_t szFilePath[256] = L"c:\\test64.exe";
-#else //x86
-    wchar_t szFilePath[256] = L"c:\\!exclude\\pe\\mini.exe";
-#endif //_WIN64
     using namespace GleeBug;
-    File diskFile(szFilePath, File::ReadOnly);
+    auto result = false;
+    File diskFile(szFileName, File::ReadOnly);
     if (diskFile.Open())
     {
         auto diskSize = diskFile.GetSize();
@@ -57,6 +53,9 @@ static void testStatic()
             auto parseError = pe.ParseHeaders();
             if (parseError == Pe::ErrorOk)
             {
+                result = true;
+                if (!dumpData)
+                    return result;
                 auto idh = pe.GetDosHeader();
                 printRegion("DOS Header:", idh);
                 printf("   e_magic: %02X\n", idh->e_magic);
@@ -75,9 +74,10 @@ static void testStatic()
 
                 PIMAGE_FILE_HEADER ifh = &inth->FileHeader;
                 puts("\n  File Header:");
-                printf("    Machine         : %04X\n", ifh->Machine);
-                printf("    NumberOfSections: %04X\n", ifh->NumberOfSections);
-                printf("    TimeDateStamp   : %08X\n", ifh->TimeDateStamp);
+                printf("    Machine             : %04X\n", ifh->Machine);
+                printf("    NumberOfSections    : %04X\n", ifh->NumberOfSections);
+                printf("    TimeDateStamp       : %08X\n", ifh->TimeDateStamp);
+                printf("    SizeOfOptionalHeader: %04X\n", ifh->SizeOfOptionalHeader);
 
                 PIMAGE_OPTIONAL_HEADER ioh = &inth->OptionalHeader;
                 puts("\n  Optional Header:");
@@ -114,11 +114,31 @@ static void testStatic()
     }
     else
         puts("File::Open failed!");
+    return result;
+}
+
+static void testCorkami()
+{
+#include "PeTests.h"
+    wchar_t szBasePath[MAX_PATH] = L"c:\\!exclude\\pe\\bin\\";
+    int okCount = 0;
+    for (auto i = 0; i < _countof(peTestFiles); i++)
+    {
+        std::wstring fileName(szBasePath);
+        fileName += peTestFiles[i];
+        if (testPeFile(fileName.c_str(), false))
+            okCount++;
+        else
+        {
+            printf("file: %ws\n\n", fileName.c_str());
+        }
+    }
+    printf("\n%d/%d parsed OK!\n", okCount, _countof(peTestFiles));
 }
 
 int main()
 {
-    testStatic();
+    testCorkami();
     puts("");
     system("pause");
     return 0;

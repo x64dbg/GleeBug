@@ -6,6 +6,7 @@ namespace GleeBug
         : _file(file)
     {
         Clear();
+        setupErrorMap();
     }
 
     void Pe::Clear()
@@ -35,11 +36,15 @@ namespace GleeBug
             return ErrorDosHeaderMagic;
 
         //get the NT headers offset
-        auto newOffset = uint32(_dosHeader->e_lfanew);
+        auto newOffset = _dosHeader->e_lfanew;
 
         //verify the new offset
-        if (newOffset < 0 || newOffset < _offset || newOffset >= _file.GetSize())
+        if (newOffset < 0 || uint32(newOffset) >= _file.GetSize())
             return ErrorDosHeaderNtHeaderOffset;
+
+        //TODO: special case where DOS and PE header overlap (tinygui.exe)
+        if (uint32(newOffset) < _offset)
+            return ErrorDosHeaderNtHeaderOffsetOverlap;
 
         //read & verify the data between the DOS header and the NT headers
         auto afterDosCount = newOffset - _offset;
@@ -51,7 +56,7 @@ namespace GleeBug
         auto signature = readRegion<DWORD>();
         if (!signature)
             return ErrorNtSignatureRead;
-        if (*(signature()) != IMAGE_NT_SIGNATURE)
+        if (*signature() != IMAGE_NT_SIGNATURE)
             return ErrorNtSignatureMagic;
 
         //read the file header
@@ -98,11 +103,26 @@ namespace GleeBug
         break;
 
         default: //unsupported machine
+        {
+            //try the best possible effort (corkami's d_resource.dll)
+            auto ioh = readRegion<uint8>(ifh->SizeOfOptionalHeader);
+            if (!ioh)
+                return ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead;
+
+            _ntHeaders32 = Region<IMAGE_NT_HEADERS32>(&_data, signature.Offset());
+            if (!_ntHeaders32)
+                return ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize;
+
             return ErrorNtFileHeaderUnsupportedMachine;
         }
+        }
 
-        //read data after the optional header
-        auto sizeOfIoh = ifh->SizeOfOptionalHeader; //this field can be zero
+        //check the SizeOfOptionalHeader field
+        auto sizeOfIoh = ifh->SizeOfOptionalHeader;
+        if (ifh->NumberOfSections && sizeOfIoh < realSizeOfIoh) //TODO: this can be valid in certain circumstances (nullSOH-XP)
+            return ErrorNtFileHeaderSizeOfOptionalHeaderOverlap;
+
+        //read data after the optional header (TODO: check if this is even possible)
         uint32 afterOptionalCount = sizeOfIoh > realSizeOfIoh ? sizeOfIoh - realSizeOfIoh : 0;
         _afterOptionalData = readRegion<uint8>(afterOptionalCount);
 
@@ -111,6 +131,16 @@ namespace GleeBug
         _sectionHeaders = readRegion<IMAGE_SECTION_HEADER>(sectionCount);
 
         return ErrorOk;
+    }
+
+    bool Pe::IsValidPe() const
+    {
+        return _sectionHeaders.Valid();
+    }
+
+    bool Pe::IsPe64() const
+    {
+        return IsValidPe() ? _ntHeaders64.Valid() : false;
     }
 
     uint32 Pe::readData(uint32 size)
@@ -126,13 +156,23 @@ namespace GleeBug
         return result;
     }
 
-    bool Pe::IsValidPe() const
+    void Pe::setupErrorMap()
     {
-        return _sectionHeaders.Valid();
-    }
-
-    bool Pe::IsPe64() const
-    {
-        return IsValidPe() ? _ntHeaders64.Valid() : false;
+        _errorMap.insert({ ErrorOk, "ErrorOk" });
+        _errorMap.insert({ ErrorDosHeaderRead, "ErrorDosHeaderRead" });
+        _errorMap.insert({ ErrorDosHeaderMagic, "ErrorDosHeaderMagic" });
+        _errorMap.insert({ ErrorDosHeaderNtHeaderOffset, "ErrorDosHeaderNtHeaderOffset" });
+        _errorMap.insert({ ErrorDosHeaderNtHeaderOffsetOverlap, "ErrorDosHeaderNtHeaderOffsetOverlap" });
+        _errorMap.insert({ ErrorAfterDosHeaderData, "ErrorAfterDosHeaderData" });
+        _errorMap.insert({ ErrorNtSignatureRead, "ErrorNtSignatureRead" });
+        _errorMap.insert({ ErrorNtSignatureMagic, "ErrorNtSignatureMagic" });
+        _errorMap.insert({ ErrorNtFileHeaderRead, "ErrorNtFileHeaderRead" });
+        _errorMap.insert({ ErrorNtFileHeaderSizeOfOptionalHeaderOverlap, "ErrorNtFileHeaderSizeOfOptionalHeaderOverlap" });
+        _errorMap.insert({ ErrorNtFileHeaderUnsupportedMachine, "ErrorNtFileHeaderUnsupportedMachine" });
+        _errorMap.insert({ ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead, "ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead" });
+        _errorMap.insert({ ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize, "ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize" });
+        _errorMap.insert({ ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead" });
+        _errorMap.insert({ ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic" });
+        _errorMap.insert({ ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize" });
     }
 };

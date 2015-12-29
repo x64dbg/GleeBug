@@ -11,18 +11,22 @@ namespace GleeBug
     public:
         enum Error
         {
-            ErrorOk,
-            ErrorDosHeaderRead,
-            ErrorDosHeaderMagic,
-            ErrorDosHeaderNtHeaderOffset,
-            ErrorAfterDosHeaderData,
-            ErrorNtSignatureRead,
-            ErrorNtSignatureMagic,
-            ErrorNtFileHeaderRead,
-            ErrorNtFileHeaderUnsupportedMachine,
-            ErrorNtOptionalHeaderRead,
-            ErrorNtOptionalHeaderMagic,
-            ErrorNtHeadersRegionSize
+            ErrorOk = 0,
+            ErrorDosHeaderRead = 1,
+            ErrorDosHeaderMagic = 2,
+            ErrorDosHeaderNtHeaderOffset = 3,
+            ErrorDosHeaderNtHeaderOffsetOverlap = 4,
+            ErrorAfterDosHeaderData = 5,
+            ErrorNtSignatureRead = 6,
+            ErrorNtSignatureMagic = 7,
+            ErrorNtFileHeaderRead = 8,
+            ErrorNtFileHeaderSizeOfOptionalHeaderOverlap = 9,
+            ErrorNtFileHeaderUnsupportedMachine = 10,
+            ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead = 11,
+            ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize = 12,
+            ErrorNtOptionalHeaderRead = 13,
+            ErrorNtOptionalHeaderMagic = 14,
+            ErrorNtHeadersRegionSize = 15,
         };
 
         explicit Pe(File & file);
@@ -41,6 +45,7 @@ namespace GleeBug
 
     private:
         uint32 readData(uint32 size);
+        void setupErrorMap();
 
         template<typename T>
         inline Region<T> readRegion(uint32 count = 1)
@@ -48,6 +53,7 @@ namespace GleeBug
             return Region<T>(&_data, readData(sizeof(T) * count), count);
         }
 
+        std::unordered_map<Error, const char*> _errorMap;
         File & _file;
         uint32 _fileSize;
         std::vector<uint8> _data;

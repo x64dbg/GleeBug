@@ -23,5 +23,8 @@
     <ClInclude Include="MyDebugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PeTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
