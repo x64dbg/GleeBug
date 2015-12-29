@@ -11,29 +11,27 @@ __declspec(dllexport) void* TITCALL InitDebugW(const wchar_t* szFileName, const 
 
 __declspec(dllexport) void* TITCALL InitDLLDebugW(const wchar_t* szFileName, bool ReserveModuleBase, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack)
 {
-    //TODO
-    return nullptr;
+    return emu.InitDLLDebugW(szFileName, ReserveModuleBase, szCommandLine, szCurrentFolder, EntryCallBack);
 }
 
 __declspec(dllexport) bool TITCALL StopDebug()
 {
-    return emu.Stop();
+    return emu.StopDebug();
 }
 
 __declspec(dllexport) bool TITCALL AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
 {
-    //TODO
-    return false;
+    return emu.AttachDebugger(ProcessId, KillOnExit, DebugInfo, CallBack);
 }
 
 __declspec(dllexport) bool TITCALL DetachDebuggerEx(DWORD ProcessId)
 {
-    return emu.Detach();
+    return emu.DetachDebuggerEx(ProcessId);
 }
 
 __declspec(dllexport) void TITCALL DebugLoop()
 {
-    emu.Start();
+    emu.DebugLoop();
 }
 
 __declspec(dllexport) void TITCALL SetNextDbgContinueStatus(DWORD SetDbgCode)
@@ -60,7 +58,7 @@ __declspec(dllexport) bool TITCALL Fill(LPVOID MemoryStart, DWORD MemorySize, PB
 //Engine
 __declspec(dllexport) bool TITCALL EngineCheckStructAlignment(DWORD StructureType, ULONG_PTR StructureSize)
 {
-    return true;
+    return emu.EngineCheckStructAlignment(StructureType, StructureSize);
 }
 
 __declspec(dllexport) bool TITCALL IsFileBeingDebugged()
@@ -86,32 +84,27 @@ __declspec(dllexport) void TITCALL SetEngineVariable(DWORD VariableId, bool Vari
 //Misc
 __declspec(dllexport) bool TITCALL IsJumpGoingToExecuteEx(HANDLE hProcess, HANDLE hThread, ULONG_PTR InstructionAddress, ULONG_PTR RegFlags)
 {
-    //TODO
-    return false;
+    return emu.IsJumpGoingToExecuteEx(hProcess, hThread, InstructionAddress, RegFlags);
 }
 
 __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
 {
-    //TODO
-    return nullptr;
+    return emu.GetPEBLocation(hProcess);
 }
 
 __declspec(dllexport) bool TITCALL HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
 {
-    //TODO
-    return false;
+    return emu.HideDebugger(hProcess, PatchAPILevel);
 }
 
 __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
 {
-    //TODO
-    return 0;
+    return emu.TitanOpenProces(dwDesiredAccess, bInheritHandle, dwProcessId);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
 {
-    //TODO
-    return 0;
+    return emu.ImporterGetRemoteAPIAddress(hProcess, APIAddress);
 }
 
 //Registers
@@ -122,162 +115,138 @@ __declspec(dllexport) ULONG_PTR TITCALL GetContextDataEx(HANDLE hActiveThread, D
 
 __declspec(dllexport) bool TITCALL SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)
 {
-    //TODO
-    return false;
+    return emu.SetContextDataEx(hActiveThread, IndexOfRegister, NewRegisterValue);
 }
 
 __declspec(dllexport) bool TITCALL GetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
-    //TODO
-    return false;
+    return emu.GetFullContextDataEx(hActiveThread, titcontext);
 }
 
 __declspec(dllexport) bool TITCALL SetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    //TODO
-    return false;
+    return emu.SetFullContextDataEx(hActiveThread, titcontext);
 }
 
 __declspec(dllexport) void TITCALL GetMMXRegisters(uint64_t mmx[8], TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    //TODO
+    emu.GetMMXRegisters(mmx, titcontext);
 }
 
 __declspec(dllexport) void TITCALL Getx87FPURegisters(x87FPURegister_t x87FPURegisters[8], TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    //TODO
+    emu.Getx87FPURegisters(x87FPURegisters, titcontext);
 }
 
 //PE
 __declspec(dllexport) bool TITCALL StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
 {
-    //TODO
-    return false;
+    return emu.StaticFileLoadW(szFileName, DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
 }
 
 __declspec(dllexport) bool TITCALL StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
 {
-    //TODO
-    return false;
+    return emu.StaticFileUnloadW(szFileName, CommitChanges, FileHandle, LoadedSize, FileMap, FileMapVA);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL ConvertFileOffsetToVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
 {
-    //TODO
-    return 0;
+    return emu.ConvertFileOffsetToVA(FileMapVA, AddressToConvert, ReturnType);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
 {
-    //TODO
-    return 0;
+    return emu.ConvertVAtoFileOffsetEx(FileMapVA, FileSize, ImageBase, AddressToConvert, AddressIsRVA, ReturnType);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
 {
-    //TODO
-    return 0;
+    return emu.GetPE32DataFromMappedFile(FileMapVA, WhichSection, WhichData);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
 {
-    //TODO
-    return 0;
+    return emu.GetPE32DataW(szFileName, WhichSection, WhichData);
 }
 
 __declspec(dllexport) bool TITCALL IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
 {
-    //TODO
-    return false;
+    return emu.IsFileDLLW(szFileName, FileMapVA);
 }
 
 __declspec(dllexport) long TITCALL GetPE32SectionNumberFromVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert)
 {
-    //TODO
-    return 0;
+    return emu.GetPE32SectionNumberFromVA(FileMapVA, AddressToConvert);
 }
 
 __declspec(dllexport) bool TITCALL TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
 {
-    //TODO
-    return false;
+    return emu.TLSGrabCallBackDataW(szFileName, ArrayOfCallBacks, NumberOfCallBacks);
 }
 
 //Software Breakpoints
 __declspec(dllexport) bool TITCALL SetBPX(ULONG_PTR bpxAddress, DWORD bpxType, LPVOID bpxCallBack)
 {
-    //TODO
-    return false;
+    return emu.SetBPX(bpxAddress, bpxType, bpxCallBack);
 }
 
 __declspec(dllexport) bool TITCALL DeleteBPX(ULONG_PTR bpxAddress)
 {
-    //TODO
-    return false;
+    return emu.DeleteBPX(bpxAddress);
 }
 
 __declspec(dllexport) bool TITCALL IsBPXEnabled(ULONG_PTR bpxAddress)
 {
-    //TODO
-    return false;
+    return emu.IsBPXEnabled(bpxAddress);
 }
 
 __declspec(dllexport) void TITCALL SetBPXOptions(long DefaultBreakPointType)
 {
-    //TODO
+    emu.SetBPXOptions(DefaultBreakPointType);
 }
 
 //Memory Breakpoints
 __declspec(dllexport) bool TITCALL SetMemoryBPXEx(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory, DWORD BreakPointType, bool RestoreOnHit, LPVOID bpxCallBack)
 {
-    //TODO
-    return false;
+    return emu.SetMemoryBPXEx(MemoryStart, SizeOfMemory, BreakPointType, RestoreOnHit, bpxCallBack);
 }
 
 __declspec(dllexport) bool TITCALL RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
 {
-    //TODO
-    return false;
+    return emu.RemoveMemoryBPX(MemoryStart, SizeOfMemory);
 }
 
-//Hardwre Breakpoints
+//Hardware Breakpoints
 __declspec(dllexport) bool TITCALL SetHardwareBreakPoint(ULONG_PTR bpxAddress, DWORD IndexOfRegister, DWORD bpxType, DWORD bpxSize, LPVOID bpxCallBack)
 {
-    //TODO
-    return false;
+    return emu.SetHardwareBreakPoint(bpxAddress, IndexOfRegister, bpxType, bpxSize, bpxCallBack);
 }
 
 __declspec(dllexport) bool TITCALL DeleteHardwareBreakPoint(DWORD IndexOfRegister)
 {
-    //TODO
-    return false;
+    return emu.DeleteHardwareBreakPoint(IndexOfRegister);
 }
 
 __declspec(dllexport) bool TITCALL GetUnusedHardwareBreakPointRegister(LPDWORD RegisterIndex)
 {
-    //TODO
-    return false;
+    return emu.GetUnusedHardwareBreakPointRegister(RegisterIndex);
 }
 
 //Librarian Breakpoints
 __declspec(dllexport) bool TITCALL LibrarianSetBreakPoint(const char* szLibraryName, DWORD bpxType, bool SingleShoot, LPVOID bpxCallBack)
 {
-    //TODO
-    return false;
+    return emu.LibrarianSetBreakPoint(szLibraryName, bpxType, SingleShoot, bpxCallBack);
 }
 
 __declspec(dllexport) bool TITCALL LibrarianRemoveBreakPoint(const char* szLibraryName, DWORD bpxType)
 {
-    //TODO
-    return false;
+    return emu.LibrarianRemoveBreakPoint(szLibraryName, bpxType);
 }
 
 //Generic Breakpoints
 __declspec(dllexport) bool TITCALL RemoveAllBreakPoints(DWORD RemoveOption)
 {
-    //TODO
-    return false;
+    return emu.RemoveAllBreakPoints(RemoveOption);
 }
 
 //Stepping

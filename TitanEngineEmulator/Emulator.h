@@ -14,24 +14,55 @@ public:
         return &_mainProcess;
     }
 
+    PROCESS_INFORMATION* InitDLLDebugW(const wchar_t* szFileName, bool ReserveModuleBase, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack)
+    {
+        //TODO
+        return nullptr;
+    }
+
+    bool StopDebug()
+    {
+        return Stop();
+    }
+
+    bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
+    {
+        //TODO
+        return false;
+    }
+
+    bool DetachDebuggerEx(DWORD ProcessId)
+    {
+        //TODO
+        return Detach();
+    }
+
+    void DebugLoop()
+    {
+        Start();
+    }
+
     void SetNextDbgContinueStatus(DWORD SetDbgCode)
     {
         this->_continueStatus = SetDbgCode;
     }
 
     //Memory
-    bool MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead)
+    bool MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead) const
     {
-        if (!_process)
+        auto process = processFromHandle(hProcess);
+        if (!process)
             return false;
-        return _process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesRead);
+        return process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesRead);
     }
 
     bool MemoryWriteSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesWritten)
     {
-        if (!_process)
+        auto process = processFromHandle(hProcess);
+        if (!process)
             return false;
-        return _process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
+        //TODO process->MemWriteSafe
+        return process->MemWrite(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
@@ -47,6 +78,13 @@ public:
     }
 
     //Engine
+    bool EngineCheckStructAlignment(DWORD StructureType, ULONG_PTR StructureSize) const
+    {
+        if (StructureType == UE_STRUCT_TITAN_ENGINE_CONTEXT)
+            return StructureSize == sizeof(TITAN_ENGINE_CONTEXT_t);
+        return false;
+    }
+
     bool IsFileBeingDebugged() const
     {
         return _isDebugging;
@@ -62,34 +100,34 @@ public:
         switch (ExceptionId)
         {
         case UE_CH_CREATEPROCESS:
-            _cbCREATEPROCESS = (CUSTOMHANDLER)CallBack;
+            _cbCREATEPROCESS = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_EXITPROCESS:
-            _cbEXITPROCESS = (CUSTOMHANDLER)CallBack;
+            _cbEXITPROCESS = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_CREATETHREAD:
-            _cbCREATETHREAD = (CUSTOMHANDLER)CallBack;
+            _cbCREATETHREAD = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_EXITTHREAD:
-            _cbEXITTHREAD = (CUSTOMHANDLER)CallBack;
+            _cbEXITTHREAD = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_SYSTEMBREAKPOINT:
-            _cbSYSTEMBREAKPOINT = (CUSTOMHANDLER)CallBack;
+            _cbSYSTEMBREAKPOINT = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_LOADDLL:
-            _cbLOADDLL = (CUSTOMHANDLER)CallBack;
+            _cbLOADDLL = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_UNLOADDLL:
-            _cbUNLOADDLL = (CUSTOMHANDLER)CallBack;
+            _cbUNLOADDLL = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_OUTPUTDEBUGSTRING:
-            _cbOUTPUTDEBUGSTRING = (CUSTOMHANDLER)CallBack;
+            _cbOUTPUTDEBUGSTRING = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_UNHANDLEDEXCEPTION:
-            _cbUNHANDLEDEXCEPTION = (CUSTOMHANDLER)CallBack;
+            _cbUNHANDLEDEXCEPTION = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_DEBUGEVENT:
-            _cbDEBUGEVENT = (CUSTOMHANDLER)CallBack;
+            _cbDEBUGEVENT = CUSTOMHANDLER(CallBack);
             break;
         default:
             break;
@@ -103,13 +141,38 @@ public:
     }
 
     //Misc
+    bool IsJumpGoingToExecuteEx(HANDLE hProcess, HANDLE hThread, ULONG_PTR InstructionAddress, ULONG_PTR RegFlags)
+    {
+        //TODO
+        return false;
+    }
+
+    void* GetPEBLocation(HANDLE hProcess)
+    {
+        //TODO
+        return nullptr;
+    }
+
+    bool HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
+    {
+        //TODO
+        return false;
+    }
+
     HANDLE TitanOpenProces(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
     {
+        //TODO
         return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
     }
 
+    ULONG_PTR ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
+    {
+        //TODO
+        return 0;
+    }
+
     //Stepping
-    void StepOver(LPVOID CallBack) const
+    void StepOver(LPVOID CallBack)
     {
         //TODO
         StepInto(CallBack);
@@ -124,14 +187,14 @@ public:
             if (!StepCount)
             {
                 if (CallBack)
-                    ((STEPCALLBACK)CallBack)();
+                    (STEPCALLBACK(CallBack))();
             }
             else
                 SingleStep(StepCount - 1, CallBack);
         });
     }
 
-    void StepInto(LPVOID CallBack) const
+    void StepInto(LPVOID CallBack)
     {
         if (!_thread || !CallBack)
             return;
@@ -141,9 +204,262 @@ public:
     //Registers
     ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister) const
     {
-        if (!_thread)
+        auto thread = threadFromHandle(hActiveThread);
+        if (!thread)
             return 0;
-        return _thread->registers.Get(registerFromDword(IndexOfRegister));
+        return thread->registers.Get(registerFromDword(IndexOfRegister));
+    }
+
+    bool SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)
+    {
+        auto thread = threadFromHandle(hActiveThread);
+        if (!thread)
+            return false;
+        thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
+        return true;
+    }
+
+    bool GetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext) const
+    {
+        auto thread = threadFromHandle(hActiveThread);
+        if (!thread || !titcontext)
+            return false;
+        memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
+        auto context = thread->registers.GetContext();
+        titcontext->cax = thread->registers.Gax();
+        titcontext->ccx = thread->registers.Gcx();
+        titcontext->cdx = thread->registers.Gdx();
+        titcontext->cbx = thread->registers.Gbx();
+        titcontext->csp = thread->registers.Gsp();
+        titcontext->cbp = thread->registers.Gbp();
+        titcontext->csi = thread->registers.Gsi();
+        titcontext->cdi = thread->registers.Gdi();
+#ifdef _WIN64
+        titcontext->r8 = thread->registers.R8();
+        titcontext->r9 = thread->registers.R9();
+        titcontext->r10 = thread->registers.R10();
+        titcontext->r11 = thread->registers.R11();
+        titcontext->r12 = thread->registers.R12();
+        titcontext->r13 = thread->registers.R13();
+        titcontext->r14 = thread->registers.R14();
+        titcontext->r15 = thread->registers.R15();
+#endif //_WIN64
+        titcontext->cip = thread->registers.Gip();
+        titcontext->eflags = thread->registers.Eflags();
+        titcontext->gs = (unsigned short)context->SegGs;
+        titcontext->fs = (unsigned short)context->SegFs;
+        titcontext->es = (unsigned short)context->SegEs;
+        titcontext->ds = (unsigned short)context->SegDs;
+        titcontext->cs = (unsigned short)context->SegCs;
+        titcontext->ss = (unsigned short)context->SegSs;
+        titcontext->dr0 = thread->registers.Dr0();
+        titcontext->dr1 = thread->registers.Dr1();
+        titcontext->dr2 = thread->registers.Dr2();
+        titcontext->dr3 = thread->registers.Dr3();
+        titcontext->dr6 = thread->registers.Dr6();
+        titcontext->dr7 = thread->registers.Dr7();
+        return true;
+    }
+
+    bool SetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
+    {
+        auto thread = threadFromHandle(hActiveThread);
+        if (!thread || !titcontext)
+            return false;
+        thread->registers.Gax = titcontext->cax;
+        thread->registers.Gcx = titcontext->ccx;
+        thread->registers.Gdx = titcontext->cdx;
+        thread->registers.Gbx = titcontext->cbx;
+        thread->registers.Gsp = titcontext->csp;
+        thread->registers.Gbp = titcontext->cbp;
+        thread->registers.Gsi = titcontext->csi;
+        thread->registers.Gdi = titcontext->cdi;
+#ifdef _WIN64
+        thread->registers.R8 = titcontext->r8;
+        thread->registers.R9 = titcontext->r9;
+        thread->registers.R10 = titcontext->r10;
+        thread->registers.R11 = titcontext->r11;
+        thread->registers.R12 = titcontext->r12;
+        thread->registers.R13 = titcontext->r13;
+        thread->registers.R14 = titcontext->r14;
+        thread->registers.R15 = titcontext->r15;
+#endif //_WIN64
+        thread->registers.Gip = titcontext->cip;
+        thread->registers.Eflags = titcontext->eflags;
+        thread->registers.Dr0 = titcontext->dr0;
+        thread->registers.Dr1 = titcontext->dr1;
+        thread->registers.Dr2 = titcontext->dr2;
+        thread->registers.Dr3 = titcontext->dr3;
+        thread->registers.Dr6 = titcontext->dr6;
+        thread->registers.Dr7 = titcontext->dr7;
+        auto context = *(thread->registers.GetContext());
+        context.SegGs = titcontext->gs;
+        context.SegFs = titcontext->fs;
+        context.SegEs = titcontext->es;
+        context.SegDs = titcontext->ds;
+        context.SegCs = titcontext->cs;
+        context.SegSs = titcontext->ss;
+        thread->registers.SetContext(context);
+        return true;
+    }
+
+    void GetMMXRegisters(uint64_t mmx[8], TITAN_ENGINE_CONTEXT_t* titcontext)
+    {
+        //TODO
+        memset(mmx, 0, sizeof(uint64_t) * 8);
+    }
+
+    void Getx87FPURegisters(x87FPURegister_t x87FPURegisters[8], TITAN_ENGINE_CONTEXT_t* titcontext)
+    {
+        //TODO
+        memset(x87FPURegisters, 0, sizeof(x87FPURegister_t) * 8);
+    }
+
+    //PE
+    bool StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
+    {
+        //TODO
+        return false;
+    }
+
+    bool StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
+    {
+        //TODO
+        return false;
+    }
+
+    ULONG_PTR ConvertFileOffsetToVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
+    {
+        //TODO
+        return 0;
+    }
+
+    ULONG_PTR ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
+    {
+        //TODO
+        return 0;
+    }
+
+    ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
+    {
+        //TODO
+        return 0;
+    }
+
+    ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
+    {
+        //TODO
+        return 0;
+    }
+
+    bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
+    {
+        //TODO
+        return false;
+    }
+
+    long GetPE32SectionNumberFromVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert)
+    {
+        //TODO
+        return 0;
+    }
+
+    bool TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
+    {
+        //TODO
+        return false;
+    }
+
+    //Software Breakpoints
+    bool SetBPX(ULONG_PTR bpxAddress, DWORD bpxType, LPVOID bpxCallBack)
+    {
+        if (!_process)
+            return false;
+        return _process->SetBreakpoint(bpxAddress, [bpxCallBack](const BreakpointInfo &)
+        {
+            (BPCALLBACK(bpxCallBack))();
+        }, (bpxType & UE_SINGLESHOOT) == UE_SINGLESHOOT);
+    }
+
+    bool DeleteBPX(ULONG_PTR bpxAddress)
+    {
+        if (!_process)
+            return false;
+        return _process->DeleteBreakpoint(bpxAddress);
+    }
+
+    bool IsBPXEnabled(ULONG_PTR bpxAddress)
+    {
+        return (_process->MemIsValidPtr(bpxAddress) &&
+            _process->breakpoints.find({ BreakpointType::Software, bpxAddress }) != _process->breakpoints.end());
+    }
+
+    void SetBPXOptions(long DefaultBreakPointType)
+    {
+    }
+
+    //Memory Breakpoints
+    bool SetMemoryBPXEx(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory, DWORD BreakPointType, bool RestoreOnHit, LPVOID bpxCallBack)
+    {
+        //TODO
+        return false;
+    }
+
+    bool RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
+    {
+        //TODO
+        return false;
+    }
+
+    //Hardware Breakpoints
+    bool SetHardwareBreakPoint(ULONG_PTR bpxAddress, DWORD IndexOfRegister, DWORD bpxType, DWORD bpxSize, LPVOID bpxCallBack)
+    {
+        if (!_process)
+            return false;
+        return _process->SetHardwareBreakpoint(bpxAddress,
+            (HardwareBreakpointSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
+        {
+            (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
+        }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize));
+    }
+
+    bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)
+    {
+        if (!_process || IndexOfRegister < 0 || IndexOfRegister > 3)
+            return false;
+        auto address = _process->hardwareBreakpoints[IndexOfRegister].address;
+        return _process->DeleteHardwareBreakpoint(address);
+    }
+
+    bool GetUnusedHardwareBreakPointRegister(LPDWORD RegisterIndex)
+    {
+        if (!_process || !RegisterIndex)
+            return false;
+        HardwareBreakpointSlot slot;
+        bool result = _process->GetFreeHardwareBreakpointSlot(slot);
+        if (result)
+            *RegisterIndex = (DWORD)slot;
+        return result;
+    }
+
+    //Librarian Breakpoints
+    bool LibrarianSetBreakPoint(const char* szLibraryName, DWORD bpxType, bool SingleShoot, LPVOID bpxCallBack)
+    {
+        //TODO
+        return false;
+    }
+
+    bool LibrarianRemoveBreakPoint(const char* szLibraryName, DWORD bpxType)
+    {
+        //TODO
+        return false;
+    }
+
+    //Generic Breakpoints
+    bool RemoveAllBreakPoints(DWORD RemoveOption)
+    {
+        //TODO
+        return false;
     }
 
 protected:
@@ -255,10 +571,58 @@ private: //functions
         }
     }
 
+    inline ThreadInfo* threadFromHandle(HANDLE hThread) const
+    {
+        //TODO: properly implement this
+        return _thread;
+    }
+
+    inline ProcessInfo* processFromHandle(HANDLE hProcess) const
+    {
+        //TODO: properly implement this
+        return _process;
+    }
+
+    static inline HardwareBreakpointType hwtypeFromTitan(DWORD type)
+    {
+        switch (type)
+        {
+        case UE_HARDWARE_EXECUTE:
+            return HardwareBreakpointType::Execute;
+        case UE_HARDWARE_WRITE:
+            return HardwareBreakpointType::Write;
+        case UE_HARDWARE_READWRITE:
+            return HardwareBreakpointType::Access;
+        default:
+            return HardwareBreakpointType::Access;
+        }
+    }
+
+    static inline HardwareBreakpointSize hwsizeFromTitan(DWORD size)
+    {
+        switch (size)
+        {
+        case UE_HARDWARE_SIZE_1:
+            return HardwareBreakpointSize::SizeByte;
+        case UE_HARDWARE_SIZE_2:
+            return HardwareBreakpointSize::SizeWord;
+        case UE_HARDWARE_SIZE_4:
+            return HardwareBreakpointSize::SizeDword;
+#ifdef _WIN64
+        case UE_HARDWARE_SIZE_8:
+            return HardwareBreakpointSize::SizeQword;
+#endif //_WIN64
+        default:
+            return HardwareBreakpointSize::SizeByte;
+        }
+    }
+
 private: //variables
     bool _setDebugPrivilege = false;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
+    typedef STEPCALLBACK BPCALLBACK;
+    typedef CUSTOMHANDLER HWBPCALLBACK;
     CUSTOMHANDLER _cbCREATEPROCESS = nullptr;
     CUSTOMHANDLER _cbEXITPROCESS = nullptr;
     CUSTOMHANDLER _cbCREATETHREAD = nullptr;
