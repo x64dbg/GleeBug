@@ -28,9 +28,9 @@ namespace GleeBug
         \param count (Optional) Number of Ts in the region. Use INVALID_VALUE to create an invalid region.
         */
         explicit Region(std::vector<uint8>* data, uint32 offset, uint32 count = 1)
-            : _data(data),
-            _offset(offset),
-            _count(count)
+            : mData(data),
+            mOffset(offset),
+            mCount(count)
         {
         }
 
@@ -42,7 +42,7 @@ namespace GleeBug
         {
             if (!Valid())
                 return nullptr;
-            return (T*)(_data->data() + _offset);
+            return (T*)(mData->data() + mOffset);
         }
 
         /**
@@ -50,7 +50,7 @@ namespace GleeBug
         */
         uint32 Offset() const
         {
-            return _offset;
+            return mOffset;
         }
 
         /**
@@ -58,7 +58,7 @@ namespace GleeBug
         */
         uint32 Count() const
         {
-            return _count;
+            return mCount;
         }
 
         /**
@@ -66,7 +66,7 @@ namespace GleeBug
         */
         uint32 Size() const
         {
-            return Valid() ? _count * sizeof(T) : INVALID_VALUE;
+            return Valid() ? mCount * sizeof(T) : INVALID_VALUE;
         }
 
         /**
@@ -74,10 +74,10 @@ namespace GleeBug
         */
         bool Valid() const
         {
-            return _offset != INVALID_VALUE &&
-                _count != INVALID_VALUE &&
-                _data && _data->data() &&
-                _offset + _count * sizeof(T) <= _data->size();
+            return mOffset != INVALID_VALUE &&
+                mCount != INVALID_VALUE &&
+                mData && mData->data() &&
+                mOffset + mCount * sizeof(T) <= mData->size();
         }
 
         /**
@@ -110,9 +110,9 @@ namespace GleeBug
         }
 
     private:
-        std::vector<uint8>* _data;
-        uint32 _offset;
-        uint32 _count;
+        std::vector<uint8>* mData;
+        uint32 mOffset;
+        uint32 mCount;
     };
 };
 

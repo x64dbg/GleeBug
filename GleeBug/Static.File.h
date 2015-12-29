@@ -83,9 +83,9 @@ namespace GleeBug
     private:
         bool internalOpen(DWORD creation);
 
-        std::wstring _fileName;
-        Mode _mode;
-        HANDLE _hFile;
+        std::wstring mFileName;
+        Mode mMode;
+        HANDLE mhFile;
     };
 };
 

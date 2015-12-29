@@ -116,7 +116,10 @@ public:
     \brief Constructor.
     \param registers Pointer to the registers.
     */
-    explicit Register(Registers* registers) : _registers(registers) {}
+    explicit Register(Registers* registers)
+        : mRegisters(registers)
+    {
+    }
 
     /**
     \brief Gets the register value.
@@ -124,7 +127,7 @@ public:
     */
     Type Get() const
     {
-        return Type(_registers->Get(RegisterIndex));
+        return Type(mRegisters->Get(RegisterIndex));
     }
 
     /**
@@ -133,7 +136,7 @@ public:
     */
     void Set(Type value)
     {
-        _registers->Set(RegisterIndex, ptr(value));
+        mRegisters->Set(RegisterIndex, ptr(value));
     }
 
     /**
@@ -285,7 +288,7 @@ public:
     }
 
 private:
-    Registers* _registers;
+    Registers* mRegisters;
 };
 
 #endif //DEBUGGER_THREAD_REGISTERS_REGISTER_H

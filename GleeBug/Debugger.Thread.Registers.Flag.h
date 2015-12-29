@@ -25,7 +25,10 @@ public:
     \brief Constructor.
     \param registers Pointer to the registers object.
     */
-    explicit Flag(Registers* registers) : _registers(registers) {}
+    explicit Flag(Registers* registers)
+        : mRegisters(registers)
+    {
+    }
 
     /**
     \brief Gets the flag.
@@ -33,7 +36,7 @@ public:
     */
     bool Get() const
     {
-        return _registers->GetFlag(FlagIndex);
+        return mRegisters->GetFlag(FlagIndex);
     }
 
     /**
@@ -42,7 +45,7 @@ public:
     */
     void Set(bool value = true)
     {
-        _registers->SetFlag(FlagIndex, value);
+        mRegisters->SetFlag(FlagIndex, value);
     }
 
     /**
@@ -108,7 +111,7 @@ public:
     }
 
 private:
-    Registers* _registers;
+    Registers* mRegisters;
 };
 
 #endif //DEBUGGER_THREAD_REGISTERS_FLAG_H

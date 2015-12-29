@@ -43,12 +43,12 @@ namespace GleeBug
     bool ThreadInfo::RegReadContext()
     {
         SuspendThread(this->hThread);
-        memset(&this->_oldContext, 0, sizeof(CONTEXT));
-        this->_oldContext.ContextFlags = CONTEXT_ALL;
+        memset(&this->mOldContext, 0, sizeof(CONTEXT));
+        this->mOldContext.ContextFlags = CONTEXT_ALL;
         bool bReturn = false;
-        if (GetThreadContext(this->hThread, &this->_oldContext))
+        if (GetThreadContext(this->hThread, &this->mOldContext))
         {
-            this->registers.SetContext(this->_oldContext);
+            this->registers.SetContext(this->mOldContext);
             bReturn = true;
         }
         ResumeThread(this->hThread);
@@ -58,7 +58,7 @@ namespace GleeBug
     bool ThreadInfo::RegWriteContext() const
     {
         //check if something actually changed
-        if (memcmp(&this->_oldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)
+        if (memcmp(&this->mOldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)
             return true;
         //update the context
         SuspendThread(this->hThread);

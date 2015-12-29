@@ -4,7 +4,7 @@ namespace GleeBug
 {
     Debugger::Debugger()
     {
-        _processes.clear();
+        mProcesses.clear();
     }
 
     Debugger::~Debugger()
@@ -43,7 +43,7 @@ namespace GleeBug
             nullptr,
             szCurrentDirectory,
             &si,
-            &_mainProcess);
+            &mMainProcess);
 
         delete[] szCreateWithCmdLine;
 
@@ -52,11 +52,11 @@ namespace GleeBug
 
     bool Debugger::Stop() const
     {
-        return !!TerminateProcess(_mainProcess.hProcess, 0);
+        return !!TerminateProcess(mMainProcess.hProcess, 0);
     }
 
     bool Debugger::Detach() const
     {
-        return !!DebugActiveProcessStop(_mainProcess.dwProcessId);
+        return !!DebugActiveProcessStop(mMainProcess.dwProcessId);
     }
 };

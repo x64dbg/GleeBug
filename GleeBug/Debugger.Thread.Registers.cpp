@@ -99,16 +99,16 @@ namespace GleeBug
         TrapFlag(this),
         ResumeFlag(this)
     {
-        memset(&this->_context, 0, sizeof(CONTEXT));
+        memset(&this->mContext, 0, sizeof(CONTEXT));
     }
 
     const CONTEXT* Registers::GetContext() const
     {
-        return &_context;
+        return &mContext;
     }
 
     void Registers::SetContext(const CONTEXT & context)
     {
-        this->_context = context;
+        this->mContext = context;
     }
 };

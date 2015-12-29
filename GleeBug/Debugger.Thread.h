@@ -118,7 +118,7 @@ namespace GleeBug
         bool DeleteHardwareBreakpoint(HardwareSlot slot);
 
     private:
-        CONTEXT _oldContext;
+        CONTEXT mOldContext;
     };
 };
 

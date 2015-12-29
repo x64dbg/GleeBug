@@ -4,11 +4,11 @@ namespace GleeBug
 {
     void Debugger::exceptionBreakpoint(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
-        if (!_process->systemBreakpoint) //handle system breakpoint
+        if (!mProcess->systemBreakpoint) //handle system breakpoint
         {
             //set internal state
-            _process->systemBreakpoint = true;
-            _continueStatus = DBG_CONTINUE;
+            mProcess->systemBreakpoint = true;
+            mContinueStatus = DBG_CONTINUE;
 
             //call the callback
             cbSystemBreakpoint();
@@ -16,63 +16,63 @@ namespace GleeBug
         else
         {
             //check if the breakpoint exists
-            auto foundInfo = _process->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
-            if (foundInfo == _process->breakpoints.end())
+            auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
+            if (foundInfo == mProcess->breakpoints.end())
                 return;
             const auto info = foundInfo->second;
 
             //set continue status
-            _continueStatus = DBG_CONTINUE;
+            mContinueStatus = DBG_CONTINUE;
 
             //set back the instruction pointer
-            _registers->Gip = info.address;
+            mRegisters->Gip = info.address;
 
             //restore the original breakpoint byte and do an internal step
-            _process->MemWrite(info.address, info.internal.software.oldbytes, info.internal.software.size);
-            _thread->StepInternal(std::bind([this, info]()
+            mProcess->MemWrite(info.address, info.internal.software.oldbytes, info.internal.software.size);
+            mThread->StepInternal(std::bind([this, info]()
             {
                 //only restore the bytes if the breakpoint still exists
-                if (_process->breakpoints.find({ BreakpointType::Software, info.address }) != _process->breakpoints.end())
-                    _process->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
+                if (mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
+                    mProcess->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
             }));
 
             //call the generic callback
             cbBreakpoint(info);
 
             //call the user callback
-            auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Software, info.address });
-            if (foundCallback != _process->breakpointCallbacks.end())
+            auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Software, info.address });
+            if (foundCallback != mProcess->breakpointCallbacks.end())
                 foundCallback->second(info);
 
             //delete the breakpoint if it is singleshoot
             if (info.singleshoot)
-                _process->DeleteGenericBreakpoint(info);
+                mProcess->DeleteGenericBreakpoint(info);
         }
     }
 
     void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
-        if (_thread->isInternalStepping) //handle internal steps
+        if (mThread->isInternalStepping) //handle internal steps
         {
             //set internal status
-            _thread->isInternalStepping = false;
-            _continueStatus = DBG_CONTINUE;
+            mThread->isInternalStepping = false;
+            mContinueStatus = DBG_CONTINUE;
 
             //call the internal step callback
-            _thread->cbInternalStep();
+            mThread->cbInternalStep();
         }
-        if (_thread->isSingleStepping) //handle single step
+        if (mThread->isSingleStepping) //handle single step
         {
             //set internal status
-            _thread->isSingleStepping = false;
-            _continueStatus = DBG_CONTINUE;
+            mThread->isSingleStepping = false;
+            mContinueStatus = DBG_CONTINUE;
 
             //call the generic callback
             cbStep();
 
             //call the user callbacks
-            auto cbStepCopy = _thread->stepCallbacks;
-            _thread->stepCallbacks.clear();
+            auto cbStepCopy = mThread->stepCallbacks;
+            mThread->stepCallbacks.clear();
             for (auto cbStep : cbStepCopy)
                 cbStep();
         }
@@ -85,69 +85,69 @@ namespace GleeBug
     void Debugger::exceptionHardwareBreakpoint(ptr exceptionAddress)
     {
         //determine the hardware breakpoint triggered
-        ptr dr6 = _registers->Dr6();
+        ptr dr6 = mRegisters->Dr6();
         HardwareSlot breakpointSlot;
         ptr breakpointAddress;
-        if (exceptionAddress == _registers->Dr0() || dr6 & 0x1)
+        if (exceptionAddress == mRegisters->Dr0() || dr6 & 0x1)
         {
-            breakpointAddress = _registers->Dr0();
+            breakpointAddress = mRegisters->Dr0();
             breakpointSlot = HardwareSlot::Dr0;
         }
-        else if (exceptionAddress == _registers->Dr1() || dr6 & 0x2)
+        else if (exceptionAddress == mRegisters->Dr1() || dr6 & 0x2)
         {
-            breakpointAddress = _registers->Dr1();
+            breakpointAddress = mRegisters->Dr1();
             breakpointSlot = HardwareSlot::Dr1;
         }
-        else if (exceptionAddress == _registers->Dr2() || dr6 & 0x4)
+        else if (exceptionAddress == mRegisters->Dr2() || dr6 & 0x4)
         {
-            breakpointAddress = _registers->Dr2();
+            breakpointAddress = mRegisters->Dr2();
             breakpointSlot = HardwareSlot::Dr2;
         }
-        else if (exceptionAddress == _registers->Dr3() || dr6 & 0x8)
+        else if (exceptionAddress == mRegisters->Dr3() || dr6 & 0x8)
         {
-            breakpointAddress = _registers->Dr3();
+            breakpointAddress = mRegisters->Dr3();
             breakpointSlot = HardwareSlot::Dr3;
         }
         else
             return; //not a hardware breakpoint
 
         //find the breakpoint in the internal structures
-        auto foundInfo = _process->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
-        if (foundInfo == _process->breakpoints.end())
+        auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
+        if (foundInfo == mProcess->breakpoints.end())
             return; //not a valid hardware breakpoint
         const auto info = foundInfo->second;
         if (info.internal.hardware.slot != breakpointSlot)
             return; //not a valid hardware breakpoint
 
         //set continue status
-        _continueStatus = DBG_CONTINUE;
+        mContinueStatus = DBG_CONTINUE;
 
         //delete the hardware breakpoint from the thread (not the breakpoint buffer) and do an internal step (TODO: maybe delete from all threads?)
-        _thread->DeleteHardwareBreakpoint(breakpointSlot);
-        _thread->StepInternal(std::bind([this, info]()
+        mThread->DeleteHardwareBreakpoint(breakpointSlot);
+        mThread->StepInternal(std::bind([this, info]()
         {
             //only restore if the breakpoint still exists
-            if (_process->breakpoints.find({ BreakpointType::Hardware, info.address }) != _process->breakpoints.end())
-                _thread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
+            if (mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) != mProcess->breakpoints.end())
+                mThread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
         }));
 
         //call the generic callback
         cbBreakpoint(info);
 
         //call the user callback
-        auto foundCallback = _process->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
-        if (foundCallback != _process->breakpointCallbacks.end())
+        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
+        if (foundCallback != mProcess->breakpointCallbacks.end())
             foundCallback->second(info);
 
         //delete the breakpoint if it is singleshoot
         if (info.singleshoot)
-            _process->DeleteGenericBreakpoint(info);
+            mProcess->DeleteGenericBreakpoint(info);
     }
 
     void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
     {
         //let the debuggee handle exceptions per default
-        _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+        mContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
         const EXCEPTION_RECORD & exceptionRecord = exceptionInfo.ExceptionRecord;
         bool firstChance = exceptionInfo.dwFirstChance == 1;
@@ -167,7 +167,7 @@ namespace GleeBug
         }
 
         //call the unhandled exception callback
-        if (_continueStatus == DBG_EXCEPTION_NOT_HANDLED)
+        if (mContinueStatus == DBG_EXCEPTION_NOT_HANDLED)
             cbUnhandledException(exceptionRecord, firstChance);
     }
 };

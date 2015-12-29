@@ -4,8 +4,8 @@ namespace GleeBug
 {
     BufferFile::BufferFile(void* data, uint32 size)
         : File(nullptr),
-        _data(data),
-        _size(size)
+        mData(data),
+        mSize(size)
     {
     }
 
@@ -21,7 +21,7 @@ namespace GleeBug
 
     bool BufferFile::IsOpen() const
     {
-        return !!_data;
+        return !!mData;
     }
 
     void BufferFile::Close()
@@ -30,21 +30,21 @@ namespace GleeBug
 
     uint32 BufferFile::GetSize() const
     {
-        return _size;
+        return mSize;
     }
 
     bool BufferFile::Read(uint32 offset, void* data, uint32 size, uint32* bytesRead) const
     {
-        if (offset >= _size)
+        if (offset >= mSize)
             return false;
         auto readSize = size;
         auto result = true;
-        if (offset + size > _size)
+        if (offset + size > mSize)
         {
-            readSize = _size - offset;
+            readSize = mSize - offset;
             result = false;
         }
-        memcpy(data, (uint8*)_data + offset, readSize);
+        memcpy(data, (uint8*)mData + offset, readSize);
         if (bytesRead)
             *bytesRead = readSize;
         return result;
@@ -52,16 +52,16 @@ namespace GleeBug
 
     bool BufferFile::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten)
     {
-        if (offset >= _size)
+        if (offset >= mSize)
             return false;
         auto writeSize = size;
         auto result = true;
-        if (offset + size > _size)
+        if (offset + size > mSize)
         {
-            writeSize = _size - offset;
+            writeSize = mSize - offset;
             result = false;
         }
-        memcpy((uint8*)_data + offset, data, writeSize);
+        memcpy((uint8*)mData + offset, data, writeSize);
         if (bytesWritten)
             *bytesWritten = writeSize;
         return result;

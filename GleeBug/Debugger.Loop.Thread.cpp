@@ -5,32 +5,32 @@ namespace GleeBug
     void Debugger::createThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread)
     {
         //thread housekeeping
-        _process->threads.insert({ _debugEvent.dwThreadId,
+        mProcess->threads.insert({ mDebugEvent.dwThreadId,
             ThreadInfo(createThread.hThread,
-            _debugEvent.dwThreadId,
+            mDebugEvent.dwThreadId,
             createThread.lpThreadLocalBase,
             createThread.lpStartAddress) });
 
         //set the current thread
-        _thread = _process->thread = &_process->threads.find(_debugEvent.dwThreadId)->second;
-        _registers = &_thread->registers;
-        if (!_thread->RegReadContext())
+        mThread = mProcess->thread = &mProcess->threads.find(mDebugEvent.dwThreadId)->second;
+        mRegisters = &mThread->registers;
+        if (!mThread->RegReadContext())
             cbInternalError("ThreadInfo::RegReadContext() failed!");
 
         //call the debug event callback
-        cbCreateThreadEvent(createThread, *_thread);
+        cbCreateThreadEvent(createThread, *mThread);
     }
 
     void Debugger::exitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread)
     {
         //call the debug event callback
-        cbExitThreadEvent(exitThread, *_thread);
+        cbExitThreadEvent(exitThread, *mThread);
 
         //thread housekeeping
-        _process->threads.erase(_debugEvent.dwThreadId);
+        mProcess->threads.erase(mDebugEvent.dwThreadId);
 
         //set the current thread
-        _thread = _process->thread = nullptr;
-        _registers = nullptr;
+        mThread = mProcess->thread = nullptr;
+        mRegisters = nullptr;
     }
 };

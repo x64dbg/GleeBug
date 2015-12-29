@@ -5,27 +5,27 @@ namespace GleeBug
     void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
     {
         //process housekeeping
-        _processes.insert({ _debugEvent.dwProcessId,
+        mProcesses.insert({ mDebugEvent.dwProcessId,
             ProcessInfo(createProcess.hProcess,
-            _debugEvent.dwProcessId,
-            _debugEvent.dwThreadId) });
-        _process = &_processes.find(_debugEvent.dwProcessId)->second;
+            mDebugEvent.dwProcessId,
+            mDebugEvent.dwThreadId) });
+        mProcess = &mProcesses.find(mDebugEvent.dwProcessId)->second;
 
         //thread housekeeping (main thread is created implicitly)
-        _process->threads.insert({ _debugEvent.dwThreadId,
+        mProcess->threads.insert({ mDebugEvent.dwThreadId,
             ThreadInfo(createProcess.hThread,
-            _debugEvent.dwThreadId,
+            mDebugEvent.dwThreadId,
             createProcess.lpThreadLocalBase,
             createProcess.lpStartAddress) });
-        _thread = _process->thread = &_process->threads.find(_debugEvent.dwThreadId)->second;
-        _registers = &_thread->registers;
+        mThread = mProcess->thread = &mProcess->threads.find(mDebugEvent.dwThreadId)->second;
+        mRegisters = &mThread->registers;
 
         //read thread context from main thread
-        if (!_thread->RegReadContext())
+        if (!mThread->RegReadContext())
             cbInternalError("ThreadInfo::RegReadContext() failed!");
 
         //call the debug event callback
-        cbCreateProcessEvent(createProcess, *_process);
+        cbCreateProcessEvent(createProcess, *mProcess);
 
         //close the file handle
         CloseHandle(createProcess.hFile);
@@ -34,18 +34,18 @@ namespace GleeBug
     void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)
     {
         //check if the terminated process is the main debuggee
-        if (_debugEvent.dwProcessId == _mainProcess.dwProcessId)
-            _breakDebugger = true;
+        if (mDebugEvent.dwProcessId == mMainProcess.dwProcessId)
+            mBreakDebugger = true;
 
         //call the debug event callback
-        cbExitProcessEvent(exitProcess, *_process);
+        cbExitProcessEvent(exitProcess, *mProcess);
 
         //process housekeeping
-        _processes.erase(_debugEvent.dwProcessId);
+        mProcesses.erase(mDebugEvent.dwProcessId);
 
         //set the current process
-        _process = nullptr;
-        _thread = nullptr;
-        _registers = nullptr;
+        mProcess = nullptr;
+        mThread = nullptr;
+        mRegisters = nullptr;
     }
 };

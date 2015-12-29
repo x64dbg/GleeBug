@@ -3,9 +3,9 @@
 namespace GleeBug
 {
     File::File(const wchar_t* szFileName, File::Mode mode)
-        : _fileName(szFileName ? szFileName : L""),
-        _mode(mode),
-        _hFile(INVALID_HANDLE_VALUE)
+        : mFileName(szFileName ? szFileName : L""),
+        mMode(mode),
+        mhFile(INVALID_HANDLE_VALUE)
     {
     }
 
@@ -26,33 +26,33 @@ namespace GleeBug
 
     bool File::IsOpen() const
     {
-        return _hFile != INVALID_HANDLE_VALUE;
+        return mhFile != INVALID_HANDLE_VALUE;
     }
 
     void File::Close()
     {
         if (IsOpen())
         {
-            CloseHandle(_hFile);
-            _hFile = INVALID_HANDLE_VALUE;
+            CloseHandle(mhFile);
+            mhFile = INVALID_HANDLE_VALUE;
         }
     }
 
     uint32 File::GetSize() const
     {
-        return IsOpen() ? GetFileSize(_hFile, nullptr) : 0;
+        return IsOpen() ? GetFileSize(mhFile, nullptr) : 0;
     }
 
     bool File::Read(uint32 offset, void* data, uint32 size, uint32* bytesRead) const
     {
-        if (!IsOpen() || SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if (!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
             if (bytesRead)
                 *bytesRead = 0;
             return false;
         }
         DWORD NumberOfBytesRead = 0;
-        auto result = !!ReadFile(_hFile, data, size, &NumberOfBytesRead, nullptr);
+        auto result = !!ReadFile(mhFile, data, size, &NumberOfBytesRead, nullptr);
         if (bytesRead)
             *bytesRead = uint32(NumberOfBytesRead);
         return result;
@@ -60,14 +60,14 @@ namespace GleeBug
 
     bool File::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten)
     {
-        if (!IsOpen() || SetFilePointer(_hFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if (!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
             if (bytesWritten)
                 *bytesWritten = 0;
             return false;
         }
         DWORD NumberOfBytesWritten = 0;
-        auto result = !!WriteFile(_hFile, data, size, &NumberOfBytesWritten, nullptr);
+        auto result = !!WriteFile(mhFile, data, size, &NumberOfBytesWritten, nullptr);
         if (bytesWritten)
             *bytesWritten = uint32(NumberOfBytesWritten);
         return result;
@@ -77,7 +77,7 @@ namespace GleeBug
     {
         //get the access and sharemode flags
         DWORD access, sharemode;
-        switch (_mode)
+        switch (mMode)
         {
         case ReadOnly:
             access = GENERIC_READ;
@@ -95,7 +95,7 @@ namespace GleeBug
         Close();
 
         //use WinAPI to get the file handle
-        _hFile = CreateFileW(_fileName.c_str(), access, sharemode, nullptr, creation, 0, nullptr);
+        mhFile = CreateFileW(mFileName.c_str(), access, sharemode, nullptr, creation, 0, nullptr);
         return IsOpen();
     }
 };

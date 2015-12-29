@@ -11,49 +11,49 @@ protected:
     void cbEntryBreakpoint(const BreakpointInfo & info)
     {
         printf("Reached entry breakpoint! GIP: 0x%p\n",
-            _registers->Gip());
-        if (_process->DeleteBreakpoint(info.address))
+            mRegisters->Gip());
+        if (mProcess->DeleteBreakpoint(info.address))
             printf("Entry breakpoint deleted!\n");
         else
             printf("Failed to delete entry breakpoint...\n");
-        _thread->StepInto(std::bind([this]()
+        mThread->StepInto(std::bind([this]()
         {
             printf("Step after entry breakpoint! GIP: 0x%p\n",
-                _registers->Gip());
+                mRegisters->Gip());
         }));
     }
 
     void cbEntryHardwareBreakpoint(const BreakpointInfo & info)
     {
         printf("Reached entry hardware breakpoint! GIP: 0x%p\n",
-            _registers->Gip());
-        if (_process->DeleteHardwareBreakpoint(info.address))
+            mRegisters->Gip());
+        if (mProcess->DeleteHardwareBreakpoint(info.address))
             printf("Entry hardware breakpoint deleted!\n");
         else
             printf("Failed to delete entry hardware breakpoint...\n");
-        _thread->StepInto(std::bind([this]()
+        mThread->StepInto(std::bind([this]()
         {
             printf("Step after entry hardware breakpoint! GIP: 0x%p\n",
-                _registers->Gip());
+                mRegisters->Gip());
         }));
     }
 
     void cbStepSystem()
     {
         printf("Reached step after system breakpoint, GIP: 0x%p!\n",
-            _registers->Gip());
+            mRegisters->Gip());
     }
 
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
     {
         ptr entry = ptr(createProcess.lpStartAddress);
         printf("Process %d created with entry 0x%p\n",
-            _debugEvent.dwProcessId,
+            mDebugEvent.dwProcessId,
             entry);
         /*HardwareSlot slot;
-        if (_process->GetFreeHardwareBreakpointSlot(slot))
+        if (mProcess->GetFreeHardwareBreakpointSlot(slot))
         {
-            if (_process->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareType::Execute, HardwareSize::SizeByte))
+            if (mProcess->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareType::Execute, HardwareSize::SizeByte))
                 printf("Hardware breakpoint set at 0x%p!\n", entry);
             else
                 printf("Failed to set hardware breakpoint at 0x%p\n", entry);
@@ -61,18 +61,18 @@ protected:
         else
             printf("No free hardware breakpoint slot...\n");*/
 
-        if(_process->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
+        if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
             printf("Failed to set breakpoint at 0x%p...\b", entry);
         uint8 test[5];
         ptr start = entry - 2;
         printf("unsafe: ");
-        _process->MemRead(start, test, sizeof(test));
+        mProcess->MemRead(start, test, sizeof(test));
         for (int i = 0; i < sizeof(test); i++)
             printf("%02X ", test[i]);
         puts("");
-        _process->MemReadSafe(start, test, sizeof(test));
+        mProcess->MemReadSafe(start, test, sizeof(test));
         printf("  safe: ");
         for (int i = 0; i < sizeof(test); i++)
             printf("%02X ", test[i]);
@@ -82,21 +82,21 @@ protected:
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
     {
         printf("Process %u terminated with exit code 0x%08X\n",
-            _debugEvent.dwProcessId,
+            mDebugEvent.dwProcessId,
             exitProcess.dwExitCode);
     }
 
     void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) override
     {
         printf("Thread %u created with entry 0x%p\n",
-            _debugEvent.dwThreadId,
+            mDebugEvent.dwThreadId,
             createThread.lpStartAddress);
     }
 
     void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) override
     {
         printf("Thread %u terminated with exit code 0x%08X\n",
-            _debugEvent.dwThreadId,
+            mDebugEvent.dwThreadId,
             exitThread.dwExitCode);
     }
 
@@ -138,8 +138,8 @@ protected:
     void cbSystemBreakpoint() override
     {
         printf("System breakpoint reached, GIP: 0x%p\n",
-            _registers->Gip());
-        _thread->StepInto(this, &MyDebugger::cbStepSystem);
+            mRegisters->Gip());
+        mThread->StepInto(this, &MyDebugger::cbStepSystem);
     }
 
     void cbInternalError(const std::string & error) override
@@ -160,7 +160,7 @@ protected:
             firstChance ? "first chance" : "second chance",
             exceptionRecord.ExceptionCode,
             exceptionRecord.ExceptionAddress,
-            _registers->Gip());
+            mRegisters->Gip());
     }
 };
 

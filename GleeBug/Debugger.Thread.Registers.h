@@ -156,7 +156,7 @@ namespace GleeBug
         void SetContext(const CONTEXT & context);
 
     private:
-        CONTEXT _context;
+        CONTEXT mContext;
     };
 };
 

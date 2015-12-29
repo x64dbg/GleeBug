@@ -59,8 +59,8 @@ namespace GleeBug
         virtual bool Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten = nullptr) override;
 
     private:
-        void* _data;
-        uint32 _size;
+        void* mData;
+        uint32 mSize;
     };
 };
 

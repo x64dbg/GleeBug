@@ -5,106 +5,106 @@ namespace GleeBug
     void Debugger::Start()
     {
         //initialize loop variables
-        _breakDebugger = false;
-        _isDebugging = true;
+        mBreakDebugger = false;
+        mIsDebugging = true;
 
-        while (!_breakDebugger)
+        while (!mBreakDebugger)
         {
             //wait for a debug event
-            _isRunning = true;
-            if (!WaitForDebugEvent(&_debugEvent, INFINITE))
+            mIsRunning = true;
+            if (!WaitForDebugEvent(&mDebugEvent, INFINITE))
                 break;
-            _isRunning = false;
+            mIsRunning = false;
 
             //set default continue status
-            _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
+            mContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
             //set the current process and thread
-            auto processFound = _processes.find(_debugEvent.dwProcessId);
-            if (processFound != _processes.end())
+            auto processFound = mProcesses.find(mDebugEvent.dwProcessId);
+            if (processFound != mProcesses.end())
             {
-                _process = &processFound->second;
-                auto threadFound = _process->threads.find(_debugEvent.dwThreadId);
-                if (threadFound != _process->threads.end())
+                mProcess = &processFound->second;
+                auto threadFound = mProcess->threads.find(mDebugEvent.dwThreadId);
+                if (threadFound != mProcess->threads.end())
                 {
-                    _thread = _process->thread = &threadFound->second;
-                    _registers = &_thread->registers;
-                    if (!_thread->RegReadContext())
+                    mThread = mProcess->thread = &threadFound->second;
+                    mRegisters = &mThread->registers;
+                    if (!mThread->RegReadContext())
                         cbInternalError("ThreadInfo::RegReadContext() failed!");
                 }
                 else
                 {
-                    _thread = _process->thread = nullptr;
-                    _registers = nullptr;
+                    mThread = mProcess->thread = nullptr;
+                    mRegisters = nullptr;
                 }
             }
             else
             {
-                _registers = nullptr;
-                _thread = nullptr;
-                if (_process)
+                mRegisters = nullptr;
+                mThread = nullptr;
+                if (mProcess)
                 {
-                    _process->thread = nullptr;
-                    _process = nullptr;
+                    mProcess->thread = nullptr;
+                    mProcess = nullptr;
                 }
             }
 
             //call the pre debug event callback
-            cbPostDebugEvent(_debugEvent);
+            cbPostDebugEvent(mDebugEvent);
 
             //dispatch the debug event
-            switch (_debugEvent.dwDebugEventCode)
+            switch (mDebugEvent.dwDebugEventCode)
             {
             case CREATE_PROCESS_DEBUG_EVENT:
-                createProcessEvent(_debugEvent.u.CreateProcessInfo);
+                createProcessEvent(mDebugEvent.u.CreateProcessInfo);
                 break;
             case EXIT_PROCESS_DEBUG_EVENT:
-                exitProcessEvent(_debugEvent.u.ExitProcess);
+                exitProcessEvent(mDebugEvent.u.ExitProcess);
                 break;
             case CREATE_THREAD_DEBUG_EVENT:
-                createThreadEvent(_debugEvent.u.CreateThread);
+                createThreadEvent(mDebugEvent.u.CreateThread);
                 break;
             case EXIT_THREAD_DEBUG_EVENT:
-                exitThreadEvent(_debugEvent.u.ExitThread);
+                exitThreadEvent(mDebugEvent.u.ExitThread);
                 break;
             case LOAD_DLL_DEBUG_EVENT:
-                loadDllEvent(_debugEvent.u.LoadDll);
+                loadDllEvent(mDebugEvent.u.LoadDll);
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
-                unloadDllEvent(_debugEvent.u.UnloadDll);
+                unloadDllEvent(mDebugEvent.u.UnloadDll);
                 break;
             case EXCEPTION_DEBUG_EVENT:
-                exceptionEvent(_debugEvent.u.Exception);
+                exceptionEvent(mDebugEvent.u.Exception);
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
-                debugStringEvent(_debugEvent.u.DebugString);
+                debugStringEvent(mDebugEvent.u.DebugString);
                 break;
             case RIP_EVENT:
-                ripEvent(_debugEvent.u.RipInfo);
+                ripEvent(mDebugEvent.u.RipInfo);
                 break;
             default:
-                unknownEvent(_debugEvent.dwDebugEventCode);
+                unknownEvent(mDebugEvent.dwDebugEventCode);
                 break;
             }
 
             //call the post debug event callback
-            cbPostDebugEvent(_debugEvent);
+            cbPostDebugEvent(mDebugEvent);
 
             //write the register context
-            if (_thread)
+            if (mThread)
             {
-                if (!_thread->RegWriteContext())
+                if (!mThread->RegWriteContext())
                     cbInternalError("ThreadInfo::RegWriteContext() failed!");
             }
 
             //continue the debug event
-            if (!ContinueDebugEvent(_debugEvent.dwProcessId, _debugEvent.dwThreadId, _continueStatus))
+            if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
                 break;
         }
 
         //cleanup
-        _processes.clear();
-        _process = nullptr;
-        _isDebugging = false;
+        mProcesses.clear();
+        mProcess = nullptr;
+        mIsDebugging = false;
     }
 };

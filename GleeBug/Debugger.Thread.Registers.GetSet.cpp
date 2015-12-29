@@ -1,25 +1,25 @@
 #include "Debugger.Thread.Registers.h"
 
 #ifdef _WIN64
-#define contextGax _context.Rax
-#define contextGbx _context.Rbx
-#define contextGcx _context.Rcx
-#define contextGdx _context.Rdx
-#define contextGdi _context.Rdi
-#define contextGsi _context.Rsi
-#define contextGbp _context.Rbp
-#define contextGsp _context.Rsp
-#define contextGip _context.Rip
+#define contextGax mContext.Rax
+#define contextGbx mContext.Rbx
+#define contextGcx mContext.Rcx
+#define contextGdx mContext.Rdx
+#define contextGdi mContext.Rdi
+#define contextGsi mContext.Rsi
+#define contextGbp mContext.Rbp
+#define contextGsp mContext.Rsp
+#define contextGip mContext.Rip
 #else //x32
-#define contextGax _context.Eax
-#define contextGbx _context.Ebx
-#define contextGcx _context.Ecx
-#define contextGdx _context.Edx
-#define contextGdi _context.Edi
-#define contextGsi _context.Esi
-#define contextGbp _context.Ebp
-#define contextGsp _context.Esp
-#define contextGip _context.Eip
+#define contextGax mContext.Eax
+#define contextGbx mContext.Ebx
+#define contextGcx mContext.Ecx
+#define contextGdx mContext.Edx
+#define contextGdi mContext.Edi
+#define contextGsi mContext.Esi
+#define contextGbp mContext.Ebp
+#define contextGsp mContext.Esp
+#define contextGip mContext.Eip
 #endif //_WIN64
 
 #ifdef _WIN64
@@ -50,20 +50,20 @@ namespace GleeBug
         switch (reg)
         {
         case R::DR0:
-            return ptr(_context.Dr0);
+            return ptr(mContext.Dr0);
         case R::DR1:
-            return ptr(_context.Dr1);
+            return ptr(mContext.Dr1);
         case R::DR2:
-            return ptr(_context.Dr2);
+            return ptr(mContext.Dr2);
         case R::DR3:
-            return ptr(_context.Dr3);
+            return ptr(mContext.Dr3);
         case R::DR6:
-            return ptr(_context.Dr6);
+            return ptr(mContext.Dr6);
         case R::DR7:
-            return ptr(_context.Dr7);
+            return ptr(mContext.Dr7);
 
         case R::EFlags:
-            return ptr(_context.EFlags);
+            return ptr(mContext.EFlags);
 
         case R::EAX:
             return uint32_lo(contextGax);
@@ -238,26 +238,26 @@ namespace GleeBug
         switch (reg)
         {
         case R::DR0:
-            _context.Dr0 = value;
+            mContext.Dr0 = value;
             break;
         case R::DR1:
-            _context.Dr1 = value;
+            mContext.Dr1 = value;
             break;
         case R::DR2:
-            _context.Dr2 = value;
+            mContext.Dr2 = value;
             break;
         case R::DR3:
-            _context.Dr3 = value;
+            mContext.Dr3 = value;
             break;
         case R::DR6:
-            _context.Dr6 = value;
+            mContext.Dr6 = value;
             break;
         case R::DR7:
-            _context.Dr7 = value;
+            mContext.Dr7 = value;
             break;
 
         case R::EFlags:
-            _context.EFlags = uint32(value);
+            mContext.EFlags = uint32(value);
             break;
 
         case R::EAX:
@@ -506,14 +506,14 @@ namespace GleeBug
 
     bool Registers::GetFlag(F flag) const
     {
-        return (_context.EFlags & ptr(flag)) == ptr(flag);
+        return (mContext.EFlags & ptr(flag)) == ptr(flag);
     }
 
     void Registers::SetFlag(F flag, bool set)
     {
         if (set)
-            _context.EFlags |= ptr(flag);
+            mContext.EFlags |= ptr(flag);
         else
-            _context.EFlags &= ~ptr(flag);
+            mContext.EFlags &= ~ptr(flag);
     }
 }

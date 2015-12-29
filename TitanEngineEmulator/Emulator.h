@@ -11,7 +11,7 @@ public:
     {
         if (!Init(szFileName, szCommandLine, szCurrentFolder))
             return nullptr;
-        return &_mainProcess;
+        return &mMainProcess;
     }
 
     PROCESS_INFORMATION* InitDLLDebugW(const wchar_t* szFileName, bool ReserveModuleBase, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack)
@@ -44,7 +44,7 @@ public:
 
     void SetNextDbgContinueStatus(DWORD SetDbgCode)
     {
-        this->_continueStatus = SetDbgCode;
+        this->mContinueStatus = SetDbgCode;
     }
 
     //Memory
@@ -67,11 +67,11 @@ public:
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
     {
-        if (!_process)
+        if (!mProcess)
             return false;
         for (DWORD i = 0; i < MemorySize; i++)
         {
-            if (!_process->MemWriteSafe(ptr(MemoryStart) + i, FillByte, 1))
+            if (!mProcess->MemWriteSafe(ptr(MemoryStart) + i, FillByte, 1))
                 return false;
         }
         return true;
@@ -87,12 +87,12 @@ public:
 
     bool IsFileBeingDebugged() const
     {
-        return _isDebugging;
+        return mIsDebugging;
     }
 
     DEBUG_EVENT* GetDebugData()
     {
-        return &_debugEvent;
+        return &mDebugEvent;
     }
 
     void SetCustomHandler(DWORD ExceptionId, PVOID CallBack)
@@ -100,34 +100,34 @@ public:
         switch (ExceptionId)
         {
         case UE_CH_CREATEPROCESS:
-            _cbCREATEPROCESS = CUSTOMHANDLER(CallBack);
+            mCbCREATEPROCESS = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_EXITPROCESS:
-            _cbEXITPROCESS = CUSTOMHANDLER(CallBack);
+            mCbEXITPROCESS = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_CREATETHREAD:
-            _cbCREATETHREAD = CUSTOMHANDLER(CallBack);
+            mCbCREATETHREAD = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_EXITTHREAD:
-            _cbEXITTHREAD = CUSTOMHANDLER(CallBack);
+            mCbEXITTHREAD = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_SYSTEMBREAKPOINT:
-            _cbSYSTEMBREAKPOINT = CUSTOMHANDLER(CallBack);
+            mCbSYSTEMBREAKPOINT = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_LOADDLL:
-            _cbLOADDLL = CUSTOMHANDLER(CallBack);
+            mCbLOADDLL = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_UNLOADDLL:
-            _cbUNLOADDLL = CUSTOMHANDLER(CallBack);
+            mCbUNLOADDLL = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_OUTPUTDEBUGSTRING:
-            _cbOUTPUTDEBUGSTRING = CUSTOMHANDLER(CallBack);
+            mCbOUTPUTDEBUGSTRING = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_UNHANDLEDEXCEPTION:
-            _cbUNHANDLEDEXCEPTION = CUSTOMHANDLER(CallBack);
+            mCbUNHANDLEDEXCEPTION = CUSTOMHANDLER(CallBack);
             break;
         case UE_CH_DEBUGEVENT:
-            _cbDEBUGEVENT = CUSTOMHANDLER(CallBack);
+            mCbDEBUGEVENT = CUSTOMHANDLER(CallBack);
             break;
         default:
             break;
@@ -137,7 +137,7 @@ public:
     void SetEngineVariable(DWORD VariableId, bool VariableSet)
     {
         if (VariableId == UE_ENGINE_SET_DEBUG_PRIVILEGE)
-            _setDebugPrivilege = VariableSet;
+            mSetDebugPrivilege = VariableSet;
     }
 
     //Misc
@@ -180,9 +180,9 @@ public:
 
     void SingleStep(DWORD StepCount, LPVOID CallBack)
     {
-        if (!_thread || !CallBack)
+        if (!mThread || !CallBack)
             return;
-        _thread->StepInto([this, StepCount, CallBack]()
+        mThread->StepInto([this, StepCount, CallBack]()
         {
             if (!StepCount)
             {
@@ -196,9 +196,9 @@ public:
 
     void StepInto(LPVOID CallBack)
     {
-        if (!_thread || !CallBack)
+        if (!mThread || !CallBack)
             return;
-        _thread->StepInto(STEPCALLBACK(CallBack));
+        mThread->StepInto(STEPCALLBACK(CallBack));
     }
 
     //Registers
@@ -373,9 +373,9 @@ public:
     //Software Breakpoints
     bool SetBPX(ULONG_PTR bpxAddress, DWORD bpxType, LPVOID bpxCallBack)
     {
-        if (!_process)
+        if (!mProcess)
             return false;
-        return _process->SetBreakpoint(bpxAddress, [bpxCallBack](const BreakpointInfo &)
+        return mProcess->SetBreakpoint(bpxAddress, [bpxCallBack](const BreakpointInfo &)
         {
             (BPCALLBACK(bpxCallBack))();
         }, (bpxType & UE_SINGLESHOOT) == UE_SINGLESHOOT);
@@ -383,15 +383,15 @@ public:
 
     bool DeleteBPX(ULONG_PTR bpxAddress)
     {
-        if (!_process)
+        if (!mProcess)
             return false;
-        return _process->DeleteBreakpoint(bpxAddress);
+        return mProcess->DeleteBreakpoint(bpxAddress);
     }
 
     bool IsBPXEnabled(ULONG_PTR bpxAddress)
     {
-        return (_process->MemIsValidPtr(bpxAddress) &&
-            _process->breakpoints.find({ BreakpointType::Software, bpxAddress }) != _process->breakpoints.end());
+        return (mProcess->MemIsValidPtr(bpxAddress) &&
+            mProcess->breakpoints.find({ BreakpointType::Software, bpxAddress }) != mProcess->breakpoints.end());
     }
 
     void SetBPXOptions(long DefaultBreakPointType)
@@ -414,9 +414,9 @@ public:
     //Hardware Breakpoints
     bool SetHardwareBreakPoint(ULONG_PTR bpxAddress, DWORD IndexOfRegister, DWORD bpxType, DWORD bpxSize, LPVOID bpxCallBack)
     {
-        if (!_process)
+        if (!mProcess)
             return false;
-        return _process->SetHardwareBreakpoint(bpxAddress,
+        return mProcess->SetHardwareBreakpoint(bpxAddress,
             (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
         {
             (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
@@ -425,18 +425,18 @@ public:
 
     bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)
     {
-        if (!_process || IndexOfRegister < 0 || IndexOfRegister > 3)
+        if (!mProcess || IndexOfRegister < 0 || IndexOfRegister > 3)
             return false;
-        auto address = _process->hardwareBreakpoints[IndexOfRegister].address;
-        return _process->DeleteHardwareBreakpoint(address);
+        auto address = mProcess->hardwareBreakpoints[IndexOfRegister].address;
+        return mProcess->DeleteHardwareBreakpoint(address);
     }
 
     bool GetUnusedHardwareBreakPointRegister(LPDWORD RegisterIndex)
     {
-        if (!_process || !RegisterIndex)
+        if (!mProcess || !RegisterIndex)
             return false;
         HardwareSlot slot;
-        bool result = _process->GetFreeHardwareBreakpointSlot(slot);
+        bool result = mProcess->GetFreeHardwareBreakpointSlot(slot);
         if (result)
             *RegisterIndex = (DWORD)slot;
         return result;
@@ -465,62 +465,62 @@ public:
 protected:
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
     {
-        if (_cbCREATEPROCESS)
-            _cbCREATEPROCESS(&createProcess);
+        if (mCbCREATEPROCESS)
+            mCbCREATEPROCESS(&createProcess);
     }
 
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
     {
-        if (_cbEXITPROCESS)
-            _cbEXITPROCESS(&exitProcess);
+        if (mCbEXITPROCESS)
+            mCbEXITPROCESS(&exitProcess);
     }
 
     void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) override
     {
-        if (_cbCREATETHREAD)
-            _cbCREATETHREAD(&createThread);
+        if (mCbCREATETHREAD)
+            mCbCREATETHREAD(&createThread);
     }
 
     void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) override
     {
-        if (_cbEXITTHREAD)
-            _cbEXITTHREAD(&exitThread);
+        if (mCbEXITTHREAD)
+            mCbEXITTHREAD(&exitThread);
     }
 
     void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll) override
     {
-        if (_cbLOADDLL)
-            _cbLOADDLL(&loadDll);
+        if (mCbLOADDLL)
+            mCbLOADDLL(&loadDll);
     }
 
     void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll) override
     {
-        if (_cbUNLOADDLL)
-            _cbUNLOADDLL(&unloadDll);
+        if (mCbUNLOADDLL)
+            mCbUNLOADDLL(&unloadDll);
     }
 
     void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) override
     {
-        if (_cbUNHANDLEDEXCEPTION)
-            _cbUNHANDLEDEXCEPTION(&_debugEvent.u.Exception);
+        if (mCbUNHANDLEDEXCEPTION)
+            mCbUNHANDLEDEXCEPTION(&mDebugEvent.u.Exception);
     }
 
     void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString) override
     {
-        if (_cbOUTPUTDEBUGSTRING)
-            _cbOUTPUTDEBUGSTRING(&debugString);
+        if (mCbOUTPUTDEBUGSTRING)
+            mCbOUTPUTDEBUGSTRING(&debugString);
     }
 
     void cbPreDebugEvent(const DEBUG_EVENT & debugEvent) override
     {
-        if (_cbDEBUGEVENT)
-            _cbDEBUGEVENT(&debugEvent);
+        if (mCbDEBUGEVENT)
+            mCbDEBUGEVENT(&debugEvent);
     }
 
     void cbSystemBreakpoint() override
     {
-        if (_cbSYSTEMBREAKPOINT)
-            _cbSYSTEMBREAKPOINT(&_debugEvent.u.Exception);
+        if (mCbSYSTEMBREAKPOINT)
+            mCbSYSTEMBREAKPOINT(&mDebugEvent.u.Exception);
     }
 
 private: //functions
@@ -574,13 +574,13 @@ private: //functions
     inline ThreadInfo* threadFromHandle(HANDLE hThread) const
     {
         //TODO: properly implement this
-        return _thread;
+        return mThread;
     }
 
     inline ProcessInfo* processFromHandle(HANDLE hProcess) const
     {
         //TODO: properly implement this
-        return _process;
+        return mProcess;
     }
 
     static inline HardwareType hwtypeFromTitan(DWORD type)
@@ -618,19 +618,19 @@ private: //functions
     }
 
 private: //variables
-    bool _setDebugPrivilege = false;
+    bool mSetDebugPrivilege = false;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;
     typedef CUSTOMHANDLER HWBPCALLBACK;
-    CUSTOMHANDLER _cbCREATEPROCESS = nullptr;
-    CUSTOMHANDLER _cbEXITPROCESS = nullptr;
-    CUSTOMHANDLER _cbCREATETHREAD = nullptr;
-    CUSTOMHANDLER _cbEXITTHREAD = nullptr;
-    CUSTOMHANDLER _cbSYSTEMBREAKPOINT = nullptr;
-    CUSTOMHANDLER _cbLOADDLL = nullptr;
-    CUSTOMHANDLER _cbUNLOADDLL = nullptr;
-    CUSTOMHANDLER _cbOUTPUTDEBUGSTRING = nullptr;
-    CUSTOMHANDLER _cbUNHANDLEDEXCEPTION = nullptr;
-    CUSTOMHANDLER _cbDEBUGEVENT = nullptr;
+    CUSTOMHANDLER mCbCREATEPROCESS = nullptr;
+    CUSTOMHANDLER mCbEXITPROCESS = nullptr;
+    CUSTOMHANDLER mCbCREATETHREAD = nullptr;
+    CUSTOMHANDLER mCbEXITTHREAD = nullptr;
+    CUSTOMHANDLER mCbSYSTEMBREAKPOINT = nullptr;
+    CUSTOMHANDLER mCbLOADDLL = nullptr;
+    CUSTOMHANDLER mCbUNLOADDLL = nullptr;
+    CUSTOMHANDLER mCbOUTPUTDEBUGSTRING = nullptr;
+    CUSTOMHANDLER mCbUNHANDLEDEXCEPTION = nullptr;
+    CUSTOMHANDLER mCbDEBUGEVENT = nullptr;
 };

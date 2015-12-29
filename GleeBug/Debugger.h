@@ -243,28 +243,28 @@ namespace GleeBug
         virtual void exceptionHardwareBreakpoint(ptr exceptionAddress);
 
     protected: //variables
-        PROCESS_INFORMATION _mainProcess;
-        uint32 _continueStatus = DBG_EXCEPTION_NOT_HANDLED;
-        bool _breakDebugger = false;
-        DEBUG_EVENT _debugEvent;
-        ProcessMap _processes;
-        bool _isRunning = false;
-        bool _isDebugging = false;
+        PROCESS_INFORMATION mMainProcess;
+        uint32 mContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
+        bool mBreakDebugger = false;
+        DEBUG_EVENT mDebugEvent;
+        ProcessMap mProcesses;
+        bool mIsRunning = false;
+        bool mIsDebugging = false;
 
         /**
         \brief The current process (can be null in some cases).
         */
-        ProcessInfo* _process = nullptr;
+        ProcessInfo* mProcess = nullptr;
 
         /**
-        \brief The current thread (can be null in some cases). Should be a copy of _process->thread.
+        \brief The current thread (can be null in some cases). Should be a copy of mProcess->thread.
         */
-        ThreadInfo* _thread = nullptr;
+        ThreadInfo* mThread = nullptr;
 
         /**
-        \brief The current thread registers (can be null in some cases). Should be a copy of _thread->registers.
+        \brief The current thread registers (can be null in some cases). Should be a copy of mThread->registers.
         */
-        Registers* _registers = nullptr;
+        Registers* mRegisters = nullptr;
     };
 };
 

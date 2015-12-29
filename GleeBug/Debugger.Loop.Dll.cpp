@@ -7,12 +7,12 @@ namespace GleeBug
         //DLL housekeeping
         MODULEINFO modinfo;
         memset(&modinfo, 0, sizeof(MODULEINFO));
-        GetModuleInformation(_process->hProcess,
+        GetModuleInformation(mProcess->hProcess,
             HMODULE(loadDll.lpBaseOfDll),
             &modinfo,
             sizeof(MODULEINFO));
         DllInfo dll(loadDll.lpBaseOfDll, modinfo.SizeOfImage, modinfo.EntryPoint);
-        _process->dlls.insert({ Range(dll.lpBaseOfDll, dll.lpBaseOfDll + dll.sizeOfImage - 1), dll });
+        mProcess->dlls.insert({ Range(dll.lpBaseOfDll, dll.lpBaseOfDll + dll.sizeOfImage - 1), dll });
 
         //call the debug event callback
         cbLoadDllEvent(loadDll, dll);
@@ -25,14 +25,14 @@ namespace GleeBug
     {
         //call the debug event callback
         ptr lpBaseOfDll = ptr(unloadDll.lpBaseOfDll);
-        auto dll = _process->dlls.find(Range(lpBaseOfDll, lpBaseOfDll));
-        if (dll != _process->dlls.end())
+        auto dll = mProcess->dlls.find(Range(lpBaseOfDll, lpBaseOfDll));
+        if (dll != mProcess->dlls.end())
             cbUnloadDllEvent(unloadDll, dll->second);
         else
             cbUnloadDllEvent(unloadDll, DllInfo(unloadDll.lpBaseOfDll, 0, nullptr));
 
         //DLL housekeeping
-        if (dll != _process->dlls.end())
-            _process->dlls.erase(dll);
+        if (dll != mProcess->dlls.end())
+            mProcess->dlls.erase(dll);
     }
 };
