@@ -118,95 +118,95 @@ namespace GleeBug
 
 #ifdef _WIN64
         case R::RAX:
-            return ptr(_context.Rax);
+            return ptr(mContext.Rax);
         case R::RBX:
-            return ptr(_context.Rbx);
+            return ptr(mContext.Rbx);
         case R::RCX:
-            return ptr(_context.Rcx);
+            return ptr(mContext.Rcx);
         case R::RDX:
-            return ptr(_context.Rdx);
+            return ptr(mContext.Rdx);
         case R::RSI:
-            return ptr(_context.Rsi);
+            return ptr(mContext.Rsi);
         case R::SIL:
-            return uint8_lo(_context.Rsi);
+            return uint8_lo(mContext.Rsi);
         case R::RDI:
-            return ptr(_context.Rdi);
+            return ptr(mContext.Rdi);
         case R::DIL:
-            return uint8_lo(_context.Rdi);
+            return uint8_lo(mContext.Rdi);
         case R::RBP:
-            return ptr(_context.Rbp);
+            return ptr(mContext.Rbp);
         case R::BPL:
-            return uint8_lo(_context.Rbp);
+            return uint8_lo(mContext.Rbp);
         case R::RSP:
-            return ptr(_context.Rsp);
+            return ptr(mContext.Rsp);
         case R::SPL:
-            return uint8_lo(_context.Rsp);
+            return uint8_lo(mContext.Rsp);
         case R::RIP:
-            return ptr(_context.Rip);
+            return ptr(mContext.Rip);
         case R::R8:
-            return ptr(_context.R8);
+            return ptr(mContext.R8);
         case R::R8D:
-            return uint32_lo(_context.R8);
+            return uint32_lo(mContext.R8);
         case R::R8W:
-            return uint16_lo(_context.R8);
+            return uint16_lo(mContext.R8);
         case R::R8B:
-            return uint8_lo(_context.R8);
+            return uint8_lo(mContext.R8);
         case R::R9:
-            return ptr(_context.R9);
+            return ptr(mContext.R9);
         case R::R9D:
-            return uint32_lo(_context.R9);
+            return uint32_lo(mContext.R9);
         case R::R9W:
-            return uint16_lo(_context.R9);
+            return uint16_lo(mContext.R9);
         case R::R9B:
-            return uint8_lo(_context.R9);
+            return uint8_lo(mContext.R9);
         case R::R10:
-            return ptr(_context.R10);
+            return ptr(mContext.R10);
         case R::R10D:
-            return uint32_lo(_context.R10);
+            return uint32_lo(mContext.R10);
         case R::R10W:
-            return uint16_lo(_context.R10);
+            return uint16_lo(mContext.R10);
         case R::R10B:
-            return uint8_lo(_context.R10);
+            return uint8_lo(mContext.R10);
         case R::R11:
-            return ptr(_context.R11);
+            return ptr(mContext.R11);
         case R::R11D:
-            return uint32_lo(_context.R11);
+            return uint32_lo(mContext.R11);
         case R::R11W:
-            return uint16_lo(_context.R11);
+            return uint16_lo(mContext.R11);
         case R::R11B:
-            return uint8_lo(_context.R11);
+            return uint8_lo(mContext.R11);
         case R::R12:
-            return ptr(_context.R12);
+            return ptr(mContext.R12);
         case R::R12D:
-            return uint32_lo(_context.R12);
+            return uint32_lo(mContext.R12);
         case R::R12W:
-            return uint16_lo(_context.R12);
+            return uint16_lo(mContext.R12);
         case R::R12B:
-            return uint8_lo(_context.R12);
+            return uint8_lo(mContext.R12);
         case R::R13:
-            return ptr(_context.R13);
+            return ptr(mContext.R13);
         case R::R13D:
-            return uint32_lo(_context.R13);
+            return uint32_lo(mContext.R13);
         case R::R13W:
-            return uint16_lo(_context.R13);
+            return uint16_lo(mContext.R13);
         case R::R13B:
-            return uint8_lo(_context.R13);
+            return uint8_lo(mContext.R13);
         case R::R14:
-            return ptr(_context.R14);
+            return ptr(mContext.R14);
         case R::R14D:
-            return uint32_lo(_context.R14);
+            return uint32_lo(mContext.R14);
         case R::R14W:
-            return uint16_lo(_context.R14);
+            return uint16_lo(mContext.R14);
         case R::R14B:
-            return uint8_lo(_context.R14);
+            return uint8_lo(mContext.R14);
         case R::R15:
-            return ptr(_context.R15);
+            return ptr(mContext.R15);
         case R::R15D:
-            return uint32_lo(_context.R15);
+            return uint32_lo(mContext.R15);
         case R::R15W:
-            return uint16_lo(_context.R15);
+            return uint16_lo(mContext.R15);
         case R::R15B:
-            return uint8_lo(_context.R15);
+            return uint8_lo(mContext.R15);
 #endif //_WIN64
 
         case R::GAX:
@@ -338,139 +338,139 @@ namespace GleeBug
 
 #ifdef _WIN64
         case R::RAX:
-            _context.Rax = value;
+            mContext.Rax = value;
             break;
         case R::RBX:
-            _context.Rbx = value;
+            mContext.Rbx = value;
             break;
         case R::RCX:
-            _context.Rcx = value;
+            mContext.Rcx = value;
             break;
         case R::RDX:
-            _context.Rdx = value;
+            mContext.Rdx = value;
             break;
         case R::RSI:
-            _context.Rsi = value;
+            mContext.Rsi = value;
             break;
         case R::SIL:
-            set_uint8_lo(_context.Rsi, value);
+            set_uint8_lo(mContext.Rsi, value);
             break;
         case R::RDI:
-            _context.Rdi = value;
+            mContext.Rdi = value;
             break;
         case R::DIL:
-            set_uint8_lo(_context.Rdi, value);
+            set_uint8_lo(mContext.Rdi, value);
             break;
         case R::RBP:
-            _context.Rbp = value;
+            mContext.Rbp = value;
             break;
         case R::BPL:
-            set_uint8_lo(_context.Rbp, value);
+            set_uint8_lo(mContext.Rbp, value);
             break;
         case R::RSP:
-            _context.Rsp = value;
+            mContext.Rsp = value;
             break;
         case R::SPL:
-            set_uint8_lo(_context.Rsp, value);
+            set_uint8_lo(mContext.Rsp, value);
             break;
         case R::RIP:
-            _context.Rip = value;
+            mContext.Rip = value;
             break;
         case R::R8:
-            _context.R8 = value;
+            mContext.R8 = value;
             break;
         case R::R8D:
-            set_uint32_lo(_context.R8, value);
+            set_uint32_lo(mContext.R8, value);
             break;
         case R::R8W:
-            set_uint16_lo(_context.R8, value);
+            set_uint16_lo(mContext.R8, value);
             break;
         case R::R8B:
-            set_uint8_lo(_context.R8, value);
+            set_uint8_lo(mContext.R8, value);
             break;
         case R::R9:
-            _context.R9 = value;
+            mContext.R9 = value;
             break;
         case R::R9D:
-            set_uint32_lo(_context.R9, value);
+            set_uint32_lo(mContext.R9, value);
             break;
         case R::R9W:
-            set_uint16_lo(_context.R9, value);
+            set_uint16_lo(mContext.R9, value);
             break;
         case R::R9B:
-            set_uint8_lo(_context.R9, value);
+            set_uint8_lo(mContext.R9, value);
             break;
         case R::R10:
-            _context.R10 = value;
+            mContext.R10 = value;
             break;
         case R::R10D:
-            set_uint32_lo(_context.R10, value);
+            set_uint32_lo(mContext.R10, value);
             break;
         case R::R10W:
-            set_uint16_lo(_context.R10, value);
+            set_uint16_lo(mContext.R10, value);
             break;
         case R::R10B:
-            set_uint8_lo(_context.R10, value);
+            set_uint8_lo(mContext.R10, value);
             break;
         case R::R11:
-            _context.R11 = value;
+            mContext.R11 = value;
             break;
         case R::R11D:
-            set_uint32_lo(_context.R11, value);
+            set_uint32_lo(mContext.R11, value);
             break;
         case R::R11W:
-            set_uint16_lo(_context.R11, value);
+            set_uint16_lo(mContext.R11, value);
             break;
         case R::R11B:
-            set_uint8_lo(_context.R11, value);
+            set_uint8_lo(mContext.R11, value);
             break;
         case R::R12:
-            _context.R12 = value;
+            mContext.R12 = value;
             break;
         case R::R12D:
-            set_uint32_lo(_context.R12, value);
+            set_uint32_lo(mContext.R12, value);
             break;
         case R::R12W:
-            set_uint16_lo(_context.R12, value);
+            set_uint16_lo(mContext.R12, value);
             break;
         case R::R12B:
-            set_uint8_lo(_context.R12, value);
+            set_uint8_lo(mContext.R12, value);
             break;
         case R::R13:
-            _context.R13 = value;
+            mContext.R13 = value;
             break;
         case R::R13D:
-            set_uint32_lo(_context.R13, value);
+            set_uint32_lo(mContext.R13, value);
             break;
         case R::R13W:
-            set_uint16_lo(_context.R13, value);
+            set_uint16_lo(mContext.R13, value);
             break;
         case R::R13B:
-            set_uint8_lo(_context.R13, value);
+            set_uint8_lo(mContext.R13, value);
             break;
         case R::R14:
-            _context.R14 = value;
+            mContext.R14 = value;
             break;
         case R::R14D:
-            set_uint32_lo(_context.R14, value);
+            set_uint32_lo(mContext.R14, value);
             break;
         case R::R14W:
-            set_uint16_lo(_context.R14, value);
+            set_uint16_lo(mContext.R14, value);
             break;
         case R::R14B:
-            set_uint8_lo(_context.R14, value);
+            set_uint8_lo(mContext.R14, value);
             break;
         case R::R15:
-            _context.R15 = value;
+            mContext.R15 = value;
             break;
         case R::R15D:
-            set_uint32_lo(_context.R15, value);
+            set_uint32_lo(mContext.R15, value);
             break;
         case R::R15W:
-            set_uint16_lo(_context.R15, value);
+            set_uint16_lo(mContext.R15, value);
             break;
         case R::R15B:
-            set_uint8_lo(_context.R15, value);
+            set_uint8_lo(mContext.R15, value);
             break;
 #endif //_WIN64
 
