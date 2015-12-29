@@ -1,5 +1,5 @@
-#ifndef _MYDEBUGGER_H
-#define _MYDEBUGGER_H
+#ifndef MYDEBUGGER_H
+#define MYDEBUGGER_H
 
 #include <GleeBug/Debugger.h>
 
@@ -50,10 +50,10 @@ protected:
         printf("Process %d created with entry 0x%p\n",
             _debugEvent.dwProcessId,
             entry);
-        /*HardwareBreakpointSlot slot;
+        /*HardwareSlot slot;
         if (_process->GetFreeHardwareBreakpointSlot(slot))
         {
-            if (_process->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareBreakpointType::Execute, HardwareBreakpointSize::SizeByte))
+            if (_process->SetHardwareBreakpoint(entry, slot, this, &MyDebugger::cbEntryHardwareBreakpoint, HardwareType::Execute, HardwareSize::SizeByte))
                 printf("Hardware breakpoint set at 0x%p!\n", entry);
             else
                 printf("Failed to set hardware breakpoint at 0x%p\n", entry);
@@ -164,4 +164,4 @@ protected:
     }
 };
 
-#endif //_MYDEBUGGER_H
+#endif //MYDEBUGGER_H

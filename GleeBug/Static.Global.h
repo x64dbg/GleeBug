@@ -1,5 +1,5 @@
-#ifndef _STATIC_GLOBAL_H
-#define _STATIC_GLOBAL_H
+#ifndef STATIC_GLOBAL_H
+#define STATIC_GLOBAL_H
 
 #include "GleeBug.h"
 
@@ -11,4 +11,4 @@ namespace GleeBug
     const uint32 INVALID_VALUE = GLEEBUG_INVALID_VALUE;
 };
 
-#endif //_STATIC_GLOBAL_H
+#endif //STATIC_GLOBAL_H

@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_THREAD_REGISTERS_H
-#define _DEBUGGER_THREAD_REGISTERS_H
+#ifndef DEBUGGER_THREAD_REGISTERS_H
+#define DEBUGGER_THREAD_REGISTERS_H
 
 #include "Debugger.Global.h"
 
@@ -160,4 +160,4 @@ namespace GleeBug
     };
 };
 
-#endif //_DEBUGGER_THREAD_REGISTERS_H
+#endif //DEBUGGER_THREAD_REGISTERS_H

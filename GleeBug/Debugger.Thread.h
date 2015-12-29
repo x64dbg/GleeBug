@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_THREAD_H
-#define _DEBUGGER_THREAD_H
+#ifndef DEBUGGER_THREAD_H
+#define DEBUGGER_THREAD_H
 
 #include "Debugger.Global.h"
 #include "Debugger.Thread.Registers.h"
@@ -108,18 +108,18 @@ namespace GleeBug
         \param size The hardware breakpoint size.
         \return true if the hardware breakpoint was set, false otherwise.
         */
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size);
+        bool SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size);
 
         /**
         \brief Deletes a hardware breakpoint.
         \param slot The slot to remove the hardware breakpoint from.
         \return true if the hardware breakpoint was deleted, false otherwise.
         */
-        bool DeleteHardwareBreakpoint(HardwareBreakpointSlot slot);
+        bool DeleteHardwareBreakpoint(HardwareSlot slot);
 
     private:
         CONTEXT _oldContext;
     };
 };
 
-#endif //_DEBUGGER_THREADS_H
+#endif //DEBUGGER_THREADS_H

@@ -86,27 +86,27 @@ namespace GleeBug
     {
         //determine the hardware breakpoint triggered
         ptr dr6 = _registers->Dr6();
-        HardwareBreakpointSlot breakpointSlot;
+        HardwareSlot breakpointSlot;
         ptr breakpointAddress;
         if (exceptionAddress == _registers->Dr0() || dr6 & 0x1)
         {
             breakpointAddress = _registers->Dr0();
-            breakpointSlot = HardwareBreakpointSlot::Dr0;
+            breakpointSlot = HardwareSlot::Dr0;
         }
         else if (exceptionAddress == _registers->Dr1() || dr6 & 0x2)
         {
             breakpointAddress = _registers->Dr1();
-            breakpointSlot = HardwareBreakpointSlot::Dr1;
+            breakpointSlot = HardwareSlot::Dr1;
         }
         else if (exceptionAddress == _registers->Dr2() || dr6 & 0x4)
         {
             breakpointAddress = _registers->Dr2();
-            breakpointSlot = HardwareBreakpointSlot::Dr2;
+            breakpointSlot = HardwareSlot::Dr2;
         }
         else if (exceptionAddress == _registers->Dr3() || dr6 & 0x8)
         {
             breakpointAddress = _registers->Dr3();
-            breakpointSlot = HardwareBreakpointSlot::Dr3;
+            breakpointSlot = HardwareSlot::Dr3;
         }
         else
             return; //not a hardware breakpoint

@@ -1,5 +1,5 @@
-#ifndef _STATIC_PE_H
-#define _STATIC_PE_H
+#ifndef STATIC_PE_H
+#define STATIC_PE_H
 
 #include "Static.File.h"
 #include "Static.Region.h"
@@ -68,4 +68,4 @@ namespace GleeBug
     };
 };
 
-#endif //_STATIC_PE_H
+#endif //STATIC_PE_H

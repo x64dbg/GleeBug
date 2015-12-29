@@ -417,7 +417,7 @@ public:
         if (!_process)
             return false;
         return _process->SetHardwareBreakpoint(bpxAddress,
-            (HardwareBreakpointSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
+            (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
         {
             (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
         }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize));
@@ -435,7 +435,7 @@ public:
     {
         if (!_process || !RegisterIndex)
             return false;
-        HardwareBreakpointSlot slot;
+        HardwareSlot slot;
         bool result = _process->GetFreeHardwareBreakpointSlot(slot);
         if (result)
             *RegisterIndex = (DWORD)slot;
@@ -583,37 +583,37 @@ private: //functions
         return _process;
     }
 
-    static inline HardwareBreakpointType hwtypeFromTitan(DWORD type)
+    static inline HardwareType hwtypeFromTitan(DWORD type)
     {
         switch (type)
         {
         case UE_HARDWARE_EXECUTE:
-            return HardwareBreakpointType::Execute;
+            return HardwareType::Execute;
         case UE_HARDWARE_WRITE:
-            return HardwareBreakpointType::Write;
+            return HardwareType::Write;
         case UE_HARDWARE_READWRITE:
-            return HardwareBreakpointType::Access;
+            return HardwareType::Access;
         default:
-            return HardwareBreakpointType::Access;
+            return HardwareType::Access;
         }
     }
 
-    static inline HardwareBreakpointSize hwsizeFromTitan(DWORD size)
+    static inline HardwareSize hwsizeFromTitan(DWORD size)
     {
         switch (size)
         {
         case UE_HARDWARE_SIZE_1:
-            return HardwareBreakpointSize::SizeByte;
+            return HardwareSize::SizeByte;
         case UE_HARDWARE_SIZE_2:
-            return HardwareBreakpointSize::SizeWord;
+            return HardwareSize::SizeWord;
         case UE_HARDWARE_SIZE_4:
-            return HardwareBreakpointSize::SizeDword;
+            return HardwareSize::SizeDword;
 #ifdef _WIN64
         case UE_HARDWARE_SIZE_8:
-            return HardwareBreakpointSize::SizeQword;
+            return HardwareSize::SizeQword;
 #endif //_WIN64
         default:
-            return HardwareBreakpointSize::SizeByte;
+            return HardwareSize::SizeByte;
         }
     }
 

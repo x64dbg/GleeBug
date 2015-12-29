@@ -146,18 +146,18 @@ namespace GleeBug
         return result;
     }
 
-    static inline DR7_SIZE size_dr7(HardwareBreakpointSize size)
+    static inline DR7_SIZE size_dr7(HardwareSize size)
     {
         switch (size)
         {
-        case HardwareBreakpointSize::SizeByte:
+        case HardwareSize::SizeByte:
             return SIZE_1;
-        case HardwareBreakpointSize::SizeWord:
+        case HardwareSize::SizeWord:
             return SIZE_2;
-        case HardwareBreakpointSize::SizeDword:
+        case HardwareSize::SizeDword:
             return SIZE_4;
 #ifdef _WIN64
-        case HardwareBreakpointSize::SizeQword:
+        case HardwareSize::SizeQword:
             return SIZE_8;
 #endif //_WIN64
         default:
@@ -165,22 +165,22 @@ namespace GleeBug
         }
     }
 
-    static inline DR7_TYPE type_dr7(HardwareBreakpointType type)
+    static inline DR7_TYPE type_dr7(HardwareType type)
     {
         switch (type)
         {
-        case HardwareBreakpointType::Access:
+        case HardwareType::Access:
             return TYPE_READWRITE;
-        case HardwareBreakpointType::Write:
+        case HardwareType::Write:
             return TYPE_WRITE;
-        case HardwareBreakpointType::Execute:
+        case HardwareType::Execute:
             return TYPE_EXECUTE;
         default:
             return TYPE_EXECUTE;
         }
     }
 
-    bool ThreadInfo::SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type, HardwareBreakpointSize size)
+    bool ThreadInfo::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size)
     {
         //check if the alignment is correct
         if ((address % int(size) != 0))
@@ -189,16 +189,16 @@ namespace GleeBug
         //set the address register
         switch (slot)
         {
-        case HardwareBreakpointSlot::Dr0:
+        case HardwareSlot::Dr0:
             registers.Dr0 = address;
             break;
-        case HardwareBreakpointSlot::Dr1:
+        case HardwareSlot::Dr1:
             registers.Dr1 = address;
             break;
-        case HardwareBreakpointSlot::Dr2:
+        case HardwareSlot::Dr2:
             registers.Dr2 = address;
             break;
-        case HardwareBreakpointSlot::Dr3:
+        case HardwareSlot::Dr3:
             registers.Dr3 = address;
             break;
         default:
@@ -216,21 +216,21 @@ namespace GleeBug
         return true;
     }
 
-    bool ThreadInfo::DeleteHardwareBreakpoint(HardwareBreakpointSlot slot)
+    bool ThreadInfo::DeleteHardwareBreakpoint(HardwareSlot slot)
     {
         //zero the address register
         switch (slot)
         {
-        case HardwareBreakpointSlot::Dr0:
+        case HardwareSlot::Dr0:
             registers.Dr0 = 0;
             break;
-        case HardwareBreakpointSlot::Dr1:
+        case HardwareSlot::Dr1:
             registers.Dr1 = 0;
             break;
-        case HardwareBreakpointSlot::Dr2:
+        case HardwareSlot::Dr2:
             registers.Dr2 = 0;
             break;
-        case HardwareBreakpointSlot::Dr3:
+        case HardwareSlot::Dr3:
             registers.Dr3 = 0;
             break;
         default:

@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_PROCESS_H
-#define _DEBUGGER_PROCESS_H
+#ifndef DEBUGGER_PROCESS_H
+#define DEBUGGER_PROCESS_H
 
 #include "Debugger.Global.h"
 #include "Debugger.Thread.h"
@@ -90,7 +90,7 @@ namespace GleeBug
         \param type (Optional) The software breakpoint type.
         \return true if the breakpoint was set, false otherwise.
         */
-        bool SetBreakpoint(ptr address, bool singleshoot = false, SoftwareBreakpointType type = SoftwareBreakpointType::ShortInt3);
+        bool SetBreakpoint(ptr address, bool singleshoot = false, SoftwareType type = SoftwareType::ShortInt3);
 
         /**
         \brief Sets a software breakpoint.
@@ -100,7 +100,7 @@ namespace GleeBug
         \param type (Optional) The software breakpoint type.
         \return true if the breakpoint was set, false otherwise.
         */
-        bool SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot = false, SoftwareBreakpointType type = SoftwareBreakpointType::ShortInt3);
+        bool SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot = false, SoftwareType type = SoftwareType::ShortInt3);
 
         /**
         \brief Sets a software breakpoint.
@@ -113,7 +113,7 @@ namespace GleeBug
         \return true if the breakpoint was set, false otherwise.
         */
         template <typename T>
-        bool SetBreakpoint(ptr address, T* debugger, void(T::*callback)(const BreakpointInfo & info), bool singleshoot = false, SoftwareBreakpointType type = SoftwareBreakpointType::ShortInt3)
+        bool SetBreakpoint(ptr address, T* debugger, void(T::*callback)(const BreakpointInfo & info), bool singleshoot = false, SoftwareType type = SoftwareType::ShortInt3)
         {
             static_cast<void>(static_cast<Debugger*>(debugger));
             return SetBreakpoint(address, std::bind(callback, debugger, std::placeholders::_1), singleshoot, type);
@@ -131,7 +131,7 @@ namespace GleeBug
         \param [out] slot First free slot found, has no meaning when the function fails.
         \return true if a free slot was found, false otherwise.
         */
-        bool GetFreeHardwareBreakpointSlot(HardwareBreakpointSlot & slot) const;
+        bool GetFreeHardwareBreakpointSlot(HardwareSlot & slot) const;
 
         /**
         \brief Sets a hardware breakpoint.
@@ -142,7 +142,7 @@ namespace GleeBug
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the hardware breakpoint was set, false otherwise.
         */
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false);
+        bool SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type = HardwareType::Execute, HardwareSize size = HardwareSize::SizeByte, bool singleshoot = false);
 
         /**
         \brief Sets a hardware breakpoint.
@@ -154,7 +154,7 @@ namespace GleeBug
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the hardware breakpoint was set, false otherwise.
         */
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, const BreakpointCallback & cbBreakpoint, HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false);
+        bool SetHardwareBreakpoint(ptr address, HardwareSlot slot, const BreakpointCallback & cbBreakpoint, HardwareType type = HardwareType::Execute, HardwareSize size = HardwareSize::SizeByte, bool singleshoot = false);
 
         /**
         \brief Sets a hardware breakpoint.
@@ -169,7 +169,7 @@ namespace GleeBug
         \return true if the hardware breakpoint was set, false otherwise.
         */
         template <typename T>
-        bool SetHardwareBreakpoint(ptr address, HardwareBreakpointSlot slot, T* debugger, void(T::*callback)(const BreakpointInfo & info), HardwareBreakpointType type = HardwareBreakpointType::Execute, HardwareBreakpointSize size = HardwareBreakpointSize::SizeByte, bool singleshoot = false)
+        bool SetHardwareBreakpoint(ptr address, HardwareSlot slot, T* debugger, void(T::*callback)(const BreakpointInfo & info), HardwareType type = HardwareType::Execute, HardwareSize size = HardwareSize::SizeByte, bool singleshoot = false)
         {
             static_cast<void>(static_cast<Debugger*>(debugger));
             return SetHardwareBreakpoint(address, slot, std::bind(callback, debugger, std::placeholders::_1), type, size, singleshoot);
@@ -191,4 +191,4 @@ namespace GleeBug
     };
 };
 
-#endif //_DEBUGGER_PROCESS_H
+#endif //DEBUGGER_PROCESS_H

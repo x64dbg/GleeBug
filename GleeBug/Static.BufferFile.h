@@ -1,5 +1,5 @@
-#ifndef _STATIC_BUFFERFILE_H
-#define _STATIC_BUFFERFILE_H
+#ifndef STATIC_BUFFERFILE_H
+#define STATIC_BUFFERFILE_H
 
 #include "Static.File.h"
 
@@ -64,4 +64,4 @@ namespace GleeBug
     };
 };
 
-#endif //_STATIC_BUFFERFILE_H
+#endif //STATIC_BUFFERFILE_H

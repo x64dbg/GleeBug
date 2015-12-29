@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_BREAKPOINT_H
-#define _DEBUGGER_BREAKPOINT_H
+#ifndef DEBUGGER_BREAKPOINT_H
+#define DEBUGGER_BREAKPOINT_H
 
 #include "Debugger.Global.h"
 
@@ -12,12 +12,12 @@ namespace GleeBug
         Memory
     };
 
-    enum class SoftwareBreakpointType
+    enum class SoftwareType
     {
         ShortInt3
     };
 
-    enum class HardwareBreakpointSlot
+    enum class HardwareSlot
     {
         Dr0 = 0,
         Dr1 = 1,
@@ -25,14 +25,14 @@ namespace GleeBug
         Dr3 = 3
     };
 
-    enum class HardwareBreakpointType
+    enum class HardwareType
     {
         Access,
         Write,
         Execute
     };
 
-    enum class HardwareBreakpointSize
+    enum class HardwareSize
     {
         SizeByte = 1,
         SizeWord = 2,
@@ -42,7 +42,7 @@ namespace GleeBug
 #endif //_WIN64
     };
 
-    enum class MemoryBreakpointType
+    enum class MemoryType
     {
         Acess,
         Write,
@@ -58,20 +58,20 @@ namespace GleeBug
         {
             struct
             {
-                SoftwareBreakpointType type;
+                SoftwareType type;
                 ptr size;
                 uint8 newbytes[2];
                 uint8 oldbytes[2];
             } software;
             struct
             {
-                HardwareBreakpointSlot slot;
-                HardwareBreakpointType type;
-                HardwareBreakpointSize size;
+                HardwareSlot slot;
+                HardwareType type;
+                HardwareSize size;
             } hardware;
             struct
             {
-                MemoryBreakpointType type;
+                MemoryType type;
                 ptr size;
             } memory;
         };
@@ -90,4 +90,4 @@ namespace GleeBug
     };
 };
 
-#endif //_DEBUGGER_BREAKPOINT_H
+#endif //DEBUGGER_BREAKPOINT_H

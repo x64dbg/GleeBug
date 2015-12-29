@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_DLL_H
-#define _DEBUGGER_DLL_H
+#ifndef DEBUGGER_DLL_H
+#define DEBUGGER_DLL_H
 
 #include "Debugger.Global.h"
 
@@ -25,4 +25,4 @@ namespace GleeBug
     };
 };
 
-#endif //_DEBUGGER_DLL_H
+#endif //DEBUGGER_DLL_H

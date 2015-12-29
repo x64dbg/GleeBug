@@ -1,5 +1,5 @@
-#ifndef _STATIC_REGION_H
-#define _STATIC_REGION_H
+#ifndef STATIC_REGION_H
+#define STATIC_REGION_H
 
 #include "Static.Global.h"
 
@@ -116,4 +116,4 @@ namespace GleeBug
     };
 };
 
-#endif //_STATIC_REGION_H
+#endif //STATIC_REGION_H

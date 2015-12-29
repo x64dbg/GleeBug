@@ -1,5 +1,5 @@
-#ifndef _STATIC_FILE_H
-#define _STATIC_FILE_H
+#ifndef STATIC_FILE_H
+#define STATIC_FILE_H
 
 #include "Static.Global.h"
 
@@ -89,4 +89,4 @@ namespace GleeBug
     };
 };
 
-#endif //_STATIC_FILE_H
+#endif //STATIC_FILE_H

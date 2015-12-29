@@ -1,5 +1,5 @@
-#ifndef _GLEEBUG_H
-#define _GLEEBUG_H
+#ifndef GLEEBUG_H
+#define GLEEBUG_H
 
 #include <cstdio>
 #include <string>
@@ -54,4 +54,4 @@ namespace GleeBug
     };
 }
 
-#endif //_GLEEBUG_H
+#endif //GLEEBUG_H

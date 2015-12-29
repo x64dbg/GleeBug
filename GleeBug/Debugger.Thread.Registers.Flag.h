@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_THREAD_REGISTERS_FLAG_H
-#define _DEBUGGER_THREAD_REGISTERS_FLAG_H
+#ifndef DEBUGGER_THREAD_REGISTERS_FLAG_H
+#define DEBUGGER_THREAD_REGISTERS_FLAG_H
 
 #include "Debugger.Thread.Registers.h"
 
@@ -111,4 +111,4 @@ private:
     Registers* _registers;
 };
 
-#endif //_DEBUGGER_THREAD_REGISTERS_FLAG_H
+#endif //DEBUGGER_THREAD_REGISTERS_FLAG_H

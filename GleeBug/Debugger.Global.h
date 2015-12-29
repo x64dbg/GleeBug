@@ -1,5 +1,5 @@
-#ifndef _DEBUGGER_GLOBAL_H
-#define _DEBUGGER_GLOBAL_H
+#ifndef DEBUGGER_GLOBAL_H
+#define DEBUGGER_GLOBAL_H
 
 #include "GleeBug.h"
 
@@ -38,4 +38,4 @@ namespace GleeBug
     typedef std::vector<StepCallback> StepCallbackVector;
 };
 
-#endif //_DEBUGGER_GLOBAL_H
+#endif //DEBUGGER_GLOBAL_H
