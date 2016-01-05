@@ -47,7 +47,7 @@ namespace GleeBug
         \param b Second range.
         \return True if a comes before b, false otherwise.
         */
-        inline bool operator()(const Range & a, const Range & b) const //a before b?
+        bool operator()(const Range & a, const Range & b) const //a before b?
         {
             return a.second < b.first;
         }

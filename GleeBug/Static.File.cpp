@@ -11,7 +11,7 @@ namespace GleeBug
 
     File::~File()
     {
-        Close();
+        File::Close();
     }
 
     bool File::Open()

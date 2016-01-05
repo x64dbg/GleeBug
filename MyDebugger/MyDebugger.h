@@ -16,11 +16,11 @@ protected:
             printf("Entry breakpoint deleted!\n");
         else
             printf("Failed to delete entry breakpoint...\n");
-        mThread->StepInto(std::bind([this]()
+        mThread->StepInto([this]()
         {
             printf("Step after entry breakpoint! GIP: 0x%p\n",
                 mRegisters->Gip());
-        }));
+        });
     }
 
     void cbEntryHardwareBreakpoint(const BreakpointInfo & info)
@@ -31,11 +31,11 @@ protected:
             printf("Entry hardware breakpoint deleted!\n");
         else
             printf("Failed to delete entry hardware breakpoint...\n");
-        mThread->StepInto(std::bind([this]()
+        mThread->StepInto([this]()
         {
             printf("Step after entry hardware breakpoint! GIP: 0x%p\n",
                 mRegisters->Gip());
-        }));
+        });
     }
 
     void cbStepSystem()

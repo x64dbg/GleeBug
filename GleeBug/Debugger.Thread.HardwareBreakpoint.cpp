@@ -37,7 +37,7 @@ namespace GleeBug
         BYTE DR7_SIZE[HWBP_COUNT];
     };
 
-    static inline ptr dr7_ptr(const DR7 & dr7)
+    static ptr dr7_ptr(const DR7 & dr7)
     {
         ptr result = 0;
         if (BITGET(dr7.DR7_MODE[0], 0))
@@ -91,7 +91,7 @@ namespace GleeBug
         return result;
     }
 
-    static inline DR7 ptr_dr7(ptr dr7)
+    static DR7 ptr_dr7(ptr dr7)
     {
         DR7 result;
         memset(&result, 0, sizeof(DR7));
@@ -146,7 +146,7 @@ namespace GleeBug
         return result;
     }
 
-    static inline DR7_SIZE size_dr7(HardwareSize size)
+    static DR7_SIZE size_dr7(HardwareSize size)
     {
         switch (size)
         {
@@ -165,7 +165,7 @@ namespace GleeBug
         }
     }
 
-    static inline DR7_TYPE type_dr7(HardwareType type)
+    static DR7_TYPE type_dr7(HardwareType type)
     {
         switch (type)
         {

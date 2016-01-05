@@ -9,6 +9,11 @@ namespace GleeBug
     {
     }
 
+    BufferFile::~BufferFile()
+    {
+        BufferFile::Close();
+    }
+
     bool BufferFile::Open()
     {
         return true;

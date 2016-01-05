@@ -425,7 +425,7 @@ public:
 
     bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)
     {
-        if (!mProcess || IndexOfRegister < 0 || IndexOfRegister > 3)
+        if (!mProcess || IndexOfRegister > 3)
             return false;
         auto address = mProcess->hardwareBreakpoints[IndexOfRegister].address;
         return mProcess->DeleteHardwareBreakpoint(address);
@@ -524,7 +524,7 @@ protected:
     }
 
 private: //functions
-    static inline Registers::R registerFromDword(DWORD IndexOfRegister)
+    static Registers::R registerFromDword(DWORD IndexOfRegister)
     {
         switch (IndexOfRegister)
         {
@@ -571,19 +571,19 @@ private: //functions
         }
     }
 
-    inline ThreadInfo* threadFromHandle(HANDLE hThread) const
+    ThreadInfo* threadFromHandle(HANDLE hThread) const
     {
         //TODO: properly implement this
         return mThread;
     }
 
-    inline ProcessInfo* processFromHandle(HANDLE hProcess) const
+    ProcessInfo* processFromHandle(HANDLE hProcess) const
     {
         //TODO: properly implement this
         return mProcess;
     }
 
-    static inline HardwareType hwtypeFromTitan(DWORD type)
+    static HardwareType hwtypeFromTitan(DWORD type)
     {
         switch (type)
         {
@@ -598,7 +598,7 @@ private: //functions
         }
     }
 
-    static inline HardwareSize hwsizeFromTitan(DWORD size)
+    static HardwareSize hwsizeFromTitan(DWORD size)
     {
         switch (size)
         {
