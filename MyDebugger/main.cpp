@@ -50,7 +50,7 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
         {
             BufferFile file(diskData.data(), diskSize);
             Pe pe(file);
-            auto parseError = pe.ParseHeaders();
+            auto parseError = pe.ParseHeaders(true);
             if (parseError == Pe::ErrorOk)
             {
                 result = true;

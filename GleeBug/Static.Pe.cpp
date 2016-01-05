@@ -15,13 +15,14 @@ namespace GleeBug
         mData.clear();
         mOffset = 0;
         mDosHeader = Region<IMAGE_DOS_HEADER>();
+        mDosNtOverlap = false;
         mAfterDosData = Region<uint8>();
         mNtHeaders32 = Region<IMAGE_NT_HEADERS32>();
         mNtHeaders64 = Region<IMAGE_NT_HEADERS64>();
         mSectionHeaders = Region<IMAGE_SECTION_HEADER>();
     }
 
-    Pe::Error Pe::ParseHeaders()
+    Pe::Error Pe::ParseHeaders(bool allowOverlap)
     {
         //clear all current data
         Clear();
@@ -42,15 +43,23 @@ namespace GleeBug
         if (newOffset < 0 || uint32(newOffset) >= mFile.GetSize())
             return ErrorDosHeaderNtHeaderOffset;
 
-        //TODO: special case where DOS and PE header overlap (tinygui.exe)
+        //special case where DOS and PE header overlap (tinygui.exe)
         if (uint32(newOffset) < mOffset)
-            return ErrorDosHeaderNtHeaderOffsetOverlap;
+        {
+            if (!allowOverlap)
+                return ErrorDosHeaderNtHeaderOffsetOverlap;
 
-        //read & verify the data between the DOS header and the NT headers
-        auto afterDosCount = newOffset - mOffset;
-        mAfterDosData = readRegion<uint8>(afterDosCount);
-        if (!mAfterDosData)
-            return ErrorAfterDosHeaderData;
+            mDosNtOverlap = true;
+            mOffset = newOffset;
+        }
+        else
+        {
+            //read & verify the data between the DOS header and the NT headers
+            auto afterDosCount = newOffset - mOffset;
+            mAfterDosData = readRegion<uint8>(afterDosCount);
+            if (!mAfterDosData)
+                return ErrorAfterDosHeaderData;
+        }
 
         //read & verify the signature
         auto signature = readRegion<DWORD>();
@@ -73,7 +82,7 @@ namespace GleeBug
             //read & verify the optional header
             realSizeOfIoh = uint32(sizeof(IMAGE_OPTIONAL_HEADER32));
             auto ioh = readRegion<IMAGE_OPTIONAL_HEADER32>();
-            if (!ioh)
+            if (!ioh) //TODO: support truncated optional header (tinyXP.exe)
                 return ErrorNtOptionalHeaderRead;
             if (ioh->Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
                 return ErrorNtOptionalHeaderMagic;

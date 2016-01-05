@@ -32,11 +32,12 @@ namespace GleeBug
         explicit Pe(File & file);
 
         void Clear();
-        Error ParseHeaders();
+        Error ParseHeaders(bool allowOverlap = false);
         bool IsValidPe() const;
         bool IsPe64() const;
 
         const Region<IMAGE_DOS_HEADER> & GetDosHeader() const { return mDosHeader; }
+        bool GetDosNtOverlap() const { return mDosNtOverlap; }
         const Region<uint8> & GetAfterDosData() const { return mAfterDosData; }
         const Region<IMAGE_NT_HEADERS32> & GetNtHeaders32() const { return mNtHeaders32; }
         const Region<IMAGE_NT_HEADERS64> & GetNtHeaders64() const { return mNtHeaders64; }
@@ -48,7 +49,7 @@ namespace GleeBug
         void setupErrorMap();
 
         template<typename T>
-        inline Region<T> readRegion(uint32 count = 1)
+        Region<T> readRegion(uint32 count = 1)
         {
             return Region<T>(&mData, readData(sizeof(T) * count), count);
         }
@@ -60,6 +61,7 @@ namespace GleeBug
         uint32 mOffset;
 
         Region<IMAGE_DOS_HEADER> mDosHeader;
+        bool mDosNtOverlap;
         Region<uint8> mAfterDosData;
         Region<IMAGE_NT_HEADERS32> mNtHeaders32;
         Region<IMAGE_NT_HEADERS64> mNtHeaders64;
