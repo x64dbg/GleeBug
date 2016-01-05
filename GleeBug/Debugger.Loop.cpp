@@ -52,7 +52,7 @@ namespace GleeBug
             //call the pre debug event callback
             cbPostDebugEvent(mDebugEvent);
 
-            //dispatch the debug event
+            //dispatch the debug event (documented here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms679302(v=vs.85).aspx)
             switch (mDebugEvent.dwDebugEventCode)
             {
             case CREATE_PROCESS_DEBUG_EVENT:
