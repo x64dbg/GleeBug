@@ -118,5 +118,8 @@
     <ClInclude Include="Static.BufferFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Static.Pe.Section.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

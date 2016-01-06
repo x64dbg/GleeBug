@@ -182,6 +182,7 @@
     <ClInclude Include="Static.File.h" />
     <ClInclude Include="Static.Global.h" />
     <ClInclude Include="Static.Pe.h" />
+    <ClInclude Include="Static.Pe.Section.h" />
     <ClInclude Include="Static.Region.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -11,18 +11,30 @@ namespace GleeBug
 
     void Pe::Clear()
     {
-        mFileSize = 0;
         mData.clear();
         mOffset = 0;
-        mDosHeader = Region<IMAGE_DOS_HEADER>();
+
+        mDosHeader.Clear();
         mDosNtOverlap = false;
-        mAfterDosData = Region<uint8>();
-        mNtHeaders32 = Region<IMAGE_NT_HEADERS32>();
-        mNtHeaders64 = Region<IMAGE_NT_HEADERS64>();
-        mSectionHeaders = Region<IMAGE_SECTION_HEADER>();
+        mAfterDosData.Clear();
+        mNtHeaders32.Clear();
+        mNtHeaders64.Clear();
+        mAfterOptionalData.Clear();
+        mSectionHeaders.Clear();
+        mSections.clear();
     }
 
-    Pe::Error Pe::ParseHeaders(bool allowOverlap)
+    bool Pe::IsValidPe() const
+    {
+        return IsPe64() ? mNtHeaders64.Valid() : mNtHeaders32.Valid();
+    }
+
+    bool Pe::IsPe64() const
+    {
+        return IsValidPe() ? mNtHeaders64.Valid() : false;
+    }
+
+    Pe::Error Pe::Parse(bool allowOverlap)
     {
         //clear all current data
         Clear();
@@ -139,17 +151,20 @@ namespace GleeBug
         auto sectionCount = ifh->NumberOfSections;
         mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(sectionCount);
 
+        //parse the sections
+        auto sectionsError = parseSections();
+        if (sectionsError != ErrorOk)
+            return sectionsError;
+
+        //TODO: parse data directories
         return ErrorOk;
     }
 
-    bool Pe::IsValidPe() const
+    Pe::Error Pe::parseSections()
     {
-        return mSectionHeaders.Valid();
-    }
-
-    bool Pe::IsPe64() const
-    {
-        return IsValidPe() ? mNtHeaders64.Valid() : false;
+        auto numberOfSections = mSectionHeaders.Count();
+        //TODO: parse section data
+        return ErrorOk;
     }
 
     uint32 Pe::readData(uint32 size)

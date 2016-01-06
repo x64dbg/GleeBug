@@ -35,6 +35,14 @@ namespace GleeBug
         }
 
         /**
+        \brief Clears and invalidates this region.
+        */
+        void Clear()
+        {
+            *this = Region<T>();
+        }
+
+        /**
         \brief Returns a pointer inside the data to the start of this region.
         \return nullptr if the region is invalid, a pointer to the data otherwise.
         */
@@ -109,7 +117,7 @@ namespace GleeBug
             return Data();
         }
 
-    private:
+    protected:
         std::vector<uint8>* mData;
         uint32 mOffset;
         uint32 mCount;

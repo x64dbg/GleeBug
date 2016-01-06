@@ -50,7 +50,7 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
         {
             BufferFile file(diskData.data(), diskSize);
             Pe pe(file);
-            auto parseError = pe.ParseHeaders(true);
+            auto parseError = pe.Parse(true);
             if (parseError == Pe::ErrorOk)
             {
                 result = true;
@@ -107,7 +107,7 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                 }
             }
             else
-                printf("Pe::ParseHeaders failed (%d)!\n", parseError);
+                printf("Pe::Parse failed (%d)!\n", parseError);
         }
         else
             puts("File::Read failed!");

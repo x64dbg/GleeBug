@@ -3,6 +3,7 @@
 
 #include "Static.File.h"
 #include "Static.Region.h"
+#include "Static.Pe.Section.h"
 
 namespace GleeBug
 {
@@ -31,10 +32,10 @@ namespace GleeBug
 
         explicit Pe(File & file);
 
-        void Clear();
-        Error ParseHeaders(bool allowOverlap = false);
         bool IsValidPe() const;
         bool IsPe64() const;
+        void Clear();
+        Error Parse(bool allowOverlap = false);
 
         const Region<IMAGE_DOS_HEADER> & GetDosHeader() const { return mDosHeader; }
         bool GetDosNtOverlap() const { return mDosNtOverlap; }
@@ -43,8 +44,10 @@ namespace GleeBug
         const Region<IMAGE_NT_HEADERS64> & GetNtHeaders64() const { return mNtHeaders64; }
         const Region<uint8> & GetAfterOptionalData() const { return mAfterOptionalData; }
         const Region<IMAGE_SECTION_HEADER> & GetSectionHeaders() const { return mSectionHeaders; }
+        const std::vector<Section> & GetSections() const { return mSections; }
 
     private:
+        Error parseSections();
         uint32 readData(uint32 size);
         void setupErrorMap();
 
@@ -55,8 +58,8 @@ namespace GleeBug
         }
 
         std::unordered_map<Error, const char*> mErrorMap;
+        
         File & mFile;
-        uint32 mFileSize;
         std::vector<uint8> mData;
         uint32 mOffset;
 
@@ -67,6 +70,7 @@ namespace GleeBug
         Region<IMAGE_NT_HEADERS64> mNtHeaders64;
         Region<uint8> mAfterOptionalData;
         Region<IMAGE_SECTION_HEADER> mSectionHeaders;
+        std::vector<Section> mSections;
     };
 };
 
