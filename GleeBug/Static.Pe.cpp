@@ -161,10 +161,7 @@ namespace GleeBug
         uint32 afterOptionalSize = realSizeOfIoh < sizeOfIoh ? sizeOfIoh - realSizeOfIoh : 0;
         mAfterOptionalData = readRegion<uint8>(afterOptionalSize);
         if (!mAfterOptionalData)
-        {
-            printf("realSizeOfIoh: %u, sizeOfIoh: %u, afterOptionalSize: %u\n", realSizeOfIoh, sizeOfIoh, afterOptionalSize);
             return ErrorAfterOptionalHeaderDataRead;
-        }
 
         //read the section headers
         mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(numberOfSections);
