@@ -64,7 +64,8 @@ namespace GleeBug
 
     bool Process::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
-        return false;
+        //TODO: correctly implement this
+        return MemWrite(address, buffer, size, bytesWritten);
     }
 
     bool Process::MemIsValidPtr(ptr address) const
@@ -73,18 +74,13 @@ namespace GleeBug
         return MemReadUnsafe(address, &byte, sizeof(byte));
     }
 
-    ptr Process::MemFindPattern(ptr data, size_t datasize, const std::vector<Pattern::Byte> & pattern, bool safe) const
+    ptr Process::MemFindPattern(ptr data, size_t datasize, const Pattern::WildcardPattern & pattern, bool safe) const
     {
         std::vector<uint8> buffer(datasize);
         if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
             return 0;
         auto found = Pattern::Find(buffer.data(), datasize, pattern);
         return found == -1 ? 0 : found + data;
-    }
-
-    ptr Process::MemFindPattern(ptr data, size_t datasize, const char* pattern, bool safe) const
-    {
-        return MemFindPattern(data, datasize, Pattern::Transform(pattern), safe);
     }
 
     ptr Process::MemFindPattern(ptr data, size_t datasize, const uint8* pattern, size_t patternsize, bool safe) const
@@ -94,5 +90,23 @@ namespace GleeBug
             return 0;
         auto found = Pattern::Find(buffer.data(), datasize, pattern, patternsize);
         return found == -1 ? 0 : found + data;
+    }
+
+    bool Process::MemWritePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & pattern, bool safe)
+    {
+        std::vector<uint8> buffer(datasize);
+        if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
+            return false;
+        Pattern::Write(buffer.data(), datasize, pattern);
+        return MemWrite(data, buffer.data(), datasize, nullptr, safe);
+    }
+
+    bool Process::MemSearchAndReplacePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe)
+    {
+        std::vector<uint8> buffer(datasize);
+        if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
+            return false;
+        Pattern::SearchAndReplace(buffer.data(), datasize, searchpattern, replacepattern);
+        return MemWrite(data, buffer.data(), datasize, nullptr, safe);
     }
 };

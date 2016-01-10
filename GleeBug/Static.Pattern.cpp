@@ -65,7 +65,7 @@ namespace GleeBug
         return pattern;
     }
 
-    size_t Pattern::Find(const uint8* data, size_t datasize, const std::vector<Byte> & pattern)
+    size_t Pattern::Find(const uint8* data, size_t datasize, const WildcardPattern & pattern)
     {
         auto MatchByte = [](uint8 byte, const Byte & pbyte)
         {
@@ -129,14 +129,8 @@ namespace GleeBug
         return -1;
     }
 
-    size_t Pattern::Find(const uint8* data, size_t datasize, const char* pattern)
+    void Pattern::Write(uint8* data, size_t datasize, const WildcardPattern & writepattern)
     {
-        return Find(data, datasize, Transform(pattern));
-    }
-
-    void Pattern::Write(uint8* data, size_t datasize, const char* pattern)
-    {
-        auto writepattern = Transform(pattern);
         if (!writepattern.size())
             return;
 
@@ -159,7 +153,7 @@ namespace GleeBug
             WriteByte(&data[i], writepattern.at(i));
     }
 
-    bool Pattern::SearchAndReplace(uint8* data, size_t datasize, const char* searchpattern, const char* replacepattern)
+    bool Pattern::SearchAndReplace(uint8* data, size_t datasize, const WildcardPattern & searchpattern, const WildcardPattern & replacepattern)
     {
         auto found = Find(data, datasize, searchpattern);
         if (found == -1)

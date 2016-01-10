@@ -124,7 +124,7 @@ namespace GleeBug
         \param safe Use the safe memory functions (eg do not consider software breakpoint data).
         \return Memory address when found, 0 when not found.
         */
-        ptr MemFindPattern(ptr data, size_t datasize, const std::vector<Pattern::Byte> & pattern, bool safe = true) const;
+        ptr MemFindPattern(ptr data, size_t datasize, const Pattern::WildcardPattern & pattern, bool safe = true) const;
 
         /**
         \brief Finds the first occurrence of a pattern in process memory.
@@ -134,7 +134,10 @@ namespace GleeBug
         \param safe Use the safe memory functions (eg do not consider software breakpoint data).
         \return Memory address when found, 0 when not found.
         */
-        ptr MemFindPattern(ptr data, size_t datasize, const char* pattern, bool safe = true) const;
+        ptr MemFindPattern(ptr data, size_t datasize, const std::string & pattern, bool safe = true) const
+        {
+            return MemFindPattern(data, datasize, Pattern::Transform(pattern), safe);
+        }
 
         /**
         \brief Finds the first occurrence of a pattern in process memory.
@@ -146,6 +149,54 @@ namespace GleeBug
         \return Memory address when found, 0 when not found.
         */
         ptr MemFindPattern(ptr data, size_t datasize, const uint8* pattern, size_t patternsize, bool safe = true) const;
+
+        /**
+        \brief Writes a pattern in process memory. This function writes as many bytes as possible from the pattern.
+        \param [in,out] data The address to write the pattern in.
+        \param datasize The size to write in.
+        \param pattern Specifies the pattern.
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemWritePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & pattern, bool safe = true);
+
+        /**
+        \brief Writes a pattern in process memory. This function writes as many bytes as possible from the pattern.
+        \param [in,out] data The address to write the pattern in.
+        \param datasize The size to write in.
+        \param pattern Specifies the pattern. The pattern supports wildcards (1? ?? ?6 78).
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemWritePattern(ptr data, size_t datasize, const std::string & pattern, bool safe = true)
+        {
+            return MemWritePattern(data, datasize, Pattern::Transform(pattern), safe);
+        }
+
+        /**
+        \brief Search and replace a pattern in process memory.
+        \param [in,out] data The address to search and replace in.
+        \param datasize The size to search and replace in.
+        \param searchpattern The pattern to find.
+        \param replacepattern The pattern to replace the found occurrence with.
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemSearchAndReplacePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe = true);
+
+        /**
+        \brief Search and replace a pattern in process memory.
+        \param [in,out] data The address to search and replace in.
+        \param datasize The size to search and replace in.
+        \param searchpattern The pattern to find. The pattern supports wildcards (1? ?? ?6 78).
+        \param replacepattern The pattern to replace the found occurrence with. The pattern supports wildcards (1? ?? ?6 78).
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemSearchAndReplacePattern(ptr data, size_t datasize, const std::string & searchpattern, const std::string & replacepattern, bool safe = true)
+        {
+            return MemSearchAndReplacePattern(data, datasize, Pattern::Transform(searchpattern), Pattern::Transform(replacepattern), safe);
+        }
 
         /**
         \brief Sets a software breakpoint.
