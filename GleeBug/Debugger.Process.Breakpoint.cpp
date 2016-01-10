@@ -29,10 +29,10 @@ namespace GleeBug
         }
 
         //read/write the breakpoint
-        if (!MemRead(address, info.internal.software.oldbytes, info.internal.software.size))
+        if (!MemReadUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
             return false;
 
-        if (!MemWrite(address, info.internal.software.newbytes, info.internal.software.size))
+        if (!MemWriteUnsafe(address, info.internal.software.newbytes, info.internal.software.size))
             return false;
         FlushInstructionCache(hProcess, nullptr, 0);
 
@@ -67,7 +67,7 @@ namespace GleeBug
         //restore the breakpoint bytes if the breakpoint is enabled
         if (info.enabled)
         {
-            if (!MemWrite(address, info.internal.software.oldbytes, info.internal.software.size))
+            if (!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
                 return false;
             FlushInstructionCache(hProcess, nullptr, 0);
         }

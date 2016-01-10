@@ -1,12 +1,10 @@
 #include "Static.Pattern.h"
 
-using namespace std;
-
 namespace GleeBug
 {
-    string Pattern::FormatPattern(const string & patterntext)
+    std::string Pattern::FormatPattern(const std::string & patterntext)
     {
-        string result;
+        std::string result;
         result.reserve(patterntext.length());
         for (auto ch : patterntext)
         {
@@ -16,19 +14,21 @@ namespace GleeBug
         return result;
     }
 
-    bool Pattern::Transform(const std::string & patterntext, std::vector<Byte> & pattern)
+    std::vector<Pattern::Byte> Pattern::Transform(const std::string & patterntext)
     {
-        pattern.clear();
+        std::vector<Byte> pattern;
         auto formattext = FormatPattern(patterntext);
         auto len = formattext.length();
         if (!len)
-            return false;
+            return pattern;
 
         if (len % 2) //not a multiple of 2
         {
             formattext += '?';
             len++;
         }
+
+        pattern.reserve(len / 2);
 
         auto hexChToInt = [](char ch)
         {
@@ -62,7 +62,7 @@ namespace GleeBug
                 pattern.push_back(newByte);
             }
         }
-        return true;
+        return pattern;
     }
 
     size_t Pattern::Find(const uint8* data, size_t datasize, const std::vector<Byte> & pattern)
@@ -87,6 +87,8 @@ namespace GleeBug
         };
 
         auto searchpatternsize = pattern.size();
+        if (!searchpatternsize)
+            return -1;
         for (size_t i = 0, pos = 0; i < datasize; i++)  //search for the pattern
         {
             if (MatchByte(data[i], pattern.at(pos)))  //check if our pattern matches the current byte
@@ -106,6 +108,8 @@ namespace GleeBug
 
     size_t Pattern::Find(const uint8* data, size_t datasize, const uint8* pattern, size_t patternsize)
     {
+        if (!patternsize)
+            return -1;
         if (patternsize > datasize)
             patternsize = datasize;
         for (size_t i = 0, pos = 0; i < datasize; i++)
@@ -127,18 +131,13 @@ namespace GleeBug
 
     size_t Pattern::Find(const uint8* data, size_t datasize, const char* pattern)
     {
-        string patterntext(pattern);
-        vector<Byte> searchpattern;
-        if (!Transform(patterntext, searchpattern))
-            return -1;
-        return Find(data, datasize, searchpattern);
+        return Find(data, datasize, Transform(pattern));
     }
 
     void Pattern::Write(uint8* data, size_t datasize, const char* pattern)
     {
-        vector<Byte> writepattern;
-        string patterntext(pattern);
-        if (!Transform(patterntext, writepattern))
+        auto writepattern = Transform(pattern);
+        if (!writepattern.size())
             return;
 
         auto writepatternsize = writepattern.size();
@@ -160,7 +159,7 @@ namespace GleeBug
             WriteByte(&data[i], writepattern.at(i));
     }
 
-    bool Pattern::Snr(uint8* data, size_t datasize, const char* searchpattern, const char* replacepattern)
+    bool Pattern::SearchAndReplace(uint8* data, size_t datasize, const char* searchpattern, const char* replacepattern)
     {
         auto found = Find(data, datasize, searchpattern);
         if (found == -1)

@@ -26,11 +26,10 @@ namespace GleeBug
 
         /**
         \brief Transforms a string pattern to a nibble structure.
-        \param patterntext The pattern string to find.
-        \param [out] pattern Transformed pattern.
-        \return true if it succeeds, false otherwise.
+        \param patterntext The pattern string to transform.
+        \return Non-empty vector on success.
         */
-        static bool Transform(const std::string & patterntext, std::vector<Byte> & pattern);
+        static std::vector<Byte> Transform(const std::string & patterntext);
 
         /**
         \brief Finds the first occurrence of a pattern in a buffer.
@@ -76,7 +75,7 @@ namespace GleeBug
         \param replacepattern The pattern to replace the found occurrence with. The pattern supports wildcards (1? ?? ?6 78).
         \return true if it succeeds, false if it fails.
         */
-        static bool Snr(uint8* data, size_t datasize, const char* searchpattern, const char* replacepattern);
+        static bool SearchAndReplace(uint8* data, size_t datasize, const char* searchpattern, const char* replacepattern);
     };
 };
 

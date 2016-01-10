@@ -28,12 +28,12 @@ namespace GleeBug
             mRegisters->Gip = info.address;
 
             //restore the original breakpoint byte and do an internal step
-            mProcess->MemWrite(info.address, info.internal.software.oldbytes, info.internal.software.size);
+            mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
             mThread->StepInternal(std::bind([this, info]()
             {
                 //only restore the bytes if the breakpoint still exists
                 if (mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
-                    mProcess->MemWrite(info.address, info.internal.software.newbytes, info.internal.software.size);
+                    mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
             }));
 
             //call the generic callback

@@ -68,7 +68,7 @@ protected:
         uint8 test[5];
         ptr start = entry - 2;
         printf("unsafe: ");
-        mProcess->MemRead(start, test, sizeof(test));
+        mProcess->MemReadUnsafe(start, test, sizeof(test));
         for (int i = 0; i < sizeof(test); i++)
             printf("%02X ", test[i]);
         puts("");

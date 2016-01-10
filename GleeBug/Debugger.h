@@ -47,7 +47,7 @@ namespace GleeBug
         bool Detach() const;
 
         /**
-        \brief Run the debug loop (does not return until the debuggee is detached or terminated).
+        \brief Run the debug loop (does not return until the debuggee is detached or terminated). This function should be run from the same thread as you ran Init.
         */
         void Start();
 

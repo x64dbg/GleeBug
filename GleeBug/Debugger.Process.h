@@ -5,6 +5,7 @@
 #include "Debugger.Thread.h"
 #include "Debugger.Dll.h"
 #include "Debugger.Breakpoint.h"
+#include "Static.Pattern.h"
 
 namespace GleeBug
 {
@@ -42,9 +43,25 @@ namespace GleeBug
         \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
         \param size The size to read.
         \param bytesRead (Optional) Number of bytes read (should be equal to size on success).
+        \param safe Whether to call MemReadSafe or MemReadUnsafe.
         \return true if it succeeds, false if it fails.
         */
-        bool MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr) const;
+        bool MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr, bool safe = true) const
+        {
+            if (safe)
+                return MemReadSafe(address, buffer, size, bytesRead);
+            return MemRead(address, buffer, size, bytesRead);
+        }
+
+        /**
+        \brief Read memory from the process. This function should be used for internal reasons only!
+        \param address The virtual address to read from.
+        \param [out] buffer Destination buffer. Cannot be null. May be filled partially on failure.
+        \param size The size to read.
+        \param bytesRead (Optional) Number of bytes read (should be equal to size on success).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemReadUnsafe(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr) const;
 
         /**
         \brief Safely read memory from the process, filtering out breakpoint bytes.
@@ -62,9 +79,25 @@ namespace GleeBug
         \param [in] buffer Source buffer. Cannot be null.
         \param size The size to write.
         \param bytesWritten (Optional) Number of bytes written (should be equal to size on success).
+        \param safe Wheter to call MemWriteSafe or MemWriteUnsafe.
         \return true if it succeeds, false if it fails.
         */
-        bool MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr);
+        bool MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr, bool safe = true)
+        {
+            if (safe)
+                return MemWriteSafe(address, buffer, size, bytesWritten);
+            return MemWriteUnsafe(address, buffer, size, bytesWritten);
+        }
+
+        /**
+        \brief Write memory to the process. This function should be used for internal reasons only!
+        \param address The virtual address to write to.
+        \param [in] buffer Source buffer. Cannot be null.
+        \param size The size to write.
+        \param bytesWritten (Optional) Number of bytes written (should be equal to size on success).
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemWriteUnsafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr);
 
         /**
         \brief Safely write memory to the process, preserving breakpoint bytes.
@@ -82,6 +115,37 @@ namespace GleeBug
         \return true if the address is valid, false otherwise.
         */
         bool MemIsValidPtr(ptr address) const;
+
+        /**
+        \brief Finds the first occurrence of a pattern in process memory.
+        \param data The address to start searching from.
+        \param datasize The size to search in.
+        \param pattern The pattern to find.
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return Memory address when found, 0 when not found.
+        */
+        ptr MemFindPattern(ptr data, size_t datasize, const std::vector<Pattern::Byte> & pattern, bool safe = true) const;
+
+        /**
+        \brief Finds the first occurrence of a pattern in process memory.
+        \param data The address to start searching from.
+        \param datasize The size to search in.
+        \param pattern The pattern to find.
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return Memory address when found, 0 when not found.
+        */
+        ptr MemFindPattern(ptr data, size_t datasize, const char* pattern, bool safe = true) const;
+
+        /**
+        \brief Finds the first occurrence of a pattern in process memory.
+        \param data The address to start searching from.
+        \param datasize The size to search in.
+        \param pattern The pattern to find.
+        \param patternsize The size of the pattern to find.
+        \param safe Use the safe memory functions (eg do not consider software breakpoint data).
+        \return Memory address when found, 0 when not found.
+        */
+        ptr MemFindPattern(ptr data, size_t datasize, const uint8* pattern, size_t patternsize, bool safe = true) const;
 
         /**
         \brief Sets a software breakpoint.

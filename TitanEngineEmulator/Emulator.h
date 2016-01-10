@@ -62,7 +62,7 @@ public:
         if (!process)
             return false;
         //TODO process->MemWriteSafe
-        return process->MemWrite(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
+        return process->MemWriteUnsafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)

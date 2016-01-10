@@ -2,7 +2,7 @@
 
 namespace GleeBug
 {
-    bool Process::MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead) const
+    bool Process::MemReadUnsafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
         ptr read;
         if (!bytesRead)
@@ -12,7 +12,7 @@ namespace GleeBug
 
     bool Process::MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
-        if (!MemRead(address, buffer, size, bytesRead))
+        if (!MemReadUnsafe(address, buffer, size, bytesRead))
             return false;
 
         //choose the filter method that has the lowest cost
@@ -54,7 +54,7 @@ namespace GleeBug
         return true;
     }
 
-    bool Process::MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
+    bool Process::MemWriteUnsafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         ptr written;
         if (!bytesWritten)
@@ -70,6 +70,29 @@ namespace GleeBug
     bool Process::MemIsValidPtr(ptr address) const
     {
         uint8 byte;
-        return MemRead(address, &byte, sizeof(byte));
+        return MemReadUnsafe(address, &byte, sizeof(byte));
+    }
+
+    ptr Process::MemFindPattern(ptr data, size_t datasize, const std::vector<Pattern::Byte> & pattern, bool safe) const
+    {
+        std::vector<uint8> buffer(datasize);
+        if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
+            return 0;
+        auto found = Pattern::Find(buffer.data(), datasize, pattern);
+        return found == -1 ? 0 : found + data;
+    }
+
+    ptr Process::MemFindPattern(ptr data, size_t datasize, const char* pattern, bool safe) const
+    {
+        return MemFindPattern(data, datasize, Pattern::Transform(pattern), safe);
+    }
+
+    ptr Process::MemFindPattern(ptr data, size_t datasize, const uint8* pattern, size_t patternsize, bool safe) const
+    {
+        std::vector<uint8> buffer(datasize);
+        if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
+            return 0;
+        auto found = Pattern::Find(buffer.data(), datasize, pattern, patternsize);
+        return found == -1 ? 0 : found + data;
     }
 };
