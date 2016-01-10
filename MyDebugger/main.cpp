@@ -149,7 +149,7 @@ static void testCorkami()
 
 int main()
 {
-    testPeFile(L"C:\\test64.exe");
+    //testPeFile(L"C:\\test64.exe");
     testCorkami();
     puts("");
     system("pause");

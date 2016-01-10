@@ -71,15 +71,17 @@ namespace GleeBug
 
             mDosNtOverlap = true;
             mOffset = newOffset;
+            mAfterDosData = readRegion<uint8>(0);
         }
         else
         {
             //read & verify the data between the DOS header and the NT headers
             auto afterDosCount = newOffset - mOffset;
             mAfterDosData = readRegion<uint8>(afterDosCount);
-            if (!mAfterDosData)
-                return ErrorAfterDosHeaderData;
         }
+
+        if (!mAfterDosData)
+            return ErrorAfterDosHeaderData;
 
         //read & verify the signature
         auto signature = readRegion<DWORD>();
@@ -156,8 +158,13 @@ namespace GleeBug
             return ErrorNtFileHeaderSizeOfOptionalHeaderOverlap;
 
         //read data after the optional header (TODO: check if this is even possible)
-        uint32 afterOptionalCount = sizeOfIoh > realSizeOfIoh ? sizeOfIoh - realSizeOfIoh : 0;
-        mAfterOptionalData = readRegion<uint8>(afterOptionalCount);
+        uint32 afterOptionalSize = realSizeOfIoh < sizeOfIoh ? sizeOfIoh - realSizeOfIoh : 0;
+        mAfterOptionalData = readRegion<uint8>(afterOptionalSize);
+        if (!mAfterOptionalData)
+        {
+            printf("realSizeOfIoh: %u, sizeOfIoh: %u, afterOptionalSize: %u\n", realSizeOfIoh, sizeOfIoh, afterOptionalSize);
+            return ErrorAfterOptionalHeaderDataRead;
+        }
 
         //read the section headers
         mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(numberOfSections);
@@ -201,8 +208,10 @@ namespace GleeBug
 
         //get after section headers data
         auto firstRawAddress = sortedHeaders[0].header.PointerToRawData;
-        if (mOffset < firstRawAddress)
-            mAfterSectionHeadersData = readRegion<uint8>(firstRawAddress - mOffset);
+        auto afterDataSize = mOffset < firstRawAddress ? firstRawAddress - mOffset : 0;
+        mAfterSectionHeadersData = readRegion<uint8>(afterDataSize);
+        if (!mAfterSectionHeadersData)
+            return ErrorAfterSectionHeadersDataRead;
 
         //read the actual section data.
         for (auto & section : sortedHeaders)
@@ -236,6 +245,8 @@ namespace GleeBug
 
     uint32 Pe::readData(uint32 size)
     {
+        if (!size)
+            return mOffset;
         std::vector<uint8> temp(size);
 
         if (!mFile.Read(mOffset, temp.data(), size))
@@ -264,8 +275,10 @@ namespace GleeBug
         mErrorMap.insert({ ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize, "ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize" });
         mErrorMap.insert({ ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead" });
         mErrorMap.insert({ ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic" });
+        mErrorMap.insert({ ErrorAfterOptionalHeaderDataRead, "ErrorAfterOptionalHeaderDataRead" });
         mErrorMap.insert({ ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize" });
         mErrorMap.insert({ ErrorSectionHeadersRead, "ErrorSectionHeadersRead" });
+        mErrorMap.insert({ ErrorAfterSectionHeadersDataRead, "ErrorAfterSectionHeadersDataRead" });
         mErrorMap.insert({ ErrorBeforeSectionDataRead, "ErrorBeforeSectionDataRead" });
         mErrorMap.insert({ ErrorSectionDataRead, "ErrorSectionDataRead" });
     }

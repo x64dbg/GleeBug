@@ -27,8 +27,10 @@ namespace GleeBug
             ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize,
             ErrorNtOptionalHeaderRead,
             ErrorNtOptionalHeaderMagic,
+            ErrorAfterOptionalHeaderDataRead,
             ErrorNtHeadersRegionSize,
             ErrorSectionHeadersRead,
+            ErrorAfterSectionHeadersDataRead,
             ErrorBeforeSectionDataRead,
             ErrorSectionDataRead
         };
