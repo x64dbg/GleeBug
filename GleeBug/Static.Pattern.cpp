@@ -104,7 +104,7 @@ namespace GleeBug
         return -1;
     }
 
-    size_t Pattern::Find(const uint8* data, size_t datasize, unsigned char* pattern, size_t patternsize)
+    size_t Pattern::Find(const uint8* data, size_t datasize, const uint8* pattern, size_t patternsize)
     {
         if (patternsize > datasize)
             patternsize = datasize;
