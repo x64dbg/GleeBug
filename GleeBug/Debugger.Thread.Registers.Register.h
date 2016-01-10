@@ -251,7 +251,7 @@ public:
     \brief Increment operator.
     \return The register before the operation.
     */
-    Register<RegisterIndex, Type> & operator++()
+    Register<RegisterIndex, Type> operator++()
     {
         auto ret = *this;
         Set(Get() + 1);
@@ -262,7 +262,7 @@ public:
     \brief Increment operator.
     \return The register before the operation.
     */
-    Register<RegisterIndex, Type> & operator++(int)
+    Register<RegisterIndex, Type> operator++(int)
     {
         return operator++();
     }

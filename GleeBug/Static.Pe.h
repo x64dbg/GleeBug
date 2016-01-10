@@ -12,23 +12,25 @@ namespace GleeBug
     public:
         enum Error
         {
-            ErrorOk = 0,
-            ErrorDosHeaderRead = 1,
-            ErrorDosHeaderMagic = 2,
-            ErrorDosHeaderNtHeaderOffset = 3,
-            ErrorDosHeaderNtHeaderOffsetOverlap = 4,
-            ErrorAfterDosHeaderData = 5,
-            ErrorNtSignatureRead = 6,
-            ErrorNtSignatureMagic = 7,
-            ErrorNtFileHeaderRead = 8,
-            ErrorNtFileHeaderSizeOfOptionalHeaderOverlap = 9,
-            ErrorNtFileHeaderUnsupportedMachine = 10,
-            ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead = 11,
-            ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize = 12,
-            ErrorNtOptionalHeaderRead = 13,
-            ErrorNtOptionalHeaderMagic = 14,
-            ErrorNtHeadersRegionSize = 15,
-            ErrorSectionsRead = 16
+            ErrorOk,
+            ErrorDosHeaderRead,
+            ErrorDosHeaderMagic,
+            ErrorDosHeaderNtHeaderOffset,
+            ErrorDosHeaderNtHeaderOffsetOverlap,
+            ErrorAfterDosHeaderData,
+            ErrorNtSignatureRead,
+            ErrorNtSignatureMagic,
+            ErrorNtFileHeaderRead,
+            ErrorNtFileHeaderSizeOfOptionalHeaderOverlap,
+            ErrorNtFileHeaderUnsupportedMachine,
+            ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead,
+            ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize,
+            ErrorNtOptionalHeaderRead,
+            ErrorNtOptionalHeaderMagic,
+            ErrorNtHeadersRegionSize,
+            ErrorSectionHeadersRead,
+            ErrorBeforeSectionDataRead,
+            ErrorSectionDataRead
         };
 
         explicit Pe(File & file);
@@ -65,6 +67,7 @@ namespace GleeBug
         File & mFile;
         std::vector<uint8> mData;
         uint32 mOffset;
+        bool mIsPe64;
 
         Region<IMAGE_DOS_HEADER> mDosHeader;
         bool mDosNtOverlap;

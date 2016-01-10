@@ -117,12 +117,14 @@ namespace GleeBug
             return Data();
         }
 
-        T* operator[](uint32 index) const
+        const T & operator[](uint32 index) const
         {
-            auto data = Data();
-            if (!data || index >= mCount)
-                return nullptr;
-            return data + index;
+            return Data()[index];
+        }
+
+        T & operator[](uint32 index)
+        {
+            return Data()[index];
         }
 
     protected:

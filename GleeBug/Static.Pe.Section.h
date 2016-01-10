@@ -5,28 +5,28 @@
 
 namespace GleeBug
 {
-    class Section : public Region < uint8 >
+    class Section
     {
     public:
-        explicit Section()
-            : Region()
+        explicit Section(uint16 index, Region<IMAGE_SECTION_HEADER> & headers, Region<uint8> beforeData, Region<uint8> data)
+            : mIndex(index),
+            mHeaders(headers),
+            mBeforeData(beforeData),
+            mData(data)
         {
         }
 
-        explicit Section(std::vector<uint8>* data, uint32 offset, uint32 size, PIMAGE_SECTION_HEADER header)
-            : Region(data, offset, size),
-            mHeader(header)
-        {
-        }
-
-        PIMAGE_SECTION_HEADER GetHeader() { return mHeader; }
-        uint32 GetVirtualAddress() { return mHeader->VirtualAddress; }
-        uint32 GetVirtualSize() { return mHeader->Misc.VirtualSize; }
-        uint32 GetRawAddress() { return mHeader->PointerToRawData; }
-        uint32 GetRawSize() { return mHeader->SizeOfRawData; }
+        uint16 GetIndex() const { return mIndex; }
+        IMAGE_SECTION_HEADER & GetHeader() { return mHeaders[mIndex]; }
+        const IMAGE_SECTION_HEADER & GetHeader() const { return mHeaders[mIndex]; }
+        const Region<uint8> & GetBeforeData() const { return mBeforeData; }
+        const Region<uint8> & GetData() const { return mData; }
 
     private:
-        PIMAGE_SECTION_HEADER mHeader;
+        uint16 mIndex;
+        Region<IMAGE_SECTION_HEADER> mHeaders;
+        Region<uint8> mBeforeData;
+        Region<uint8> mData;
     };
 };
 

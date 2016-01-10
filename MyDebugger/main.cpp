@@ -27,14 +27,37 @@ static void testDebugger()
 }
 
 template<typename T>
-static void printRegion(const char* str, Region<T> region)
+static void printRegion(const char* str, Region<T> region, bool newline = true)
 {
-    printf("\n%s (offset: 0x%X, size: 0x%X, v: %s, e: %s)\n",
+    printf("\n%s (offset: 0x%X, size: 0x%X, v: %s, e: %s)",
         str,
         region.Offset(),
         region.Size(),
         region.Valid() ? "true" : "false",
         region.Empty() ? "true" : "false");
+    if (newline)
+        puts("");
+}
+
+template<typename T>
+static void printNtHeaders(T inth)
+{
+    printRegion("NT Headers:", inth);
+    printf("  Signature: %08X\n", inth->Signature);
+
+    auto ifh = &inth->FileHeader;
+    puts("\n  File Header:");
+    printf("    Machine             : %04X\n", ifh->Machine);
+    printf("    NumberOfSections    : %04X\n", ifh->NumberOfSections);
+    printf("    TimeDateStamp       : %08X\n", ifh->TimeDateStamp);
+    printf("    SizeOfOptionalHeader: %04X\n", ifh->SizeOfOptionalHeader);
+
+    auto ioh = &inth->OptionalHeader;
+    puts("\n  Optional Header:");
+    printf("    Magic     : %04X\n", ioh->Magic);
+    printf("    EntryPoint: %08X\n", ioh->AddressOfEntryPoint);
+    printf("    ImageBase : %p\n", PVOID(ioh->ImageBase));
+    printf("    Subsystem : %04X\n", ioh->Subsystem);
 }
 
 static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
@@ -64,50 +87,35 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                 auto afterDosData = pe.GetAfterDosData();
                 printRegion("After DOS Data", afterDosData);
 
-#ifdef _WIN64
-                auto inth = pe.GetNtHeaders64();
-#else //x32
-                auto inth = pe.GetNtHeaders32();
-#endif //_WIN64
-                printRegion("NT Headers:", inth);
-                printf("  Signature: %08X\n", inth->Signature);
-
-                PIMAGE_FILE_HEADER ifh = &inth->FileHeader;
-                puts("\n  File Header:");
-                printf("    Machine             : %04X\n", ifh->Machine);
-                printf("    NumberOfSections    : %04X\n", ifh->NumberOfSections);
-                printf("    TimeDateStamp       : %08X\n", ifh->TimeDateStamp);
-                printf("    SizeOfOptionalHeader: %04X\n", ifh->SizeOfOptionalHeader);
-
-                PIMAGE_OPTIONAL_HEADER ioh = &inth->OptionalHeader;
-                puts("\n  Optional Header:");
-                printf("    Magic     : %04X\n", ioh->Magic);
-                printf("    EntryPoint: %08X\n", ioh->AddressOfEntryPoint);
-                printf("    ImageBase : %p\n", ioh->ImageBase);
-                printf("    Subsystem : %04X\n", ioh->Subsystem);
+                if (pe.IsPe64())
+                    printNtHeaders(pe.GetNtHeaders64());
+                else
+                    printNtHeaders(pe.GetNtHeaders32());
 
                 auto afterOptionalData = pe.GetAfterOptionalData();
                 printRegion("After Optional Data", afterOptionalData);
 
                 auto ish = pe.GetSectionHeaders();
-                printRegion("Section Headers:", ish);
-                for (auto i = 0; i < ifh->NumberOfSections; i++)
-                {
-                    if (i)
-                        puts("");
-                    auto cur = ish.Data() + i;
-                    printf("  Section %d:\n", i + 1);
-                    char name[9] = "";
-                    memcpy(name, cur->Name, sizeof(cur->Name));
-                    printf("    Name : %s\n", name);
-                    printf("    VSize: %08X\n", cur->Misc.VirtualSize);
-                    printf("    VAddr: %08X\n", cur->VirtualAddress);
-                    printf("    RSize: %08X\n", cur->SizeOfRawData);
-                    printf("    RAddr: %08X\n", cur->PointerToRawData);
-                }
-
+                printRegion("Section Headers", ish, false);
                 auto afterSectionHeadersData = pe.GetAfterSectionHeadersData();
                 printRegion("After Section Headers Data", afterSectionHeadersData);
+                auto sections = pe.GetSections();
+                for (const auto & section : sections)
+                {
+                    if (section.GetIndex())
+                        puts("");
+                    printf("  Section %d:\n", section.GetIndex());
+                    auto cur = section.GetHeader();
+                    char name[9] = "";
+                    memcpy(name, cur.Name, sizeof(cur.Name));
+                    printf("    Name : %s\n", name);
+                    printf("    VSize: %08X\n", cur.Misc.VirtualSize);
+                    printf("    VAddr: %08X\n", cur.VirtualAddress);
+                    printf("    RSize: %08X\n", cur.SizeOfRawData);
+                    printf("    RAddr: %08X", cur.PointerToRawData);
+                    printRegion("    Before Data", section.GetBeforeData(), false);
+                    printRegion("    Data", section.GetData());
+                }
             }
             else
                 printf("Pe::Parse failed (%s)!\n", pe.ErrorText(parseError));
@@ -142,7 +150,7 @@ static void testCorkami()
 int main()
 {
     testPeFile(L"C:\\test64.exe");
-    //testCorkami();
+    testCorkami();
     puts("");
     system("pause");
     return 0;

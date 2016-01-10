@@ -13,6 +13,7 @@ namespace GleeBug
     {
         mData.clear();
         mOffset = 0;
+        mIsPe64 = false;
 
         mDosHeader.Clear();
         mDosNtOverlap = false;
@@ -38,7 +39,7 @@ namespace GleeBug
 
     bool Pe::IsPe64() const
     {
-        return IsValidPe() ? mNtHeaders64.Valid() : false;
+        return mIsPe64;
     }
 
     Pe::Error Pe::Parse(bool allowOverlap)
@@ -115,6 +116,8 @@ namespace GleeBug
 
         case IMAGE_FILE_MACHINE_AMD64:
         {
+            mIsPe64 = true;
+
             //read & verify the optional header
             realSizeOfIoh = uint32(sizeof(IMAGE_OPTIONAL_HEADER64));
             auto ioh = readRegion<IMAGE_OPTIONAL_HEADER64>();
@@ -145,9 +148,11 @@ namespace GleeBug
         }
         }
 
+        auto numberOfSections = ifh->NumberOfSections;
+
         //check the SizeOfOptionalHeader field
         auto sizeOfIoh = ifh->SizeOfOptionalHeader;
-        if (ifh->NumberOfSections && sizeOfIoh < realSizeOfIoh) //TODO: this can be valid in certain circumstances (nullSOH-XP)
+        if (numberOfSections && sizeOfIoh < realSizeOfIoh) //TODO: this can be valid in certain circumstances (nullSOH-XP)
             return ErrorNtFileHeaderSizeOfOptionalHeaderOverlap;
 
         //read data after the optional header (TODO: check if this is even possible)
@@ -155,13 +160,12 @@ namespace GleeBug
         mAfterOptionalData = readRegion<uint8>(afterOptionalCount);
 
         //read the section headers
-        auto sectionCount = ifh->NumberOfSections;
-        mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(sectionCount);
+        mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(numberOfSections);
         if (!mSectionHeaders)
-            return ErrorSectionsRead;
+            return ErrorSectionHeadersRead;
 
         //parse the sections
-        auto sectionsError = parseSections(sectionCount);
+        auto sectionsError = parseSections(numberOfSections);
         if (sectionsError != ErrorOk)
             return sectionsError;
 
@@ -171,34 +175,60 @@ namespace GleeBug
 
     Pe::Error Pe::parseSections(uint16 count)
     {
-        if (count == 0)
+        if (!count)
             return ErrorOk;
 
         auto sectionHeaders = GetSectionHeaders();
+
         struct SectionInfo
         {
             uint16 index;
-            PIMAGE_SECTION_HEADER header;
+            IMAGE_SECTION_HEADER header; //by value to prevent pointer invalidation
+            Region<uint8> beforeData;
+            Region<uint8> data;
         };
 
         //sort sections on raw address to prevent read errors and have a contiguous buffer
         std::vector<SectionInfo> sortedHeaders;
-        for (uint32 i = 0; i < count; i++)
+        sortedHeaders.reserve(count);
+        for (uint16 i = 0; i < count; i++)
             sortedHeaders.push_back(SectionInfo{ i, sectionHeaders[i] });
+
         std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
         {
-            return a.header->PointerToRawData < b.header->PointerToRawData;
+            return a.header.PointerToRawData < b.header.PointerToRawData;
         });
 
         //get after section headers data
-        auto firstRawAddress = sortedHeaders[0].header->PointerToRawData;
+        auto firstRawAddress = sortedHeaders[0].header.PointerToRawData;
         if (mOffset < firstRawAddress)
             mAfterSectionHeadersData = readRegion<uint8>(firstRawAddress - mOffset);
 
-        //TODO: read the actual section data.
-        for (auto section : sortedHeaders)
+        //read the actual section data.
+        for (auto & section : sortedHeaders)
         {
+            auto rawAddress = section.header.PointerToRawData;
+            auto beforeSize = mOffset < rawAddress ? rawAddress - mOffset : 0;
+            section.beforeData = readRegion<uint8>(beforeSize);
+            if (!section.beforeData)
+                return ErrorBeforeSectionDataRead;
+            section.data = readRegion<uint8>(section.header.SizeOfRawData);
+            if (!section.data)
+                return ErrorSectionDataRead;
+        }
 
+        //re-sort the sections by index
+        std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
+        {
+            return a.index < b.index;
+        });
+
+        //add the sections to the mSections vector
+        mSections.reserve(count);
+        for (uint16 i = 0; i < count; i++)
+        {
+            const auto & section = sortedHeaders[i];
+            mSections.push_back(Section(i, mSectionHeaders, section.beforeData, section.data));
         }
 
         return ErrorOk;
@@ -235,6 +265,8 @@ namespace GleeBug
         mErrorMap.insert({ ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead" });
         mErrorMap.insert({ ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic" });
         mErrorMap.insert({ ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize" });
-        mErrorMap.insert({ ErrorSectionsRead, "ErrorSectionsRead" });
+        mErrorMap.insert({ ErrorSectionHeadersRead, "ErrorSectionHeadersRead" });
+        mErrorMap.insert({ ErrorBeforeSectionDataRead, "ErrorBeforeSectionDataRead" });
+        mErrorMap.insert({ ErrorSectionDataRead, "ErrorSectionDataRead" });
     }
 };
