@@ -182,7 +182,7 @@ namespace GleeBug
         \param safe Use the safe memory functions (eg do not consider software breakpoint data).
         \return true if it succeeds, false if it fails.
         */
-        bool MemSearchAndReplacePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe = true);
+        bool MemSearchAndReplace(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe = true);
 
         /**
         \brief Search and replace a pattern in process memory.
@@ -193,9 +193,9 @@ namespace GleeBug
         \param safe Use the safe memory functions (eg do not consider software breakpoint data).
         \return true if it succeeds, false if it fails.
         */
-        bool MemSearchAndReplacePattern(ptr data, size_t datasize, const std::string & searchpattern, const std::string & replacepattern, bool safe = true)
+        bool MemSearchAndReplace(ptr data, size_t datasize, const std::string & searchpattern, const std::string & replacepattern, bool safe = true)
         {
-            return MemSearchAndReplacePattern(data, datasize, Pattern::Transform(searchpattern), Pattern::Transform(replacepattern), safe);
+            return MemSearchAndReplace(data, datasize, Pattern::Transform(searchpattern), Pattern::Transform(replacepattern), safe);
         }
 
         /**

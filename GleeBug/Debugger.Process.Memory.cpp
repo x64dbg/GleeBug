@@ -101,12 +101,13 @@ namespace GleeBug
         return MemWrite(data, buffer.data(), datasize, nullptr, safe);
     }
 
-    bool Process::MemSearchAndReplacePattern(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe)
+    bool Process::MemSearchAndReplace(ptr data, size_t datasize, const Pattern::WildcardPattern & searchpattern, const Pattern::WildcardPattern & replacepattern, bool safe)
     {
         std::vector<uint8> buffer(datasize);
         if (!MemRead(data, buffer.data(), datasize, nullptr, safe))
             return false;
-        Pattern::SearchAndReplace(buffer.data(), datasize, searchpattern, replacepattern);
+        if (!Pattern::SearchAndReplace(buffer.data(), datasize, searchpattern, replacepattern))
+            return false;
         return MemWrite(data, buffer.data(), datasize, nullptr, safe);
     }
 };
