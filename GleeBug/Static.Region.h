@@ -117,6 +117,14 @@ namespace GleeBug
             return Data();
         }
 
+        T* operator[](uint32 index) const
+        {
+            auto data = Data();
+            if (!data || index >= mCount)
+                return nullptr;
+            return data + index;
+        }
+
     protected:
         std::vector<uint8>* mData;
         uint32 mOffset;

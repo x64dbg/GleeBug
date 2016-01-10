@@ -21,7 +21,14 @@ namespace GleeBug
         mNtHeaders64.Clear();
         mAfterOptionalData.Clear();
         mSectionHeaders.Clear();
+        mAfterSectionHeadersData.Clear();
         mSections.clear();
+    }
+
+    const char* Pe::ErrorText(Error error) const
+    {
+        auto found = mErrorMap.find(error);
+        return found == mErrorMap.end() ? "" : found->second;
     }
 
     bool Pe::IsValidPe() const
@@ -150,9 +157,11 @@ namespace GleeBug
         //read the section headers
         auto sectionCount = ifh->NumberOfSections;
         mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(sectionCount);
+        if (!mSectionHeaders)
+            return ErrorSectionsRead;
 
         //parse the sections
-        auto sectionsError = parseSections();
+        auto sectionsError = parseSections(sectionCount);
         if (sectionsError != ErrorOk)
             return sectionsError;
 
@@ -160,10 +169,38 @@ namespace GleeBug
         return ErrorOk;
     }
 
-    Pe::Error Pe::parseSections()
+    Pe::Error Pe::parseSections(uint16 count)
     {
-        auto numberOfSections = mSectionHeaders.Count();
-        //TODO: parse section data
+        if (count == 0)
+            return ErrorOk;
+
+        auto sectionHeaders = GetSectionHeaders();
+        struct SectionInfo
+        {
+            uint16 index;
+            PIMAGE_SECTION_HEADER header;
+        };
+
+        //sort sections on raw address to prevent read errors and have a contiguous buffer
+        std::vector<SectionInfo> sortedHeaders;
+        for (uint32 i = 0; i < count; i++)
+            sortedHeaders.push_back(SectionInfo{ i, sectionHeaders[i] });
+        std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
+        {
+            return a.header->PointerToRawData < b.header->PointerToRawData;
+        });
+
+        //get after section headers data
+        auto firstRawAddress = sortedHeaders[0].header->PointerToRawData;
+        if (mOffset < firstRawAddress)
+            mAfterSectionHeadersData = readRegion<uint8>(firstRawAddress - mOffset);
+
+        //TODO: read the actual section data.
+        for (auto section : sortedHeaders)
+        {
+
+        }
+
         return ErrorOk;
     }
 
@@ -198,5 +235,6 @@ namespace GleeBug
         mErrorMap.insert({ ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead" });
         mErrorMap.insert({ ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic" });
         mErrorMap.insert({ ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize" });
+        mErrorMap.insert({ ErrorSectionsRead, "ErrorSectionsRead" });
     }
 };

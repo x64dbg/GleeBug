@@ -105,9 +105,12 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                     printf("    RSize: %08X\n", cur->SizeOfRawData);
                     printf("    RAddr: %08X\n", cur->PointerToRawData);
                 }
+
+                auto afterSectionHeadersData = pe.GetAfterSectionHeadersData();
+                printRegion("After Section Headers Data", afterSectionHeadersData);
             }
             else
-                printf("Pe::Parse failed (%d)!\n", parseError);
+                printf("Pe::Parse failed (%s)!\n", pe.ErrorText(parseError));
         }
         else
             puts("File::Read failed!");
@@ -138,7 +141,8 @@ static void testCorkami()
 
 int main()
 {
-    testCorkami();
+    testPeFile(L"C:\\test64.exe");
+    //testCorkami();
     puts("");
     system("pause");
     return 0;

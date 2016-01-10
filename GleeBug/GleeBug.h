@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <functional>
+#include <algorithm>
 
 #include <windows.h>
 #include <psapi.h>

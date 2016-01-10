@@ -28,13 +28,15 @@ namespace GleeBug
             ErrorNtOptionalHeaderRead = 13,
             ErrorNtOptionalHeaderMagic = 14,
             ErrorNtHeadersRegionSize = 15,
+            ErrorSectionsRead = 16
         };
 
         explicit Pe(File & file);
 
+        void Clear();
+        const char* ErrorText(Error error) const;
         bool IsValidPe() const;
         bool IsPe64() const;
-        void Clear();
         Error Parse(bool allowOverlap = false);
 
         const Region<IMAGE_DOS_HEADER> & GetDosHeader() const { return mDosHeader; }
@@ -44,10 +46,11 @@ namespace GleeBug
         const Region<IMAGE_NT_HEADERS64> & GetNtHeaders64() const { return mNtHeaders64; }
         const Region<uint8> & GetAfterOptionalData() const { return mAfterOptionalData; }
         const Region<IMAGE_SECTION_HEADER> & GetSectionHeaders() const { return mSectionHeaders; }
+        const Region<uint8> & GetAfterSectionHeadersData() const { return mAfterSectionHeadersData; }
         const std::vector<Section> & GetSections() const { return mSections; }
 
     private:
-        Error parseSections();
+        Error parseSections(uint16 count);
         uint32 readData(uint32 size);
         void setupErrorMap();
 
@@ -70,6 +73,7 @@ namespace GleeBug
         Region<IMAGE_NT_HEADERS64> mNtHeaders64;
         Region<uint8> mAfterOptionalData;
         Region<IMAGE_SECTION_HEADER> mSectionHeaders;
+        Region<uint8> mAfterSectionHeadersData;
         std::vector<Section> mSections;
     };
 };
