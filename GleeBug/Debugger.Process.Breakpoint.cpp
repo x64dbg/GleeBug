@@ -2,7 +2,7 @@
 
 namespace GleeBug
 {
-    bool ProcessInfo::SetBreakpoint(ptr address, bool singleshoot, SoftwareType type)
+    bool Process::SetBreakpoint(ptr address, bool singleshoot, SoftwareType type)
     {
         //check the address
         if (!MemIsValidPtr(address) ||
@@ -43,7 +43,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot, SoftwareType type)
+    bool Process::SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot, SoftwareType type)
     {
         //check if a callback on this address was already found
         if (breakpointCallbacks.find({ BreakpointType::Software, address }) != breakpointCallbacks.end())
@@ -56,7 +56,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::DeleteBreakpoint(ptr address)
+    bool Process::DeleteBreakpoint(ptr address)
     {
         //find the breakpoint
         auto found = breakpoints.find({ BreakpointType::Software, address });
@@ -79,7 +79,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::GetFreeHardwareBreakpointSlot(HardwareSlot & slot) const
+    bool Process::GetFreeHardwareBreakpointSlot(HardwareSlot & slot) const
     {
         //find a free hardware breakpoint slot
         for (int i = 0; i < HWBP_COUNT; i++)
@@ -93,7 +93,7 @@ namespace GleeBug
         return false;
     }
 
-    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size, bool singleshoot)
+    bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size, bool singleshoot)
     {
         //check the address
         if (!MemIsValidPtr(address) ||
@@ -138,7 +138,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::SetHardwareBreakpoint(ptr address, HardwareSlot slot, const BreakpointCallback & cbBreakpoint, HardwareType type, HardwareSize size, bool singleshoot)
+    bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, const BreakpointCallback & cbBreakpoint, HardwareType type, HardwareSize size, bool singleshoot)
     {
         //check if a callback on this address was already found
         if (breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
@@ -151,7 +151,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::DeleteHardwareBreakpoint(ptr address)
+    bool Process::DeleteHardwareBreakpoint(ptr address)
     {
         //find the hardware breakpoint
         auto found = breakpoints.find({ BreakpointType::Hardware, address });
@@ -176,7 +176,7 @@ namespace GleeBug
         return success;
     }
 
-    bool ProcessInfo::DeleteGenericBreakpoint(const BreakpointInfo & info)
+    bool Process::DeleteGenericBreakpoint(const BreakpointInfo & info)
     {
         switch (info.type)
         {

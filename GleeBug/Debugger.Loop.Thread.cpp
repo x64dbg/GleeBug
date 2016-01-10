@@ -6,7 +6,7 @@ namespace GleeBug
     {
         //thread housekeeping
         mProcess->threads.insert({ mDebugEvent.dwThreadId,
-            ThreadInfo(createThread.hThread,
+            Thread(createThread.hThread,
             mDebugEvent.dwThreadId,
             createThread.lpThreadLocalBase,
             createThread.lpStartAddress) });
@@ -15,7 +15,7 @@ namespace GleeBug
         mThread = mProcess->thread = &mProcess->threads.find(mDebugEvent.dwThreadId)->second;
         mRegisters = &mThread->registers;
         if (!mThread->RegReadContext())
-            cbInternalError("ThreadInfo::RegReadContext() failed!");
+            cbInternalError("Thread::RegReadContext() failed!");
 
         //call the debug event callback
         cbCreateThreadEvent(createThread, *mThread);

@@ -463,37 +463,37 @@ public:
     }
 
 protected:
-    void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
+    void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) override
     {
         if (mCbCREATEPROCESS)
             mCbCREATEPROCESS(&createProcess);
     }
 
-    void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
+    void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const Process & process) override
     {
         if (mCbEXITPROCESS)
             mCbEXITPROCESS(&exitProcess);
     }
 
-    void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) override
+    void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const Thread & thread) override
     {
         if (mCbCREATETHREAD)
             mCbCREATETHREAD(&createThread);
     }
 
-    void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) override
+    void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const Thread & thread) override
     {
         if (mCbEXITTHREAD)
             mCbEXITTHREAD(&exitThread);
     }
 
-    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll) override
+    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) override
     {
         if (mCbLOADDLL)
             mCbLOADDLL(&loadDll);
     }
 
-    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll) override
+    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) override
     {
         if (mCbUNLOADDLL)
             mCbUNLOADDLL(&unloadDll);
@@ -571,13 +571,13 @@ private: //functions
         }
     }
 
-    ThreadInfo* threadFromHandle(HANDLE hThread) const
+    Thread* threadFromHandle(HANDLE hThread) const
     {
         //TODO: properly implement this
         return mThread;
     }
 
-    ProcessInfo* processFromHandle(HANDLE hProcess) const
+    Process* processFromHandle(HANDLE hProcess) const
     {
         //TODO: properly implement this
         return mProcess;

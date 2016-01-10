@@ -2,7 +2,7 @@
 
 namespace GleeBug
 {
-    ThreadInfo::ThreadInfo(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress) :
+    Thread::Thread(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress) :
         hThread(hThread),
         dwThreadId(dwThreadId),
         lpThreadLocalBase(ptr(lpThreadLocalBase)),
@@ -13,7 +13,7 @@ namespace GleeBug
     {
     }
 
-    ThreadInfo::ThreadInfo(const ThreadInfo & other) :
+    Thread::Thread(const Thread & other) :
         hThread(other.hThread),
         dwThreadId(other.dwThreadId),
         lpThreadLocalBase(other.lpThreadLocalBase),
@@ -26,7 +26,7 @@ namespace GleeBug
     {
     }
 
-    ThreadInfo & ThreadInfo::operator=(const ThreadInfo& other)
+    Thread & Thread::operator=(const Thread& other)
     {
         hThread = other.hThread;
         dwThreadId = other.dwThreadId;
@@ -40,7 +40,7 @@ namespace GleeBug
         return *this;
     }
 
-    bool ThreadInfo::RegReadContext()
+    bool Thread::RegReadContext()
     {
         SuspendThread(this->hThread);
         memset(&this->mOldContext, 0, sizeof(CONTEXT));
@@ -55,7 +55,7 @@ namespace GleeBug
         return bReturn;
     }
 
-    bool ThreadInfo::RegWriteContext() const
+    bool Thread::RegWriteContext() const
     {
         //check if something actually changed
         if (memcmp(&this->mOldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)
@@ -67,13 +67,13 @@ namespace GleeBug
         return bReturn;
     }
 
-    void ThreadInfo::StepInto()
+    void Thread::StepInto()
     {
         registers.TrapFlag.Set();
         isSingleStepping = true;
     }
 
-    void ThreadInfo::StepInto(const StepCallback & cbStep)
+    void Thread::StepInto(const StepCallback & cbStep)
     {
         StepInto();
         
@@ -89,7 +89,7 @@ namespace GleeBug
         stepCallbacks.push_back(cbStep);
     }
 
-    void ThreadInfo::StepInternal(const StepCallback & cbStep)
+    void Thread::StepInternal(const StepCallback & cbStep)
     {
         registers.TrapFlag.Set();
         isInternalStepping = true;

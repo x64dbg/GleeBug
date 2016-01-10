@@ -44,7 +44,7 @@ protected:
             mRegisters->Gip());
     }
 
-    void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) override
+    void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) override
     {
         ptr entry = ptr(createProcess.lpStartAddress);
         printf("Process %d created with entry 0x%p\n",
@@ -79,34 +79,34 @@ protected:
         puts("");
     }
 
-    void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) override
+    void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const Process & process) override
     {
         printf("Process %u terminated with exit code 0x%08X\n",
             mDebugEvent.dwProcessId,
             exitProcess.dwExitCode);
     }
 
-    void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) override
+    void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const Thread & thread) override
     {
         printf("Thread %u created with entry 0x%p\n",
             mDebugEvent.dwThreadId,
             createThread.lpStartAddress);
     }
 
-    void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) override
+    void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const Thread & thread) override
     {
         printf("Thread %u terminated with exit code 0x%08X\n",
             mDebugEvent.dwThreadId,
             exitThread.dwExitCode);
     }
 
-    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll) override
+    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) override
     {
         printf("DLL loaded at 0x%p\n",
             loadDll.lpBaseOfDll);
     }
 
-    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll) override
+    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) override
     {
         printf("DLL 0x%p unloaded\n",
             unloadDll.lpBaseOfDll);

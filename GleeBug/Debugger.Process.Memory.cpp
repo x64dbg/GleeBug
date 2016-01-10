@@ -2,7 +2,7 @@
 
 namespace GleeBug
 {
-    bool ProcessInfo::MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead) const
+    bool Process::MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
         ptr read;
         if (!bytesRead)
@@ -10,7 +10,7 @@ namespace GleeBug
         return !!ReadProcessMemory(this->hProcess, reinterpret_cast<const void*>(address), buffer, size, (SIZE_T*)bytesRead);
     }
 
-    bool ProcessInfo::MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
+    bool Process::MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
         if (!MemRead(address, buffer, size, bytesRead))
             return false;
@@ -54,7 +54,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ProcessInfo::MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
+    bool Process::MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         ptr written;
         if (!bytesWritten)
@@ -62,12 +62,12 @@ namespace GleeBug
         return !!WriteProcessMemory(this->hProcess, reinterpret_cast<void*>(address), buffer, size, (SIZE_T*)bytesWritten);
     }
 
-    bool ProcessInfo::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
+    bool Process::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         return false;
     }
 
-    bool ProcessInfo::MemIsValidPtr(ptr address) const
+    bool Process::MemIsValidPtr(ptr address) const
     {
         uint8 byte;
         return MemRead(address, &byte, sizeof(byte));

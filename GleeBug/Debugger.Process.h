@@ -11,14 +11,14 @@ namespace GleeBug
     /**
     \brief Process information structure.
     */
-    class ProcessInfo
+    class Process
     {
     public:
         HANDLE hProcess;
         uint32 dwProcessId;
         uint32 dwMainThreadId;
 
-        ThreadInfo* thread;
+        Thread* thread;
         bool systemBreakpoint;
 
         ThreadMap threads; //DO NOT COPY THESE OBJECTS!
@@ -34,7 +34,7 @@ namespace GleeBug
         \param dwProcessId Identifier for the process.
         \param dwMainThreadId Identifier for the main thread.
         */
-        explicit ProcessInfo(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId);
+        explicit Process(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId);
 
         /**
         \brief Read memory from the process.
@@ -136,7 +136,7 @@ namespace GleeBug
         /**
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
-        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param slot The hardware breakpoint register slot. Use Process::GetFreeHardwareBreakpointSlot.
         \param type (Optional) The hardware breakpoint type.
         \param size (Optional) The hardware breakpoint size.
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
@@ -147,7 +147,7 @@ namespace GleeBug
         /**
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
-        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param slot The hardware breakpoint register slot. Use Process::GetFreeHardwareBreakpointSlot.
         \param cbBreakpoint The breakpoint callback. Can be written using BIND1(this, MyDebugger::cb).
         \param type (Optional) The hardware breakpoint type.
         \param size (Optional) The hardware breakpoint size.
@@ -160,7 +160,7 @@ namespace GleeBug
         \brief Sets a hardware breakpoint.
         \tparam T Generic type parameter. Must be a subclass of Debugger.
         \param address The address to set the hardware breakpoint on.
-        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param slot The hardware breakpoint register slot. Use Process::GetFreeHardwareBreakpointSlot.
         \param debugger This pointer to a subclass of Debugger.
         \param callback Pointer to the callback. Written like: &MyDebugger::cb
         \param type (Optional) The hardware breakpoint type.

@@ -180,7 +180,7 @@ namespace GleeBug
         }
     }
 
-    bool ThreadInfo::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size)
+    bool Thread::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size)
     {
         //check if the alignment is correct
         if ((address % int(size) != 0))
@@ -216,7 +216,7 @@ namespace GleeBug
         return true;
     }
 
-    bool ThreadInfo::DeleteHardwareBreakpoint(HardwareSlot slot)
+    bool Thread::DeleteHardwareBreakpoint(HardwareSlot slot)
     {
         //zero the address register
         switch (slot)

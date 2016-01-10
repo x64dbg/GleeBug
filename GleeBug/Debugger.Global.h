@@ -10,9 +10,9 @@ namespace GleeBug
 {
     //forward declarations
     class Debugger;
-    class ProcessInfo;
-    class DllInfo;
-    class ThreadInfo;
+    class Process;
+    class Dll;
+    class Thread;
     enum class BreakpointType;
     struct BreakpointInfo;
 
@@ -27,9 +27,9 @@ namespace GleeBug
     typedef std::function<void(const BreakpointInfo & info)> BreakpointCallback;
 
     //map typedefs
-    typedef std::map<uint32, ProcessInfo> ProcessMap;
-    typedef std::map<Range, DllInfo, RangeCompare> DllMap;
-    typedef std::map<uint32, ThreadInfo> ThreadMap;
+    typedef std::map<uint32, Process> ProcessMap;
+    typedef std::map<Range, Dll, RangeCompare> DllMap;
+    typedef std::map<uint32, Thread> ThreadMap;
     typedef std::map<BreakpointKey, BreakpointInfo> BreakpointMap;
     typedef std::map<BreakpointKey, BreakpointCallback> BreakpointCallbackMap;
     typedef std::unordered_map<ptr, BreakpointMap::iterator> SoftwareBreakpointMap;

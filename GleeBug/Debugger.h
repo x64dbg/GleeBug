@@ -67,44 +67,44 @@ namespace GleeBug
         /**
         \brief Process creation debug event callback. Called after the event is internally processed. Provide an implementation to use this callback.
         \param createProcess Information about the process created.
-        \param process ProcessInfo of the created process.
+        \param process Process of the created process.
         */
-        virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const ProcessInfo & process) {};
+        virtual void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) {};
 
         /**
         \brief Process termination debug event callback. Called before the event is internally processed. Provide an implementation to use this callback.
         \param exitProcess Information about the process terminated.
-        \param process ProcessInfo of the terminated process.
+        \param process Process of the terminated process.
         */
-        virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const ProcessInfo & process) {};
+        virtual void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const Process & process) {};
 
         /**
         \brief Thread creation debug event callback. Called after the event is internally processed. Provide an implementation to use this callback.
         \param createThread Information about the thread created.
-        \param thread ThreadInfo of the created thread.
+        \param thread Thread of the created thread.
         */
-        virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const ThreadInfo & thread) {};
+        virtual void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const Thread & thread) {};
 
         /**
         \brief Thread termination debug event callback. Called before the event is internally processed. Provide an implementation to use this callback.
         \param exitThread Information about the thread terminated.
-        \param thread ThreadInfo of the terminated thread.
+        \param thread Thread of the terminated thread.
         */
-        virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const ThreadInfo & thread) {};
+        virtual void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const Thread & thread) {};
 
         /**
         \brief DLL load debug event callback. Called after event is internally processed. Provide an implementation to use this callback.
         \param loadDll Information about the DLL loaded.
-        \param dll DllInfo of the loaded DLL.
+        \param dll Dll of the loaded DLL.
         */
-        virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const DllInfo & dll) {};
+        virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) {};
 
         /**
         \brief DLL unload debug event callback. Called before event is internally processed. Provide an implementation to use this callback.
         \param unloadDll Information about the DLL unloaded.
-        \param dll DllInfo of the unloaded DLL.
+        \param dll Dll of the unloaded DLL.
         */
-        virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const DllInfo & dll) {};
+        virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) {};
 
         /**
         \brief Exception debug event callback. Called before the event is internally processed. Provide an implementation to use this callback.
@@ -254,12 +254,12 @@ namespace GleeBug
         /**
         \brief The current process (can be null in some cases).
         */
-        ProcessInfo* mProcess = nullptr;
+        Process* mProcess = nullptr;
 
         /**
         \brief The current thread (can be null in some cases). Should be a copy of mProcess->thread.
         */
-        ThreadInfo* mThread = nullptr;
+        Thread* mThread = nullptr;
 
         /**
         \brief The current thread registers (can be null in some cases). Should be a copy of mThread->registers.

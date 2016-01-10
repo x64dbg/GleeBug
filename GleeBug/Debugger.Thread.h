@@ -10,7 +10,7 @@ namespace GleeBug
     /**
     \brief Thread information structure.
     */
-    class ThreadInfo
+    class Thread
     {
     public:
         HANDLE hThread;
@@ -31,19 +31,19 @@ namespace GleeBug
         \param lpThreadLocalBase The thread local base.
         \param lpStartAddress The start address.
         */
-        explicit ThreadInfo(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
+        explicit Thread(HANDLE hThread, uint32 dwThreadId, LPVOID lpThreadLocalBase, LPVOID lpStartAddress);
 
         /**
         \brief Copy constructor.
         */
-        ThreadInfo(const ThreadInfo & other);
+        Thread(const Thread & other);
 
         /**
         \brief Assignment operator.
         \param other The other object.
         \return A shallow copy of this object.
         */
-        ThreadInfo & operator=(const ThreadInfo & other);
+        Thread & operator=(const Thread & other);
 
         /**
         \brief Read the register context from the thread. This fills the RegistersInfo member.
@@ -103,7 +103,7 @@ namespace GleeBug
         /**
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
-        \param slot The hardware breakpoint register slot. Use ProcessInfo::GetFreeHardwareBreakpointSlot.
+        \param slot The hardware breakpoint register slot. Use Process::GetFreeHardwareBreakpointSlot.
         \param type The hardware breakpoint type.
         \param size The hardware breakpoint size.
         \return true if the hardware breakpoint was set, false otherwise.

@@ -8,7 +8,7 @@ namespace GleeBug
     /**
     \brief DLL information structure.
     */
-    class DllInfo
+    class Dll
     {
     public:
         ptr lpBaseOfDll;
@@ -21,7 +21,7 @@ namespace GleeBug
         \param sizeOfImage Size of the image.
         \param entryPoint The entry point.
         */
-        explicit DllInfo(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
+        explicit Dll(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
     };
 };
 
