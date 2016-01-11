@@ -285,7 +285,7 @@ public:
         thread->registers.R15 = titcontext->r15;
 #endif //_WIN64
         thread->registers.Gip = titcontext->cip;
-        thread->registers.Eflags = titcontext->eflags;
+        thread->registers.Eflags = uint32(titcontext->eflags);
         thread->registers.Dr0 = titcontext->dr0;
         thread->registers.Dr1 = titcontext->dr1;
         thread->registers.Dr2 = titcontext->dr2;
