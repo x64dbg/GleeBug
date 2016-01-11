@@ -8,11 +8,24 @@ namespace GleeBug
         mBreakDebugger = false;
         mIsDebugging = true;
 
+        //use correct WaitForDebugEvent function
+        typedef BOOL(WINAPI *MYWAITFORDEBUGEVENT)(
+            _Out_ LPDEBUG_EVENT lpDebugEvent,
+            _In_  DWORD         dwMilliseconds
+            );
+        static auto WFDEX = MYWAITFORDEBUGEVENT(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEventEx"));
+        static auto MyWaitForDebugEvent = WFDEX ? WFDEX : MYWAITFORDEBUGEVENT(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEvent"));
+        if (!MyWaitForDebugEvent)
+        {
+            cbInternalError("MyWaitForDebugEvent not set!");
+            return;
+        }
+
         while (!mBreakDebugger)
         {
             //wait for a debug event
             mIsRunning = true;
-            if (!WaitForDebugEvent(&mDebugEvent, INFINITE))
+            if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
                 break;
             mIsRunning = false;
 
