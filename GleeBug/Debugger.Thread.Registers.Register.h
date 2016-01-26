@@ -127,7 +127,10 @@ public:
     */
     Type Get() const
     {
-        return Type(mRegisters->Get(RegisterIndex));
+        auto ptr = (Type*)mRegisters->getPtr(RegisterIndex);
+        if (ptr)
+            return *ptr;
+        return Type();
     }
 
     /**
@@ -136,7 +139,9 @@ public:
     */
     void Set(Type value)
     {
-        mRegisters->Set(RegisterIndex, ptr(value));
+        auto ptr = (Type*)mRegisters->getPtr(RegisterIndex);
+        if (ptr)
+            *ptr = value;
     }
 
     /**

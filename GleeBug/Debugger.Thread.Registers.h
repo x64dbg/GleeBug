@@ -10,6 +10,8 @@ namespace GleeBug
     */
     class Registers
     {
+        friend class Register;
+
     public:
         /**
         \brief Default constructor.
@@ -157,6 +159,8 @@ namespace GleeBug
 
     private:
         CONTEXT mContext;
+
+        void* getPtr(R reg) const;
     };
 };
 

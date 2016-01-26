@@ -1,5 +1,8 @@
 #include "Debugger.Thread.Registers.h"
 
+#define REGPTR(x) (void*)(&x)
+#define REGPTRN(x, n) (void*)((char*)&x + n)
+
 #ifdef _WIN64
 #define contextGax mContext.Rax
 #define contextGbx mContext.Rbx
@@ -27,9 +30,15 @@
 #else //x32
 #define uint32_lo(x) ptr(x)
 #endif //_WIN64
-#define uint16_lo(x) ptr(x & 0xFFFFFFFF)
+#define uint16_lo(x) ptr(x & 0xFFFF)
 #define uint8_hi(x) ptr((x >> 8) & 0xFF)
 #define uint8_lo(x) ptr(x & 0xFF)
+
+#define PTR_uint32_lo(x) REGPTR(x)
+#define PTR_uint16_lo(x) REGPTR(x)
+#define PTR_uint8_lo(x) REGPTR(x)
+#define PTR_uint16_hi(x) REGPTRN(x, 2)
+#define PTR_uint8_hi(x) REGPTRN(x, 1)
 
 #ifdef _WIN64
 #define set_uint32_lo(x, y) x = (x & ~0xFFFFFFFF) | uint32_lo(y)
@@ -515,5 +524,193 @@ namespace GleeBug
             mContext.EFlags |= ptr(flag);
         else
             mContext.EFlags &= ~ptr(flag);
+    }
+
+    void* Registers::getPtr(R reg) const
+    {
+        switch (reg)
+        {
+        case R::DR0:
+            return REGPTR(mContext.Dr0);
+        case R::DR1:
+            return REGPTR(mContext.Dr1);
+        case R::DR2:
+            return REGPTR(mContext.Dr2);
+        case R::DR3:
+            return REGPTR(mContext.Dr3);
+        case R::DR6:
+            return REGPTR(mContext.Dr6);
+        case R::DR7:
+            return REGPTR(mContext.Dr7);
+
+        case R::EFlags:
+            return REGPTR(mContext.EFlags);
+
+        case R::EAX:
+            return PTR_uint32_lo(contextGax);
+        case R::AX:
+            return PTR_uint16_lo(contextGax);
+        case R::AH:
+            return PTR_uint8_hi(contextGax);
+        case R::AL:
+            return PTR_uint8_lo(contextGax);
+        case R::EBX:
+            return PTR_uint32_lo(contextGbx);
+        case R::BX:
+            return PTR_uint16_lo(contextGbx);
+        case R::BH:
+            return PTR_uint8_hi(contextGbx);
+        case R::BL:
+            return PTR_uint8_lo(contextGbx);
+        case R::ECX:
+            return PTR_uint32_lo(contextGcx);
+        case R::CX:
+            return PTR_uint16_lo(contextGcx);
+        case R::CH:
+            return PTR_uint8_hi(contextGcx);
+        case R::CL:
+            return PTR_uint8_lo(contextGcx);
+        case R::EDX:
+            return PTR_uint32_lo(contextGdx);
+        case R::DX:
+            return PTR_uint16_lo(contextGdx);
+        case R::DH:
+            return PTR_uint8_hi(contextGdx);
+        case R::DL:
+            return PTR_uint8_lo(contextGdx);
+        case R::EDI:
+            return PTR_uint32_lo(contextGdi);
+        case R::DI:
+            return PTR_uint16_lo(contextGdi);
+        case R::ESI:
+            return PTR_uint32_lo(contextGsi);
+        case R::SI:
+            return PTR_uint16_lo(contextGsi);
+        case R::EBP:
+            return PTR_uint32_lo(contextGbp);
+        case R::BP:
+            return PTR_uint16_lo(contextGbp);
+        case R::ESP:
+            return PTR_uint32_lo(contextGsp);
+        case R::SP:
+            return PTR_uint16_lo(contextGsp);
+        case R::EIP:
+            return PTR_uint32_lo(contextGip);
+
+#ifdef _WIN64
+        case R::RAX:
+            return REGPTR(mContext.Rax);
+        case R::RBX:
+            return REGPTR(mContext.Rbx);
+        case R::RCX:
+            return REGPTR(mContext.Rcx);
+        case R::RDX:
+            return REGPTR(mContext.Rdx);
+        case R::RSI:
+            return REGPTR(mContext.Rsi);
+        case R::SIL:
+            return PTR_uint8_lo(mContext.Rsi);
+        case R::RDI:
+            return REGPTR(mContext.Rdi);
+        case R::DIL:
+            return PTR_uint8_lo(mContext.Rdi);
+        case R::RBP:
+            return REGPTR(mContext.Rbp);
+        case R::BPL:
+            return PTR_uint8_lo(mContext.Rbp);
+        case R::RSP:
+            return REGPTR(mContext.Rsp);
+        case R::SPL:
+            return PTR_uint8_lo(mContext.Rsp);
+        case R::RIP:
+            return REGPTR(mContext.Rip);
+        case R::R8:
+            return REGPTR(mContext.R8);
+        case R::R8D:
+            return PTR_uint32_lo(mContext.R8);
+        case R::R8W:
+            return PTR_uint16_lo(mContext.R8);
+        case R::R8B:
+            return PTR_uint8_lo(mContext.R8);
+        case R::R9:
+            return REGPTR(mContext.R9);
+        case R::R9D:
+            return PTR_uint32_lo(mContext.R9);
+        case R::R9W:
+            return PTR_uint16_lo(mContext.R9);
+        case R::R9B:
+            return PTR_uint8_lo(mContext.R9);
+        case R::R10:
+            return REGPTR(mContext.R10);
+        case R::R10D:
+            return PTR_uint32_lo(mContext.R10);
+        case R::R10W:
+            return PTR_uint16_lo(mContext.R10);
+        case R::R10B:
+            return PTR_uint8_lo(mContext.R10);
+        case R::R11:
+            return REGPTR(mContext.R11);
+        case R::R11D:
+            return PTR_uint32_lo(mContext.R11);
+        case R::R11W:
+            return PTR_uint16_lo(mContext.R11);
+        case R::R11B:
+            return PTR_uint8_lo(mContext.R11);
+        case R::R12:
+            return REGPTR(mContext.R12);
+        case R::R12D:
+            return PTR_uint32_lo(mContext.R12);
+        case R::R12W:
+            return PTR_uint16_lo(mContext.R12);
+        case R::R12B:
+            return PTR_uint8_lo(mContext.R12);
+        case R::R13:
+            return REGPTR(mContext.R13);
+        case R::R13D:
+            return PTR_uint32_lo(mContext.R13);
+        case R::R13W:
+            return PTR_uint16_lo(mContext.R13);
+        case R::R13B:
+            return PTR_uint8_lo(mContext.R13);
+        case R::R14:
+            return REGPTR(mContext.R14);
+        case R::R14D:
+            return PTR_uint32_lo(mContext.R14);
+        case R::R14W:
+            return PTR_uint16_lo(mContext.R14);
+        case R::R14B:
+            return PTR_uint8_lo(mContext.R14);
+        case R::R15:
+            return REGPTR(mContext.R15);
+        case R::R15D:
+            return PTR_uint32_lo(mContext.R15);
+        case R::R15W:
+            return PTR_uint16_lo(mContext.R15);
+        case R::R15B:
+            return PTR_uint8_lo(mContext.R15);
+#endif //_WIN64
+
+        case R::GAX:
+            return REGPTR(contextGax);
+        case R::GBX:
+            return REGPTR(contextGbx);
+        case R::GCX:
+            return REGPTR(contextGcx);
+        case R::GDX:
+            return REGPTR(contextGdx);
+        case R::GDI:
+            return REGPTR(contextGdi);
+        case R::GSI:
+            return REGPTR(contextGsi);
+        case R::GBP:
+            return REGPTR(contextGbp);
+        case R::GSP:
+            return REGPTR(contextGsp);
+        case R::GIP:
+            return REGPTR(contextGip);
+
+        default:
+            return nullptr;
+        }
     }
 }
