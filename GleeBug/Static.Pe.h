@@ -35,6 +35,10 @@ namespace GleeBug
             ErrorSectionDataRead
         };
 
+        const int HeaderSection = -1;
+
+        typedef std::map<Range, int, RangeCompare> RangeSectionMap;
+
         explicit Pe(File & file);
 
         void Clear();
@@ -42,6 +46,8 @@ namespace GleeBug
         bool IsValidPe() const;
         bool IsPe64() const;
         Error Parse(bool allowOverlap = false);
+        uint32 ConvertOffsetToRva(uint32 offset);
+        uint32 ConvertRvaToOffset(uint32 rva);
 
         const Region<IMAGE_DOS_HEADER> & GetDosHeader() const { return mDosHeader; }
         bool GetDosNtOverlap() const { return mDosNtOverlap; }
@@ -52,11 +58,25 @@ namespace GleeBug
         const Region<IMAGE_SECTION_HEADER> & GetSectionHeaders() const { return mSectionHeaders; }
         const Region<uint8> & GetAfterSectionHeadersData() const { return mAfterSectionHeadersData; }
         const std::vector<Section> & GetSections() const { return mSections; }
+        const RangeSectionMap & GetOffsetSectionMap() const { return mOffsetSectionMap; }
+        const RangeSectionMap & GetRvaSectionMap() const { return mRvaSectionMap; }
 
     private:
-        Error parseSections(uint16 count);
+        Error parseSections(uint16 count, uint32 alignment = 0x1000);
         uint32 readData(uint32 size);
         void setupErrorMap();
+
+        template<typename T>
+        T alignAdjustSize(T size, uint32 alignment) //TODO: check this
+        {
+            return size + (alignment - 1) & ~(alignment - 1);
+        }
+
+        template<typename T>
+        T alignAdjustAddress(T address, uint32 alignment) //TODO: check this
+        {
+            return address & ~(alignment - 1);
+        }
 
         template<typename T>
         Region<T> readRegion(uint32 count = 1)
@@ -65,7 +85,7 @@ namespace GleeBug
         }
 
         std::unordered_map<Error, const char*> mErrorMap;
-        
+
         File & mFile;
         std::vector<uint8> mData;
         uint32 mOffset;
@@ -80,6 +100,8 @@ namespace GleeBug
         Region<IMAGE_SECTION_HEADER> mSectionHeaders;
         Region<uint8> mAfterSectionHeadersData;
         std::vector<Section> mSections;
+        RangeSectionMap mOffsetSectionMap;
+        RangeSectionMap mRvaSectionMap;
     };
 };
 

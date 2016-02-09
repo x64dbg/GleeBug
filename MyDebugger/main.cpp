@@ -116,6 +116,18 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                     printRegion("    Before Data", section.GetBeforeData(), false);
                     printRegion("    Data", section.GetData());
                 }
+
+                printf("\nOffset -> Section:\n");
+                for (auto range : pe.GetOffsetSectionMap())
+                {
+                    printf("  %08llX:%08llX -> %d\n", range.first.first, range.first.second, range.second);
+                }
+
+                printf("\nRva -> Section:\n");
+                for (auto range : pe.GetRvaSectionMap())
+                {
+                    printf("  %08llX:%08llX -> %d\n", range.first.first, range.first.second, range.second);
+                }
             }
             else
                 printf("Pe::Parse failed (%s)!\n", pe.ErrorText(parseError));
@@ -149,8 +161,9 @@ static void testCorkami()
 
 int main()
 {
-    //testPeFile(L"C:\\test64.exe");
-    testCorkami();
+    testPeFile(L"C:\\test64.exe");
+    //testCorkami();
+    //testPeFile(L"c:\\!exclude\\pe\\bin\\appendedhdr.exe");
     puts("");
     system("pause");
     return 0;

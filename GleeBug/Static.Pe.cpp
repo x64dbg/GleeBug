@@ -177,7 +177,37 @@ namespace GleeBug
         return ErrorOk;
     }
 
-    Pe::Error Pe::parseSections(uint16 count)
+    uint32 Pe::ConvertOffsetToRva(uint32 offset)
+    {
+        if (!mOffsetSectionMap.size()) //TODO: verify this (no sections means direct mapping)
+            return offset;
+        const auto found = mOffsetSectionMap.find(Range(offset, offset));
+        if (found == mOffsetSectionMap.end())
+            return INVALID_VALUE;
+        auto index = found->second;
+        if (index == HeaderSection)
+            return offset;
+        const auto & section = mSections[index];
+        offset -= uint32(found->first.first); //adjust the offset to be relative to the offset range in the map
+        return alignAdjustAddress(section.GetHeader().VirtualAddress, section.GetAlignment()) + offset;
+    }
+
+    uint32 Pe::ConvertRvaToOffset(uint32 rva)
+    {
+        if (!mRvaSectionMap.size()) //TODO: verify this (no sections means direct mapping)
+            return rva;
+        const auto found = mRvaSectionMap.find(Range(rva, rva));
+        if (found == mRvaSectionMap.end())
+            return INVALID_VALUE;
+        auto index = found->second;
+        if (index == HeaderSection)
+            return rva;
+        const auto & section = mSections[index];
+        rva -= uint32(found->first.first); //adjust the rva to be relative to the rva range in the map
+        return section.GetHeader().PointerToRawData + rva;
+    }
+
+    Pe::Error Pe::parseSections(uint16 count, uint32 alignment)
     {
         if (!count)
             return ErrorOk;
@@ -234,7 +264,30 @@ namespace GleeBug
         for (uint16 i = 0; i < count; i++)
         {
             const auto & section = sortedHeaders[i];
-            mSections.push_back(Section(i, mSectionHeaders, section.beforeData, section.data));
+            mSections.push_back(Section(i, alignment, mSectionHeaders, section.beforeData, section.data));
+        }
+
+        //create rva/offset -> section maps
+        if (count) //insert pe header offset/rva (file start -> first section is the PE header)
+        {
+            const auto & section = mSections[0];
+            mOffsetSectionMap.insert({ Range(0, section.GetHeader().PointerToRawData - 1), HeaderSection });
+            auto rva = alignAdjustSize(section.GetHeader().VirtualAddress, alignment);
+            mRvaSectionMap.insert({ Range(0, rva - 1), HeaderSection });
+        }
+        else //TODO: handle file without sections
+        {
+        }
+        for (const auto & section : mSections)
+        {
+            //offset -> section index
+            auto offset = section.GetHeader().PointerToRawData;
+            mOffsetSectionMap.insert({ Range(offset, offset + section.GetHeader().SizeOfRawData - 1), section.GetIndex() });
+
+            //rva -> section index
+            auto rva = alignAdjustAddress(section.GetHeader().VirtualAddress, alignment);
+            auto vsize = alignAdjustSize(section.GetHeader().Misc.VirtualSize, alignment);
+            mRvaSectionMap.insert({ Range(rva, rva + vsize - 1), section.GetIndex() });
         }
 
         return ErrorOk;
@@ -257,26 +310,30 @@ namespace GleeBug
 
     void Pe::setupErrorMap()
     {
-        mErrorMap.insert({ ErrorOk, "ErrorOk" });
-        mErrorMap.insert({ ErrorDosHeaderRead, "ErrorDosHeaderRead" });
-        mErrorMap.insert({ ErrorDosHeaderMagic, "ErrorDosHeaderMagic" });
-        mErrorMap.insert({ ErrorDosHeaderNtHeaderOffset, "ErrorDosHeaderNtHeaderOffset" });
-        mErrorMap.insert({ ErrorDosHeaderNtHeaderOffsetOverlap, "ErrorDosHeaderNtHeaderOffsetOverlap" });
-        mErrorMap.insert({ ErrorAfterDosHeaderData, "ErrorAfterDosHeaderData" });
-        mErrorMap.insert({ ErrorNtSignatureRead, "ErrorNtSignatureRead" });
-        mErrorMap.insert({ ErrorNtSignatureMagic, "ErrorNtSignatureMagic" });
-        mErrorMap.insert({ ErrorNtFileHeaderRead, "ErrorNtFileHeaderRead" });
-        mErrorMap.insert({ ErrorNtFileHeaderSizeOfOptionalHeaderOverlap, "ErrorNtFileHeaderSizeOfOptionalHeaderOverlap" });
-        mErrorMap.insert({ ErrorNtFileHeaderUnsupportedMachine, "ErrorNtFileHeaderUnsupportedMachine" });
-        mErrorMap.insert({ ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead, "ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead" });
-        mErrorMap.insert({ ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize, "ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize" });
-        mErrorMap.insert({ ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead" });
-        mErrorMap.insert({ ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic" });
-        mErrorMap.insert({ ErrorAfterOptionalHeaderDataRead, "ErrorAfterOptionalHeaderDataRead" });
-        mErrorMap.insert({ ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize" });
-        mErrorMap.insert({ ErrorSectionHeadersRead, "ErrorSectionHeadersRead" });
-        mErrorMap.insert({ ErrorAfterSectionHeadersDataRead, "ErrorAfterSectionHeadersDataRead" });
-        mErrorMap.insert({ ErrorBeforeSectionDataRead, "ErrorBeforeSectionDataRead" });
-        mErrorMap.insert({ ErrorSectionDataRead, "ErrorSectionDataRead" });
+        auto add = [this](Error e, const char* s)
+        {
+            mErrorMap.insert({ e, s });
+        };
+        add(ErrorOk, "ErrorOk");
+        add(ErrorDosHeaderRead, "ErrorDosHeaderRead");
+        add(ErrorDosHeaderMagic, "ErrorDosHeaderMagic");
+        add(ErrorDosHeaderNtHeaderOffset, "ErrorDosHeaderNtHeaderOffset");
+        add(ErrorDosHeaderNtHeaderOffsetOverlap, "ErrorDosHeaderNtHeaderOffsetOverlap");
+        add(ErrorAfterDosHeaderData, "ErrorAfterDosHeaderData");
+        add(ErrorNtSignatureRead, "ErrorNtSignatureRead");
+        add(ErrorNtSignatureMagic, "ErrorNtSignatureMagic");
+        add(ErrorNtFileHeaderRead, "ErrorNtFileHeaderRead");
+        add(ErrorNtFileHeaderSizeOfOptionalHeaderOverlap, "ErrorNtFileHeaderSizeOfOptionalHeaderOverlap");
+        add(ErrorNtFileHeaderUnsupportedMachine, "ErrorNtFileHeaderUnsupportedMachine");
+        add(ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead, "ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead");
+        add(ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize, "ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize");
+        add(ErrorNtOptionalHeaderRead, "ErrorNtOptionalHeaderRead");
+        add(ErrorNtOptionalHeaderMagic, "ErrorNtOptionalHeaderMagic");
+        add(ErrorAfterOptionalHeaderDataRead, "ErrorAfterOptionalHeaderDataRead");
+        add(ErrorNtHeadersRegionSize, "ErrorNtHeadersRegionSize");
+        add(ErrorSectionHeadersRead, "ErrorSectionHeadersRead");
+        add(ErrorAfterSectionHeadersDataRead, "ErrorAfterSectionHeadersDataRead");
+        add(ErrorBeforeSectionDataRead, "ErrorBeforeSectionDataRead");
+        add(ErrorSectionDataRead, "ErrorSectionDataRead");
     }
 };
