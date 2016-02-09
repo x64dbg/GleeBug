@@ -5,10 +5,12 @@ namespace GleeBug
     Debugger::Debugger()
     {
         mProcesses.clear();
+        Capstone::GlobalInitialize(); //TODO: properly handle this
     }
 
     Debugger::~Debugger()
     {
+        Capstone::GlobalFinalize(); //TODO: properly handle this
     }
 
     bool Debugger::Init(const wchar_t* szFilePath,

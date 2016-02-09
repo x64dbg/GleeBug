@@ -4,6 +4,7 @@
 #include "Debugger.Global.h"
 #include "Debugger.Process.h"
 #include "Debugger.Breakpoint.h"
+#include <capstone_wrapper/capstone_wrapper.h>
 
 namespace GleeBug
 {
@@ -250,6 +251,7 @@ namespace GleeBug
         ProcessMap mProcesses;
         bool mIsRunning = false;
         bool mIsDebugging = false;
+        Capstone mCapstone;
 
         /**
         \brief The current process (can be null in some cases).
