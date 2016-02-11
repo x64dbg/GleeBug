@@ -66,22 +66,22 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)bin\$(Configuration)\x32\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\$(Configuration)\x32\</OutDir>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>$(SolutionDir)bin\$(Configuration)\x64\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\$(Configuration)\x64\</OutDir>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)bin\$(Configuration)\x32\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\$(Configuration)\x32\</OutDir>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)bin\$(Configuration)\x64\</OutDir>
+    <OutDir>$(ProjectDir)..\bin\$(Configuration)\x64\</OutDir>
     <TargetExt>.lib</TargetExt>
     <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
