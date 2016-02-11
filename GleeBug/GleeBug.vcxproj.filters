@@ -9,6 +9,12 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\capstone_wrapper">
+      <UniqueIdentifier>{4215a98e-b5ea-4d74-b38a-b4adaec85570}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\capstone_wrapper">
+      <UniqueIdentifier>{0f772f56-25cc-40aa-85b4-be2140c10d27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Debugger.cpp">
@@ -74,6 +80,9 @@
     <ClCompile Include="Static.Pattern.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\capstone_wrapper\capstone_wrapper.cpp">
+      <Filter>Source Files\capstone_wrapper</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.h">
@@ -126,6 +135,9 @@
     </ClInclude>
     <ClInclude Include="Static.Pattern.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\capstone_wrapper\capstone_wrapper.h">
+      <Filter>Header Files\capstone_wrapper</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

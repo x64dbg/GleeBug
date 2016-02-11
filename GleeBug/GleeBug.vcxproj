@@ -150,6 +150,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\capstone_wrapper\capstone_wrapper.cpp" />
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="Debugger.Dll.cpp" />
     <ClCompile Include="Debugger.Loop.cpp" />
@@ -173,6 +174,7 @@
     <ClCompile Include="Static.Pe.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\capstone_wrapper\capstone_wrapper.h" />
     <ClInclude Include="Debugger.Breakpoint.h" />
     <ClInclude Include="Debugger.Dll.h" />
     <ClInclude Include="Debugger.Process.h" />
