@@ -45,7 +45,23 @@ namespace GleeBug
         \brief Detaches the debuggee.
         \return true if the debuggee was detached correctly, false otherwise.
         */
-        bool Detach() const;
+        bool UnsafeDetach();
+
+        /**
+        \brief Detaches the debuggee. The detach happens at the end of the debug loop.
+        */
+        void Detach();
+
+        /**
+        \brief Detaches the debuggee and breaks with an INT3 (to invoke the JIT debugger).
+        \return true if the debuggee was detached correctly, false otherwise.
+        */
+        bool UnsafeDetachAndBreak();
+
+        /**
+        \brief Detaches the debuggee and breaks with an INT3 (to invoke the JIT debugger). The detach happens at the end of the debug loop.
+        */
+        void DetachAndBreak();
 
         /**
         \brief Run the debug loop (does not return until the debuggee is detached or terminated). This function should be run from the same thread as you ran Init.
@@ -251,6 +267,8 @@ namespace GleeBug
         ProcessMap mProcesses;
         bool mIsRunning = false;
         bool mIsDebugging = false;
+        bool mDetach = false;
+        bool mDetachAndBreak = false;
         Capstone mCapstone;
 
         /**

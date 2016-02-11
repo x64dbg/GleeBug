@@ -34,7 +34,8 @@ public:
     bool DetachDebuggerEx(DWORD ProcessId)
     {
         //TODO
-        return Detach();
+        Detach();
+        return true;
     }
 
     void DebugLoop()

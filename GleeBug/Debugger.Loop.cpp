@@ -7,6 +7,8 @@ namespace GleeBug
         //initialize loop variables
         mBreakDebugger = false;
         mIsDebugging = true;
+        mDetach = false;
+        mDetachAndBreak = false;
 
         //use correct WaitForDebugEvent function
         typedef BOOL(WINAPI *MYWAITFORDEBUGEVENT)(
@@ -23,6 +25,20 @@ namespace GleeBug
 
         while (!mBreakDebugger)
         {
+            //execute the delayed-detach
+            if (mDetach)
+            {
+                if (!UnsafeDetach())
+                    cbInternalError("Debugger::Detach failed!");
+                break;
+            }
+            if (mDetachAndBreak)
+            {
+                if (!UnsafeDetachAndBreak())
+                    cbInternalError("Debugger::DetachAndBreak failed!");
+                break;
+            }
+
             //wait for a debug event
             mIsRunning = true;
             if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
@@ -63,7 +79,7 @@ namespace GleeBug
             }
 
             //call the pre debug event callback
-            cbPostDebugEvent(mDebugEvent);
+            cbPreDebugEvent(mDebugEvent);
 
             //dispatch the debug event (documented here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms679302(v=vs.85).aspx)
             switch (mDebugEvent.dwDebugEventCode)
