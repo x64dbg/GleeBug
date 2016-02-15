@@ -14,14 +14,16 @@ namespace GleeBug
         ptr lpBaseOfDll;
         ptr sizeOfImage;
         ptr entryPoint;
+        LOAD_DLL_DEBUG_INFO loadDllInfo;
 
         /**
         \brief Constructor.
         \param lpBaseOfDll The base of DLL.
         \param sizeOfImage Size of the image.
         \param entryPoint The entry point.
+        \param loadDllInfo The DLL info on creation.
         */
-        explicit Dll(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint);
+        explicit Dll(LPVOID lpBaseOfDll, ptr sizeOfImage, LPVOID entryPoint, const LOAD_DLL_DEBUG_INFO & loadDllInfo);
     };
 };
 

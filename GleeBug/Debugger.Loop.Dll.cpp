@@ -11,7 +11,7 @@ namespace GleeBug
             HMODULE(loadDll.lpBaseOfDll),
             &modinfo,
             sizeof(MODULEINFO));
-        Dll dll(loadDll.lpBaseOfDll, modinfo.SizeOfImage, modinfo.EntryPoint);
+        Dll dll(loadDll.lpBaseOfDll, modinfo.SizeOfImage, modinfo.EntryPoint, loadDll);
         mProcess->dlls.insert({ Range(dll.lpBaseOfDll, dll.lpBaseOfDll + dll.sizeOfImage - 1), dll });
 
         //call the debug event callback
@@ -29,7 +29,7 @@ namespace GleeBug
         if (dll != mProcess->dlls.end())
             cbUnloadDllEvent(unloadDll, dll->second);
         else
-            cbUnloadDllEvent(unloadDll, Dll(unloadDll.lpBaseOfDll, 0, nullptr));
+            cbUnloadDllEvent(unloadDll, Dll(unloadDll.lpBaseOfDll, 0, nullptr, LOAD_DLL_DEBUG_INFO()));
 
         //DLL housekeeping
         if (dll != mProcess->dlls.end())

@@ -18,6 +18,7 @@ namespace GleeBug
         HANDLE hProcess;
         uint32 dwProcessId;
         uint32 dwMainThreadId;
+        CREATE_PROCESS_DEBUG_INFO createProcessInfo; //hFile is invalid, possibly other handles too!
 
         Thread* thread;
         bool systemBreakpoint;
@@ -34,8 +35,9 @@ namespace GleeBug
         \param hProcess Process handle.
         \param dwProcessId Identifier for the process.
         \param dwMainThreadId Identifier for the main thread.
+        \param createProcessInfo The process creation info.
         */
-        explicit Process(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId);
+        explicit Process(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId, const CREATE_PROCESS_DEBUG_INFO & createProcessInfo);
 
         /**
         \brief Read memory from the process.

@@ -8,7 +8,8 @@ namespace GleeBug
         mProcesses.insert({ mDebugEvent.dwProcessId,
             Process(createProcess.hProcess,
             mDebugEvent.dwProcessId,
-            mDebugEvent.dwThreadId) });
+            mDebugEvent.dwThreadId,
+            createProcess) });
         mProcess = &mProcesses.find(mDebugEvent.dwProcessId)->second;
 
         //thread housekeeping (main thread is created implicitly)
