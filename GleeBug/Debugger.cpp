@@ -71,25 +71,8 @@ namespace GleeBug
         if (!mProcess || !mThread || !mRegisters) //fail when there is no process or thread currently specified
             return false;
         
-        //write the code that breaks the process
-        auto codePtr = ptr(VirtualAllocEx(mProcess->hProcess, nullptr, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE));
-        if (!codePtr)
-        {
-            cbInternalError("Debugger::UnsafeDetachAndBreak, VirtualAllocEx failed!");
-            return false;
-        }
-        uint8 code[] = { 0xCC, 0xC3 };
-        mProcess->MemWriteUnsafe(codePtr, code, sizeof(code));
-
-        //push the return address (current GIP) on the stack
-        mRegisters->Gsp -= sizeof(ptr);
-        auto gip = mRegisters->Gip();
-        mProcess->MemWriteUnsafe(mRegisters->Gsp(), &gip, sizeof(gip));
-        
-        //change the GIP to the code
-        mRegisters->Gip = codePtr;
-
-        //flush the register cache (needed here explicitly because control will be out of the debugger after this).
+        //set the trap flag to trigger an exception
+        mRegisters->TrapFlag = true;
         mThread->RegWriteContext();
         
         //detach from the process
@@ -102,7 +85,7 @@ namespace GleeBug
         mDetach = false;
 
         //unset the trap flag when set by GleeBug
-        if (mThread->isInternalStepping)
+        if (mThread->isInternalStepping || mThread->isSingleStepping)
             mRegisters->TrapFlag = false;
     }
 };
