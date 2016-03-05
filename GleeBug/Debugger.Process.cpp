@@ -13,4 +13,23 @@ namespace GleeBug
         for (int i = 0; i < HWBP_COUNT; i++)
             hardwareBreakpoints[i].enabled = false;
     }
+
+    void Process::StepOver(const StepCallback & cbStep)
+    {
+        auto gip = thread->registers.Gip();
+        unsigned char data[16];
+        if (MemReadSafe(gip, data, sizeof(data)))
+        {
+            mCapstone.Disassemble(gip, data);
+            if(mCapstone.GetId() == X86_INS_CALL)
+            {
+                SetBreakpoint(gip + mCapstone.Size(), [cbStep](const BreakpointInfo & info)
+                {
+                    cbStep();
+                }, true, SoftwareType::ShortInt3);
+                return;
+            }
+        }
+        thread->StepInto(cbStep);
+    }
 };

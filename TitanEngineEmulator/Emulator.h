@@ -175,8 +175,9 @@ public:
     //Stepping
     void StepOver(LPVOID CallBack)
     {
-        //TODO
-        StepInto(CallBack);
+        if (!mProcess || !CallBack)
+            return;
+        mProcess->StepOver(STEPCALLBACK(CallBack));
     }
 
     void SingleStep(DWORD StepCount, LPVOID CallBack)

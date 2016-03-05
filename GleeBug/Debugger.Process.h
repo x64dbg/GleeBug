@@ -6,6 +6,7 @@
 #include "Debugger.Dll.h"
 #include "Debugger.Breakpoint.h"
 #include "Static.Pattern.h"
+#include <capstone_wrapper/capstone_wrapper.h>
 
 namespace GleeBug
 {
@@ -305,6 +306,28 @@ namespace GleeBug
         \return true if the breakpoint was deleted, false otherwise.
         */
         bool DeleteGenericBreakpoint(const BreakpointInfo & info);
+
+        /**
+        \brief Step over.
+        \param cbStep Step callback. Can be written using BIND(this, MyDebugger::cb).
+        */
+        void StepOver(const StepCallback & cbStep);
+
+        /**
+        \brief Step over.
+        \tparam T Generic type parameter. Must be a subclass of Debugger.
+        \param debugger This pointer to a subclass of Debugger.
+        \param callback Pointer to the callback. Written like: &MyDebugger::cb
+        */
+        template<typename T>
+        void StepOver(T* debugger, void(T::*callback)())
+        {
+            static_cast<void>(static_cast<Debugger*>(debugger));
+            StepOver(std::bind(callback, debugger));
+        }
+
+        private:
+            Capstone mCapstone;
     };
 };
 
