@@ -72,7 +72,14 @@ namespace GleeBug
             return false;
         
         //set the trap flag to trigger an exception
-        mRegisters->TrapFlag = true;
+        auto gip = mRegisters->Gip();
+        auto codePtr = ptr(VirtualAllocEx(mProcess->hProcess, nullptr, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE));
+        unsigned char code[2] = { 0xCC, 0xC3 };
+        mProcess->MemWriteUnsafe(codePtr, code, sizeof(code));
+
+        mRegisters->Gsp -= sizeof(ptr);
+        mProcess->MemWriteUnsafe(mRegisters->Gsp(), &gip, sizeof(gip));
+        mRegisters->Gip = codePtr;
         mThread->RegWriteContext();
         
         //detach from the process
