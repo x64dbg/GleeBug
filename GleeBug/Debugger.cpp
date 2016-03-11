@@ -57,6 +57,8 @@ namespace GleeBug
 
     bool Debugger::UnsafeDetach()
     {
+        mRegisters->TrapFlag = false;
+        mThread->RegWriteContext();
         return !!DebugActiveProcessStop(mMainProcess.dwProcessId);
     }
 
@@ -66,22 +68,15 @@ namespace GleeBug
         mDetachAndBreak = false;
     }
 
-    bool Debugger::UnsafeDetachAndBreak() //TODO check with child processes
+    bool Debugger::UnsafeDetachAndBreak()
     {
         if (!mProcess || !mThread || !mRegisters) //fail when there is no process or thread currently specified
             return false;
-        
-        //set the trap flag to trigger an exception
-        auto gip = mRegisters->Gip();
-        auto codePtr = ptr(VirtualAllocEx(mProcess->hProcess, nullptr, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE));
-        unsigned char code[2] = { 0xCC, 0xC3 };
-        mProcess->MemWriteUnsafe(codePtr, code, sizeof(code));
 
-        mRegisters->Gsp -= sizeof(ptr);
-        mProcess->MemWriteUnsafe(mRegisters->Gsp(), &gip, sizeof(gip));
-        mRegisters->Gip = codePtr;
+        //trigger an EXCEPTION_SINGLE_STEP in the debuggee
+        mRegisters->TrapFlag = true;
         mThread->RegWriteContext();
-        
+
         //detach from the process
         return UnsafeDetach();
     }
@@ -90,9 +85,5 @@ namespace GleeBug
     {
         mDetachAndBreak = true;
         mDetach = false;
-
-        //unset the trap flag when set by GleeBug
-        if (mThread->isInternalStepping || mThread->isSingleStepping)
-            mRegisters->TrapFlag = false;
     }
 };

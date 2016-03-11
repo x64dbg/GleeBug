@@ -25,20 +25,6 @@ namespace GleeBug
 
         while (!mBreakDebugger)
         {
-            //execute the delayed-detach
-            if (mDetach)
-            {
-                if (!UnsafeDetach())
-                    cbInternalError("Debugger::Detach failed!");
-                break;
-            }
-            if (mDetachAndBreak)
-            {
-                if (!UnsafeDetachAndBreak())
-                    cbInternalError("Debugger::DetachAndBreak failed!");
-                break;
-            }
-
             //wait for a debug event
             mIsRunning = true;
             if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
@@ -119,6 +105,21 @@ namespace GleeBug
             //call the post debug event callback
             cbPostDebugEvent(mDebugEvent);
 
+            //execute the delayed-detach
+            if (mDetachAndBreak)
+            {
+                if (!UnsafeDetachAndBreak())
+                    cbInternalError("Debugger::DetachAndBreak failed!");
+                break;
+            }
+
+            //clear trap flag when set by GleeBug (to prevent an EXCEPTION_SINGLE_STEP after detach
+            if (mDetach && mThread)
+            {
+                if (mThread->isInternalStepping || mThread->isSingleStepping)
+                    mThread->registers.TrapFlag = false;
+            }
+
             //write the register context
             if (mThread)
             {
@@ -129,6 +130,13 @@ namespace GleeBug
             //continue the debug event
             if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
                 break;
+
+            if (mDetach || mDetachAndBreak)
+            {
+                if (!UnsafeDetach())
+                    cbInternalError("Debugger::Detach failed!");
+                break;
+            }
         }
 
         //cleanup
