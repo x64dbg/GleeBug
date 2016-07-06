@@ -154,6 +154,12 @@ public:
         return nullptr;
     }
 
+    void* GetTEBLocation(HANDLE hProcess)
+    {
+        //TODO
+        return nullptr;
+    }
+
     bool HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
     {
         //TODO

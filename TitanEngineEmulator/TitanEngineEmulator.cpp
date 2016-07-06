@@ -92,6 +92,11 @@ __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
     return emu.GetPEBLocation(hProcess);
 }
 
+__declspec(dllexport) void* TITCALL GetTEBLocation(HANDLE hProcess)
+{
+    return emu.GetTEBLocation(hProcess);
+}
+
 __declspec(dllexport) bool TITCALL HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
 {
     return emu.HideDebugger(hProcess, PatchAPILevel);
