@@ -12,7 +12,7 @@ protected:
     {
         printf("Reached entry breakpoint! GIP: 0x%p\n",
             mRegisters->Gip());
-        if (mProcess->DeleteBreakpoint(info.address))
+        /*if (mProcess->DeleteBreakpoint(info.address))
             printf("Entry breakpoint deleted!\n");
         else
             printf("Failed to delete entry breakpoint...\n");
@@ -20,7 +20,7 @@ protected:
         {
             printf("Step after entry breakpoint! GIP: 0x%p\n",
                 mRegisters->Gip());
-        });
+        });*/
     }
 
     void cbEntryHardwareBreakpoint(const BreakpointInfo & info)
@@ -61,7 +61,7 @@ protected:
         else
             printf("No free hardware breakpoint slot...\n");*/
 
-        if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint))
+        if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint, true))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
             printf("Failed to set breakpoint at 0x%p...\b", entry);

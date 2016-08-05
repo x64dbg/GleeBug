@@ -5,6 +5,7 @@
 
 //defines
 #define GLEEBUG_HWBP_COUNT 4
+#define GLEEBUG_PAGE_SIZE 0x1000
 
 namespace GleeBug
 {
@@ -18,6 +19,7 @@ namespace GleeBug
 
     //constants
     const int HWBP_COUNT = GLEEBUG_HWBP_COUNT;
+    const int PAGE_SIZE = GLEEBUG_PAGE_SIZE;
 
     //key typedefs
     typedef std::pair<BreakpointType, ptr> BreakpointKey;
