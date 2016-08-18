@@ -30,6 +30,7 @@ namespace GleeBug
         SoftwareBreakpointMap softwareBreakpointReferences;
         BreakpointCallbackMap breakpointCallbacks;
         BreakpointInfo hardwareBreakpoints[4];
+        MemoryBreakpointSet memoryBreakpoints;
 
         /**
         \brief Constructor.

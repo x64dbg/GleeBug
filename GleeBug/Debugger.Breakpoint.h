@@ -49,14 +49,6 @@ namespace GleeBug
         Execute
     };
 
-    struct MemoryBreakpointInfo
-    {
-        struct
-        {
-            uint32 offset;
-        } info[PAGE_SIZE];
-    };
-
     /**
     \brief Structure describing internal breakpoint info.
     */
@@ -81,7 +73,6 @@ namespace GleeBug
             {
                 MemoryType type;
                 ptr size;
-                MemoryBreakpointInfo* info;
             } memory;
         };
     };

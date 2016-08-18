@@ -35,6 +35,7 @@ namespace GleeBug
     typedef std::map<BreakpointKey, BreakpointInfo> BreakpointMap;
     typedef std::map<BreakpointKey, BreakpointCallback> BreakpointCallbackMap;
     typedef std::unordered_map<ptr, BreakpointMap::iterator> SoftwareBreakpointMap;
+    typedef std::set<Range, RangeCompare> MemoryBreakpointSet;
 
     //vector typedefs
     typedef std::vector<StepCallback> StepCallbackVector;
