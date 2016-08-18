@@ -44,9 +44,9 @@ namespace GleeBug
 
     enum class MemoryType
     {
-        Acess,
-        Write,
-        Execute
+        Access = 1,
+        Write = 2,
+        Execute = 4
     };
 
     /**
@@ -87,6 +87,17 @@ namespace GleeBug
         bool singleshoot;
         BreakpointType type;
         BreakpointInternalInfo internal;
+    };
+
+    /**
+    \brief Structure for memory breakpoint management.
+    */
+    struct MemoryBreakpointData
+    {
+        uint32 Refcount;
+        uint32 Type;
+        DWORD OldProtect;
+        DWORD NewProtect;
     };
 };
 

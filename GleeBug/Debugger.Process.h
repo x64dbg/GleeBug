@@ -23,6 +23,7 @@ namespace GleeBug
 
         Thread* thread;
         bool systemBreakpoint;
+        bool permanentDep;
 
         ThreadMap threads; //DO NOT COPY THESE OBJECTS!
         DllMap dlls;
@@ -30,7 +31,8 @@ namespace GleeBug
         SoftwareBreakpointMap softwareBreakpointReferences;
         BreakpointCallbackMap breakpointCallbacks;
         BreakpointInfo hardwareBreakpoints[4];
-        MemoryBreakpointSet memoryBreakpoints;
+        MemoryBreakpointSet memoryBreakpointRanges;
+        MemoryBreakpointMap memoryBreakpointPages;
 
         /**
         \brief Constructor.
@@ -300,6 +302,61 @@ namespace GleeBug
         \return true if the hardware breakpoint was deleted, false otherwise.
         */
         bool DeleteHardwareBreakpoint(ptr address);
+
+        /**
+        \brief Sets new page protection to trigger an exception for certain memory breakpoint types.
+        \param page The page address.
+        \param data The current protection of the page.
+        \param type The memory breakpoint type to trigger an exception for.
+        \return true if it succeeds, false if it fails.
+        */
+        bool SetNewPageProtection(ptr page, MemoryBreakpointData & data, MemoryType type);
+
+        /**
+        \brief Sets a memory breakpoint.
+        \param address The address to set the memory breakpoint on.
+        \param size Size of the memory breakpoint (in bytes).
+        \param type (Optional) The memory breakpoint type.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
+        \return true if the memory breakpoint was set, false otherwise.
+        */
+        bool SetMemoryBreakpoint(ptr address, ptr size, MemoryType type = MemoryType::Access, bool singleshoot = false);
+
+        /**
+        \brief Sets a memory breakpoint.
+        \param address The address to set the memory breakpoint on.
+        \param size Size of the memory breakpoint (in bytes).
+        \param cbBreakpoint The breakpoint callback. Can be written using BIND1(this, MyDebugger::cb).
+        \param type (Optional) The memory breakpoint type.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
+        \return true if the memory breakpoint was set, false otherwise.
+        */
+        bool SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type = MemoryType::Access, bool singleshoot = false);
+
+        /**
+        \brief Sets a hardware breakpoint.
+        \tparam T Generic type parameter. Must be a subclass of Debugger.
+        \param address The address to set the hardware breakpoint on.
+        \param size Size of the memory breakpoint (in bytes).
+        \param debugger This pointer to a subclass of Debugger.
+        \param callback Pointer to the callback. Written like: &MyDebugger::cb
+        \param type (Optional) The memory breakpoint type.
+        \param singleshoot (Optional) True to remove the breakpoint after the first hit.
+        \return true if the memory breakpoint was set, false otherwise.
+        */
+        template <typename T>
+        bool SetMemoryBreakpoint(ptr address, ptr size, T* debugger, void(T::*callback)(const BreakpointInfo & info), MemoryType type = MemoryType::Access, bool singleshoot = false)
+        {
+            static_cast<void>(static_cast<Debugger*>(debugger));
+            return SetMemoryBreakpoint(address, size, std::bind(callback, debugger, std::placeholders::_1), type, singleshoot);
+        }
+
+        /**
+        \brief Deletes a hardware breakpoint.
+        \param address The address the hardware breakpoint is set on.
+        \return true if the hardware breakpoint was deleted, false otherwise.
+        */
+        bool DeleteMemoryBreakpoint(ptr address);
 
         /**
         \brief Deletes a breakpoint.
