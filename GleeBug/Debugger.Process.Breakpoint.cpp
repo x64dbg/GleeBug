@@ -238,6 +238,7 @@ namespace GleeBug
             switch (type)
             {
             case MemoryType::Access:
+            case MemoryType::Read:
                 data.NewProtect = data.OldProtect | PAGE_GUARD;
                 break;
             case MemoryType::Write:
@@ -254,7 +255,7 @@ namespace GleeBug
             data.Type = oldData.Type | uint32(type);
             data.OldProtect = oldData.OldProtect;
             data.Refcount = oldData.Refcount + 1;
-            if (data.Type & uint32(MemoryType::Access)) //Access always becomes PAGE_GUARD
+            if (data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read)) //Access/Read always becomes PAGE_GUARD
                 data.NewProtect = data.OldProtect | PAGE_GUARD;
             else if (data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute))) //Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
                 data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;

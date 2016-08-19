@@ -45,8 +45,9 @@ namespace GleeBug
     enum class MemoryType
     {
         Access = 1,
-        Write = 2,
-        Execute = 4
+        Read = 2,
+        Write = 4,
+        Execute = 8
     };
 
     /**

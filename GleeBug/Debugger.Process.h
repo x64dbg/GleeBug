@@ -320,7 +320,7 @@ namespace GleeBug
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the memory breakpoint was set, false otherwise.
         */
-        bool SetMemoryBreakpoint(ptr address, ptr size, MemoryType type = MemoryType::Access, bool singleshoot = false);
+        bool SetMemoryBreakpoint(ptr address, ptr size, MemoryType type = MemoryType::Access, bool singleshoot = true);
 
         /**
         \brief Sets a memory breakpoint.
@@ -331,7 +331,7 @@ namespace GleeBug
         \param singleshoot (Optional) True to remove the breakpoint after the first hit.
         \return true if the memory breakpoint was set, false otherwise.
         */
-        bool SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type = MemoryType::Access, bool singleshoot = false);
+        bool SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type = MemoryType::Access, bool singleshoot = true);
 
         /**
         \brief Sets a hardware breakpoint.
@@ -345,7 +345,7 @@ namespace GleeBug
         \return true if the memory breakpoint was set, false otherwise.
         */
         template <typename T>
-        bool SetMemoryBreakpoint(ptr address, ptr size, T* debugger, void(T::*callback)(const BreakpointInfo & info), MemoryType type = MemoryType::Access, bool singleshoot = false)
+        bool SetMemoryBreakpoint(ptr address, ptr size, T* debugger, void(T::*callback)(const BreakpointInfo & info), MemoryType type = MemoryType::Access, bool singleshoot = true)
         {
             static_cast<void>(static_cast<Debugger*>(debugger));
             return SetMemoryBreakpoint(address, size, std::bind(callback, debugger, std::placeholders::_1), type, singleshoot);
