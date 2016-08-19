@@ -409,14 +409,37 @@ public:
     //Memory Breakpoints
     bool SetMemoryBPXEx(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory, DWORD BreakPointType, bool RestoreOnHit, LPVOID bpxCallBack)
     {
-        //TODO
-        return false;
+        if (!mProcess)
+            return false;
+        MemoryType type;
+        switch (BreakPointType)
+        {
+        case UE_MEMORY:
+            type = MemoryType::Access;
+            break;
+        case UE_MEMORY_READ:
+            type = MemoryType::Read;
+            break;
+        case UE_MEMORY_WRITE:
+            type = MemoryType::Write;
+            break;
+        case UE_MEMORY_EXECUTE:
+            type = MemoryType::Execute;
+            break;
+        default:
+            return false;
+        }
+        return mProcess->SetMemoryBreakpoint(ptr(MemoryStart), ptr(SizeOfMemory), [bpxCallBack](const BreakpointInfo & info)
+        {
+            (MEMBPCALLBACK(bpxCallBack))((const void*)info.address);
+        }, type, !RestoreOnHit);
     }
 
     bool RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
     {
-        //TODO
-        return false;
+        if (!mProcess)
+            return false;
+        return mProcess->DeleteMemoryBreakpoint(ptr(MemoryStart));
     }
 
     //Hardware Breakpoints
@@ -631,6 +654,7 @@ private: //variables
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;
     typedef CUSTOMHANDLER HWBPCALLBACK;
+    typedef CUSTOMHANDLER MEMBPCALLBACK;
     CUSTOMHANDLER mCbCREATEPROCESS = nullptr;
     CUSTOMHANDLER mCbEXITPROCESS = nullptr;
     CUSTOMHANDLER mCbCREATETHREAD = nullptr;
