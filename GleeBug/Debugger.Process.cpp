@@ -13,25 +13,6 @@ namespace GleeBug
     {
         for (int i = 0; i < HWBP_COUNT; i++)
             hardwareBreakpoints[i].enabled = false;
-
-        // DEP is disabled if lpFlagsDep == 0
-        typedef BOOL(WINAPI * GETPROCESSDEPPOLICY)(
-            _In_  HANDLE  /*hProcess*/,
-            _Out_ LPDWORD /*lpFlags*/,
-            _Out_ PBOOL   /*lpPermanent*/
-            );
-        static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
-        if (GPDP)
-        {
-            DWORD lpFlags;
-            BOOL bPermanent;
-            if (GPDP(hProcess, &lpFlags, &bPermanent))
-                permanentDep = lpFlags && bPermanent;
-#ifdef _WIN64
-            else if (GetLastError() == ERROR_NOT_SUPPORTED)
-                permanentDep = true;
-#endif
-        }
     }
 
     void Process::StepOver(const StepCallback & cbStep)

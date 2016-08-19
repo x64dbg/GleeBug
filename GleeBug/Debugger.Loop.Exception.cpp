@@ -10,6 +10,25 @@ namespace GleeBug
             mProcess->systemBreakpoint = true;
             mContinueStatus = DBG_CONTINUE;
 
+            //get process DEP policy
+#ifndef _WIN64
+            typedef BOOL(WINAPI * GETPROCESSDEPPOLICY)(
+                _In_  HANDLE  /*hProcess*/,
+                _Out_ LPDWORD /*lpFlags*/,
+                _Out_ PBOOL   /*lpPermanent*/
+                );
+            static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
+            if (GPDP)
+            {
+                DWORD lpFlags;
+                BOOL bPermanent;
+                if (GPDP(mProcess->hProcess, &lpFlags, &bPermanent))
+                    mProcess->permanentDep = lpFlags && bPermanent;
+            }
+#else
+            mProcess->permanentDep = true;
+#endif //_WIN64
+
             //call the callback
             cbSystemBreakpoint();
         }
@@ -155,7 +174,7 @@ namespace GleeBug
         //call the debug event callback
         cbExceptionEvent(exceptionInfo);
 
-        //dispatch the exception
+        //dispatch the exception (https://msdn.microsoft.com/en-us/library/windows/desktop/aa363082(v=vs.85).aspx)
         switch (exceptionInfo.ExceptionRecord.ExceptionCode)
         {
         case STATUS_BREAKPOINT:
