@@ -411,28 +411,10 @@ public:
     {
         if (!mProcess)
             return false;
-        MemoryType type;
-        switch (BreakPointType)
-        {
-        case UE_MEMORY:
-            type = MemoryType::Access;
-            break;
-        case UE_MEMORY_READ:
-            type = MemoryType::Read;
-            break;
-        case UE_MEMORY_WRITE:
-            type = MemoryType::Write;
-            break;
-        case UE_MEMORY_EXECUTE:
-            type = MemoryType::Execute;
-            break;
-        default:
-            return false;
-        }
         return mProcess->SetMemoryBreakpoint(ptr(MemoryStart), ptr(SizeOfMemory), [bpxCallBack](const BreakpointInfo & info)
         {
             (MEMBPCALLBACK(bpxCallBack))((const void*)info.address);
-        }, type, !RestoreOnHit);
+        }, memtypeFromTitan(BreakPointType), !RestoreOnHit);
     }
 
     bool RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
@@ -645,6 +627,23 @@ private: //functions
 #endif //_WIN64
         default:
             return HardwareSize::SizeByte;
+        }
+    }
+
+    static MemoryType memtypeFromTitan(DWORD type)
+    {
+        switch (type)
+        {
+        case UE_MEMORY:
+            return MemoryType::Access;
+        case UE_MEMORY_READ: 
+            return MemoryType::Read;
+        case UE_MEMORY_WRITE:
+            return MemoryType::Write;
+        case UE_MEMORY_EXECUTE:
+            return MemoryType::Execute;
+        default:
+            return MemoryType::Access;
         }
     }
 
