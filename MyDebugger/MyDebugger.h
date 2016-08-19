@@ -8,10 +8,25 @@ using namespace GleeBug;
 class MyDebugger : public Debugger
 {
 protected:
+    void cbMemoryBreakpoint(const BreakpointInfo & info)
+    {
+        printf("Reached memory breakpoint! GIP: 0x%p\n",
+            mRegisters->Gip());
+    }
+
     void cbEntryBreakpoint(const BreakpointInfo & info)
     {
         printf("Reached entry breakpoint! GIP: 0x%p\n",
             mRegisters->Gip());
+#ifdef _WIN64
+        printf("RBX: 0x%p\n", mRegisters->Rbx());
+        if (mProcess->SetMemoryBreakpoint(mRegisters->Rbx(), 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute))
+            puts("Memory breakpoint set!");
+        else
+            puts("Failed to set memory breakpoint...");
+#endif
+        //system("pause");
+
         /*if (mProcess->DeleteBreakpoint(info.address))
             printf("Entry breakpoint deleted!\n");
         else
@@ -61,6 +76,7 @@ protected:
         else
             printf("No free hardware breakpoint slot...\n");*/
 
+        entry = ptr(createProcess.lpBaseOfImage) + 0x1060;
         if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint, true))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
@@ -119,6 +135,8 @@ protected:
             exceptionType,
             exceptionInfo.ExceptionRecord.ExceptionCode,
             exceptionInfo.ExceptionRecord.ExceptionAddress);
+        for (DWORD i = 0; i < exceptionInfo.ExceptionRecord.NumberParameters; i++)
+            printf("  ExceptionInformation[%d] = 0x%p\n", i, exceptionInfo.ExceptionRecord.ExceptionInformation[i]);
     }
 
     void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString) override

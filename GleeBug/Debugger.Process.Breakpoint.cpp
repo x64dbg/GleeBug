@@ -259,7 +259,11 @@ namespace GleeBug
             else if (data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute))) //Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
                 data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;
         }
-        return false;
+
+        DWORD oldProtect;
+        auto vps = !!VirtualProtectEx(hProcess, LPVOID(page), PAGE_SIZE, data.NewProtect, &oldProtect);
+        printf("VirtualProtect(0x%p, 0x%X, %08X, %08X) = %d\n", page, PAGE_SIZE, data.NewProtect, oldProtect, vps);
+        return vps;
     }
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, MemoryType type, bool singleshoot)
@@ -317,7 +321,8 @@ namespace GleeBug
             for (const auto & page : breakpointData)
             {
                 DWORD oldProtect;
-                VirtualProtectEx(hProcess, LPVOID(page.addr), PAGE_SIZE, page.OldProtect, &oldProtect);
+                auto vps = !!VirtualProtectEx(hProcess, LPVOID(page.addr), PAGE_SIZE, page.OldProtect, &oldProtect);
+                printf("VirtualProtect(0x%p, 0x%X, %08X, %08X) = %d\n", page, PAGE_SIZE, page.OldProtect, oldProtect, vps);
             }
             return false;
         }
@@ -384,7 +389,9 @@ namespace GleeBug
             else
                 Protect = data.OldProtect;
             DWORD oldProtect;
-            if (!VirtualProtectEx(hProcess, LPVOID(page), PAGE_SIZE, Protect, &oldProtect))
+            auto vps = !!VirtualProtectEx(hProcess, LPVOID(page), PAGE_SIZE, Protect, &oldProtect);
+            printf("VirtualProtect(0x%p, 0x%X, %08X, %08X) = %d\n", page, PAGE_SIZE, Protect, oldProtect, vps);
+            if (!vps)
                 success = false;
             if (!data.Refcount)
                 memoryBreakpointPages.erase(foundData);
