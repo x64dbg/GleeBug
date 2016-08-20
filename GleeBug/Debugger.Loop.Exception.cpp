@@ -40,6 +40,9 @@ namespace GleeBug
                 return;
             const auto info = foundInfo->second;
 
+            if (!info.enabled)
+                return; //not a valid software breakpoint
+
             //set continue status
             mContinueStatus = DBG_CONTINUE;
 
@@ -135,7 +138,7 @@ namespace GleeBug
         if (foundInfo == mProcess->breakpoints.end())
             return; //not a valid hardware breakpoint
         const auto info = foundInfo->second;
-        if (info.internal.hardware.slot != breakpointSlot)
+        if (info.internal.hardware.slot != breakpointSlot || !info.enabled)
             return; //not a valid hardware breakpoint
 
         //set continue status
@@ -163,6 +166,47 @@ namespace GleeBug
             mProcess->DeleteGenericBreakpoint(info);
     }
 
+    void Debugger::exceptionGuardPage(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
+    {
+        char error[128] = "";
+        auto exceptionAddress = ptr(exceptionRecord.ExceptionAddress);
+
+        auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
+        if (foundRange == mProcess->memoryBreakpointRanges.end())
+        {
+            auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
+            if (foundPage != mProcess->memoryBreakpointPages.end())
+            {
+                const auto & page = foundPage->second;
+                //TODO: single step and page protection changes
+                if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.NewProtect))
+                {
+                    sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
+                    cbInternalError(error);
+                }
+            }
+            return;
+        }
+
+        auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
+        if (foundInfo == mProcess->breakpoints.end())
+        {
+            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
+            cbInternalError(error);
+            return;
+        }
+
+        const auto info = foundInfo->second;
+        if (!info.enabled)
+            return;
+
+        //exceptionRecord.
+    }
+
+    void Debugger::exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
+    {
+    }
+
     void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
     {
         //let the debuggee handle exceptions per default
@@ -182,6 +226,12 @@ namespace GleeBug
             break;
         case STATUS_SINGLE_STEP:
             exceptionSingleStep(exceptionRecord, firstChance);
+            break;
+        case STATUS_GUARD_PAGE_VIOLATION:
+            exceptionGuardPage(exceptionRecord, firstChance);
+            break;
+        case STATUS_ACCESS_VIOLATION:
+            exceptionAccessViolation(exceptionRecord, firstChance);
             break;
         }
 

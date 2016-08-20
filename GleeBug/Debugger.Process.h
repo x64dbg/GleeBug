@@ -123,6 +123,16 @@ namespace GleeBug
         bool MemIsValidPtr(ptr address) const;
 
         /**
+        \brief Memory protect (execute VirtualProtect in the context of the process).
+        \param address The address to change protection for.
+        \param size The size to change protection for.
+        \param newProtect The new protection.
+        \param [out] oldProtect The old protection.
+        \return true if it succeeds, false if it fails.
+        */
+        bool MemProtect(ptr address, ptr size, DWORD newProtect, DWORD* oldProtect = nullptr);
+
+        /**
         \brief Finds the first occurrence of a pattern in process memory.
         \param data The address to start searching from.
         \param datasize The size to search in.
