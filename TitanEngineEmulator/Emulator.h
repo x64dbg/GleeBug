@@ -470,6 +470,13 @@ public:
         return false;
     }
 
+    //Threader
+    ULONG_PTR ThreaderCreateRemoteThread(ULONG_PTR ThreadStartAddress, bool AutoCloseTheHandle, LPVOID ThreadPassParameter, LPDWORD ThreadId)
+    {
+        //TODO
+        return 0;
+    }
+
 protected:
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) override
     {

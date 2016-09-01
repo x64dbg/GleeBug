@@ -269,3 +269,9 @@ __declspec(dllexport) void TITCALL StepInto(LPVOID traceCallBack)
 {
     emu.StepInto(traceCallBack);
 }
+
+//Threader
+__declspec(dllexport) ULONG_PTR TITCALL ThreaderCreateRemoteThread(ULONG_PTR ThreadStartAddress, bool AutoCloseTheHandle, LPVOID ThreadPassParameter, LPDWORD ThreadId)
+{
+    return emu.ThreaderCreateRemoteThread(ThreadStartAddress, AutoCloseTheHandle, ThreadPassParameter, ThreadId);
+}
