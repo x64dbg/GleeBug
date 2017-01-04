@@ -204,11 +204,13 @@ namespace GleeBug
         if (!info.enabled)
             return;
 
+        //TODO: memory breakpoint code
         //exceptionRecord.
     }
 
     void Debugger::exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
     {
+        //TODO: memory breakpoint code
     }
 
     void Debugger::exceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo)
