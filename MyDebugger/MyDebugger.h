@@ -76,7 +76,7 @@ protected:
         else
             printf("No free hardware breakpoint slot...\n");*/
 
-        entry = ptr(createProcess.lpBaseOfImage) + 0x1060;
+        entry = ptr(createProcess.lpBaseOfImage) + 0x1060; //MembpTest, main.cpp:43 (x64)
         if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint, true))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
