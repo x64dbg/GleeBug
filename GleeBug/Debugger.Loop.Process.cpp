@@ -4,6 +4,15 @@ namespace GleeBug
 {
     void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
     {
+        //initial attach housekeeping
+        if(mAttachedToProcess && !mMainProcess.dwProcessId)
+        {
+            mMainProcess.hProcess = createProcess.hProcess;
+            mMainProcess.hThread = createProcess.hThread;
+            mMainProcess.dwProcessId = mDebugEvent.dwProcessId;
+            mMainProcess.dwThreadId = mDebugEvent.dwThreadId;
+        }
+
         //process housekeeping
         mProcesses.insert({ mDebugEvent.dwProcessId,
             Process(createProcess.hProcess,

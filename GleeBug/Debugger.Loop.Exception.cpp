@@ -10,6 +10,10 @@ namespace GleeBug
             mProcess->systemBreakpoint = true;
             mContinueStatus = DBG_CONTINUE;
 
+            //call the attach callback if appropriate
+            if(mAttachedToProcess && mProcess->dwProcessId == mMainProcess.dwProcessId)
+                cbAttachBreakpoint();
+
             //call the callback
             cbSystemBreakpoint();
         }
