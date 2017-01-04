@@ -15,8 +15,8 @@ namespace GleeBug
         const wchar_t* szCommandLine,
         const wchar_t* szCurrentDirectory)
     {
-        STARTUPINFOW si;
-        memset(&si, 0, sizeof(si));
+        memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
+        memset(&mMainProcess, 0, sizeof(mMainProcess));
         const wchar_t* szFileNameCreateProcess;
         wchar_t* szCommandLineCreateProcess;
         wchar_t* szCreateWithCmdLine = nullptr;
@@ -42,12 +42,26 @@ namespace GleeBug
             DEBUG_PROCESS | CREATE_NEW_CONSOLE,
             nullptr,
             szCurrentDirectory,
-            &si,
+            &mMainStartupInfo,
             &mMainProcess);
 
         delete[] szCreateWithCmdLine;
+        mAttachedToProcess = false;
 
         return result;
+    }
+
+    bool Debugger::Attach(DWORD processId)
+    {
+        //don't allow attaching when still debugging
+        if(mIsDebugging)
+            return false;
+        if(!DebugActiveProcess(processId))
+            return false;
+        mAttachedToProcess = true;
+        memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
+        memset(&mMainProcess, 0, sizeof(mMainProcess));
+        return true;
     }
 
     bool Debugger::Stop() const

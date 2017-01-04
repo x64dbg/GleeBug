@@ -53,6 +53,11 @@ namespace GleeBug
             return a.second < b.first;
         }
     };
+
+    std::string Utf16ToUtf8(const std::wstring & wstr);
+    std::string Utf16ToUtf8(const wchar_t* wstr);
+    std::wstring Utf8ToUtf16(const std::string & str);
+    std::wstring Utf8ToUtf16(const char* str);
 }
 
 #endif //GLEEBUG_H

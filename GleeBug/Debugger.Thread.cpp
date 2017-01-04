@@ -42,17 +42,14 @@ namespace GleeBug
 
     bool Thread::RegReadContext()
     {
-        SuspendThread(this->hThread);
         memset(&this->mOldContext, 0, sizeof(CONTEXT));
-        this->mOldContext.ContextFlags = CONTEXT_ALL;
-        bool bReturn = false;
+        this->mOldContext.ContextFlags = CONTEXT_ALL; //TODO: granular control over what's required
         if (GetThreadContext(this->hThread, &this->mOldContext))
         {
             this->registers.SetContext(this->mOldContext);
-            bReturn = true;
+            return true;
         }
-        ResumeThread(this->hThread);
-        return bReturn;
+        return false;
     }
 
     bool Thread::RegWriteContext() const
@@ -61,10 +58,7 @@ namespace GleeBug
         if (memcmp(&this->mOldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)
             return true;
         //update the context
-        SuspendThread(this->hThread);
-        bool bReturn = !!SetThreadContext(this->hThread, this->registers.GetContext());
-        ResumeThread(this->hThread);
-        return bReturn;
+        return !!SetThreadContext(this->hThread, this->registers.GetContext());
     }
 
     void Thread::StepInto()

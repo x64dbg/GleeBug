@@ -113,7 +113,7 @@ namespace GleeBug
                 break;
             }
 
-            //clear trap flag when set by GleeBug (to prevent an EXCEPTION_SINGLE_STEP after detach
+            //clear trap flag when set by GleeBug (to prevent an EXCEPTION_SINGLE_STEP after detach)
             if (mDetach && mThread)
             {
                 if (mThread->isInternalStepping || mThread->isSingleStepping)

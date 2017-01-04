@@ -36,6 +36,13 @@ namespace GleeBug
             const wchar_t* szCurrentDirectory);
 
         /**
+        \brief Attach to a debuggee.
+        \param processId Process to attach to.
+        \return true if the debuggee was attached to successfully, false otherwise.
+        */
+        bool Attach(DWORD processId);
+
+        /**
         \brief Stops the debuggee (terminate the process)
         \return true if the debuggee was stopped correctly, false otherwise.
         */
@@ -162,6 +169,11 @@ namespace GleeBug
         virtual void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) {};
 
         /**
+        \brief Attach breakpoint callback. Called just before cbSystemBreakpoint, only for the process that was attached to. Provide an implementation to use this callback.
+        */
+        virtual void cbAttachBreakpoint() {};
+
+        /**
         \brief System breakpoint callback. Called after the event is internally processed. Provide an implementation to use this callback.
         */
         virtual void cbSystemBreakpoint() {};
@@ -264,6 +276,7 @@ namespace GleeBug
         virtual void exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance);
 
     protected: //variables
+        STARTUPINFOW mMainStartupInfo;
         PROCESS_INFORMATION mMainProcess;
         uint32 mContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
         bool mBreakDebugger = false;
@@ -273,6 +286,7 @@ namespace GleeBug
         bool mIsDebugging = false;
         bool mDetach = false;
         bool mDetachAndBreak = false;
+        bool mAttachedToProcess = false;
         Capstone mCapstone;
 
         /**

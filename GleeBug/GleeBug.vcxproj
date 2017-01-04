@@ -168,6 +168,7 @@
     <ClCompile Include="Debugger.Thread.HardwareBreakpoint.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp" />
+    <ClCompile Include="GleeBug.cpp" />
     <ClCompile Include="Static.BufferFile.cpp" />
     <ClCompile Include="Static.File.cpp" />
     <ClCompile Include="Static.Pattern.cpp" />

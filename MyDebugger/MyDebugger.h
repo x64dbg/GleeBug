@@ -153,6 +153,12 @@ protected:
             rip.dwError);
     }
 
+    void cbAttachBreakpoint() override
+    {
+        printf("Attach breakpoint reached, GIP: 0x%p\n",
+            mRegisters->Gip());
+    }
+
     void cbSystemBreakpoint() override
     {
         printf("System breakpoint reached, GIP: 0x%p\n",
