@@ -81,6 +81,16 @@ __declspec(dllexport) void TITCALL SetEngineVariable(DWORD VariableId, bool Vari
     emu.SetEngineVariable(VariableId, VariableSet);
 }
 
+__declspec(dllexport) PROCESS_INFORMATION* TITCALL TitanGetProcessInformation()
+{
+    return emu.TitanGetProcessInformation();
+}
+
+__declspec(dllexport) STARTUPINFOW* TITCALL TitanGetStartupInformation()
+{
+    return emu.TitanGetStartupInformation();
+}
+
 //Misc
 __declspec(dllexport) bool TITCALL IsJumpGoingToExecuteEx(HANDLE hProcess, HANDLE hThread, ULONG_PTR InstructionAddress, ULONG_PTR RegFlags)
 {
@@ -118,6 +128,11 @@ __declspec(dllexport) ULONG_PTR TITCALL GetContextDataEx(HANDLE hActiveThread, D
     return emu.GetContextDataEx(hActiveThread, IndexOfRegister);
 }
 
+__declspec(dllexport) ULONG_PTR TITCALL GetContextData(DWORD IndexOfRegister)
+{
+    return GetContextDataEx(nullptr, IndexOfRegister);
+}
+
 __declspec(dllexport) bool TITCALL SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)
 {
     return emu.SetContextDataEx(hActiveThread, IndexOfRegister, NewRegisterValue);
@@ -149,6 +164,11 @@ __declspec(dllexport) bool TITCALL StaticFileLoadW(const wchar_t* szFileName, DW
     return emu.StaticFileLoadW(szFileName, DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
 }
 
+__declspec(dllexport) bool TITCALL StaticFileLoad(const char* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
+{
+    return StaticFileLoadW(Utf8ToUtf16(szFileName).c_str(), DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
+}
+
 __declspec(dllexport) bool TITCALL StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
 {
     return emu.StaticFileUnloadW(szFileName, CommitChanges, FileHandle, LoadedSize, FileMap, FileMapVA);
@@ -164,6 +184,11 @@ __declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffsetEx(ULONG_PTR FileMa
     return emu.ConvertVAtoFileOffsetEx(FileMapVA, FileSize, ImageBase, AddressToConvert, AddressIsRVA, ReturnType);
 }
 
+__declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffset(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
+{
+    return ConvertVAtoFileOffsetEx(FileMapVA, 0, 0, AddressToConvert, false, ReturnType);
+}
+
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
 {
     return emu.GetPE32DataFromMappedFile(FileMapVA, WhichSection, WhichData);
@@ -172,6 +197,11 @@ __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR File
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
 {
     return emu.GetPE32DataW(szFileName, WhichSection, WhichData);
+}
+
+__declspec(dllexport) ULONG_PTR TITCALL GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
+{
+    return GetPE32DataW(Utf8ToUtf16(szFileName).c_str(), WhichSection, WhichData);
 }
 
 __declspec(dllexport) bool TITCALL IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)

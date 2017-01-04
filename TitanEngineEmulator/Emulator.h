@@ -9,6 +9,7 @@ public:
     //Debugger
     PROCESS_INFORMATION* InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder)
     {
+        mCbATTACHBREAKPOINT = nullptr;
         if (!Init(szFileName, szCommandLine, szCurrentFolder))
             return nullptr;
         return &mMainProcess;
@@ -27,13 +28,16 @@ public:
 
     bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
     {
-        //TODO
-        return false;
+        if(!Attach(ProcessId))
+            return false;
+        mCbATTACHBREAKPOINT = STEPCALLBACK(CallBack);
+        mAttachProcessInfo = (PROCESS_INFORMATION*)DebugInfo;
+        DebugLoop();
+        return true;
     }
 
     bool DetachDebuggerEx(DWORD ProcessId)
     {
-        //TODO
         Detach();
         return true;
     }
@@ -139,6 +143,16 @@ public:
     {
         if (VariableId == UE_ENGINE_SET_DEBUG_PRIVILEGE)
             mSetDebugPrivilege = VariableSet;
+    }
+
+    PROCESS_INFORMATION* TitanGetProcessInformation()
+    {
+        return &mMainProcess;
+    }
+
+    STARTUPINFOW* TitanGetStartupInformation()
+    {
+        return &mMainStartupInfo;
     }
 
     //Misc
@@ -532,6 +546,16 @@ protected:
             mCbDEBUGEVENT(&debugEvent);
     }
 
+    void cbAttachBreakpoint() override
+    {
+        if(mCbATTACHBREAKPOINT)
+        {
+            if(mAttachProcessInfo)
+                *mAttachProcessInfo = mMainProcess;
+            mCbATTACHBREAKPOINT();
+        }
+    }
+
     void cbSystemBreakpoint() override
     {
         if (mCbSYSTEMBREAKPOINT)
@@ -588,12 +612,16 @@ private: //functions
 
     Thread* threadFromHandle(HANDLE hThread) const
     {
+        if(!hThread)
+            return mThread;
         //TODO: properly implement this
         return mThread;
     }
 
     Process* processFromHandle(HANDLE hProcess) const
     {
+        if(!hProcess)
+            return mProcess;
         //TODO: properly implement this
         return mProcess;
     }
@@ -648,4 +676,6 @@ private: //variables
     CUSTOMHANDLER mCbOUTPUTDEBUGSTRING = nullptr;
     CUSTOMHANDLER mCbUNHANDLEDEXCEPTION = nullptr;
     CUSTOMHANDLER mCbDEBUGEVENT = nullptr;
+    STEPCALLBACK mCbATTACHBREAKPOINT = nullptr;
+    PROCESS_INFORMATION* mAttachProcessInfo = nullptr;
 };
