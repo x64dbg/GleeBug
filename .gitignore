@@ -6,3 +6,4 @@ Release/
 *.orig
 *.vcxproj.user
 docs/
+.vs/
