@@ -83,6 +83,9 @@
     <ClCompile Include="..\capstone_wrapper\capstone_wrapper.cpp">
       <Filter>Source Files\capstone_wrapper</Filter>
     </ClCompile>
+    <ClCompile Include="GleeBug.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.h">
