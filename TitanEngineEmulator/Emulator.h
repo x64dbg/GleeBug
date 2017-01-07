@@ -186,6 +186,12 @@ public:
         return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
     }
 
+    HANDLE TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
+    {
+        //TODO
+        return OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+    }
+
     ULONG_PTR ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
     {
         //TODO
