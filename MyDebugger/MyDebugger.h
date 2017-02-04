@@ -19,12 +19,16 @@ protected:
         printf("Reached entry breakpoint! GIP: 0x%p\n",
             mRegisters->Gip());
 #ifdef _WIN64
-        printf("RBX: 0x%p\n", mRegisters->Rbx());
-        if (mProcess->SetMemoryBreakpoint(mRegisters->Rbx(), 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute))
+        auto addr = mRegisters->Rbx();
+#else
+        auto addr = mRegisters->Esi();
+#endif //_WIN64
+        printf("Addr: 0x%p\n", addr);
+        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute))
             puts("Memory breakpoint set!");
         else
             puts("Failed to set memory breakpoint...");
-#endif
+
         //system("pause");
 
         /*if (mProcess->DeleteBreakpoint(info.address))
@@ -77,7 +81,11 @@ protected:
             printf("No free hardware breakpoint slot...\n");*/
 
         //https://github.com/mrexodia/GleeBugMembpTest
+#ifdef _WIN64
         entry = ptr(createProcess.lpBaseOfImage) + 0x1060; //MembpTest, main.cpp:43 (x64)
+#else
+        entry = ptr(createProcess.lpBaseOfImage) + 0x108F; //MembpTest, main.cpp:43 (x32)
+#endif //_WIN64
         if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint, true))
             printf("Breakpoint set at 0x%p!\n", entry);
         else
