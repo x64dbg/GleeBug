@@ -173,14 +173,17 @@ namespace GleeBug
     void Debugger::exceptionGuardPage(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
     {
         char error[128] = "";
-        auto exceptionAddress = ptr(exceptionRecord.ExceptionAddress);
+        auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
 
+        //check if the exception address is directly in the range of a memory breakpoint
         auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
         if (foundRange == mProcess->memoryBreakpointRanges.end())
         {
+            //if not in range, check if a memory breakpoint is in the accessed page
             auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
             if (foundPage != mProcess->memoryBreakpointPages.end())
             {
+                //if the page contains a memory breakpoint we have to restore the old protection to correctly resume the debuggee
                 const auto & page = foundPage->second;
                 //TODO: single step and page protection changes
                 if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.NewProtect))
@@ -192,6 +195,7 @@ namespace GleeBug
             return;
         }
 
+        //find the breakpoint associated with the hit breakpoint range
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
         if (foundInfo == mProcess->breakpoints.end())
         {
@@ -200,12 +204,17 @@ namespace GleeBug
             return;
         }
 
+        //check if the memory breakpoint is disabled (meaning we shouldn't intercept the exception)
+        //TODO: think about what happens with multiple breakpoints in one page where only one is disabled
         const auto info = foundInfo->second;
         if (!info.enabled)
             return;
 
-        //TODO: memory breakpoint code
-        //exceptionRecord.
+        printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
+
+        //TODO: check if the right type is accessed (ExceptionInformation[0])
+        //TODO: execute the user callback (if present)
+        //TODO: single step and restore page protection
     }
 
     void Debugger::exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
