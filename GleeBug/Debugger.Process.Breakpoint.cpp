@@ -381,7 +381,7 @@ namespace GleeBug
             if (data.Refcount)
             {
                 //TODO: properly determine the new protection flag
-                if (data.Type & ~uint32(info.type))
+                if (data.Type & ~uint32(info.internal.memory.type))
                     data.NewProtect = data.OldProtect | PAGE_GUARD;
                 Protect = data.NewProtect;
             }
