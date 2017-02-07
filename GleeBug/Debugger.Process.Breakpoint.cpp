@@ -356,8 +356,13 @@ namespace GleeBug
 
     bool Process::DeleteMemoryBreakpoint(ptr address)
     {
-        //find the hardware breakpoint
-        auto found = breakpoints.find({ BreakpointType::Hardware, address });
+        //find the memory breakpoint range
+        auto range = memoryBreakpointRanges.find(Range(address, address));
+        if(range == memoryBreakpointRanges.end())
+            return false;
+
+        //find the memory breakpoint
+        auto found = breakpoints.find({ BreakpointType::Memory, range->first });
         if (found == breakpoints.end())
             return false;
         const auto & info = found->second;
