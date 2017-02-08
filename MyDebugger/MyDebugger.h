@@ -10,8 +10,16 @@ class MyDebugger : public Debugger
 protected:
     void cbMemoryBreakpoint(const BreakpointInfo & info)
     {
+        unsigned char dataToExec[4];
         printf("Reached memory breakpoint! GIP: 0x%p\n",
             mRegisters->Gip());
+
+        mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
+        printf("\n You Bpxed Correctly: ");
+        for (int i = 0; i < 4; i++)
+        {
+            printf("%02X ", dataToExec[i]);
+        }
     }
 
     void cbEntryBreakpoint(const BreakpointInfo & info)
@@ -24,7 +32,7 @@ protected:
         auto addr = mRegisters->Esi();
 #endif //_WIN64
         printf("Addr: 0x%p\n", addr);
-        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Access))
+        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute))
             puts("Memory breakpoint set!");
         else
             puts("Failed to set memory breakpoint...");
