@@ -171,187 +171,178 @@ namespace GleeBug
     }
 
     void Debugger::exceptionGuardPage(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
-	{
+    {
+        /* old code ~Duncan~
+        char error[128] = "";
+        auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
+        //check if the exception address is directly in the range of a memory breakpoint
+        auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
+        if (foundRange == mProcess->memoryBreakpointRanges.end())
+        {
+        //if not in range, check if a memory breakpoint is in the accessed page
+        auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
+        if (foundPage != mProcess->memoryBreakpointPages.end())
+        {
+        //if the page contains a memory breakpoint we have to restore the old protection to correctly resume the debuggee
+        const auto & page = foundPage->second;
+        //TODO: single step and page protection changes
+        if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.NewProtect))
+        {
+        sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
+        cbInternalError(error);
+        }
+        }
+        return;
+        }
+        //find the breakpoint associated with the hit breakpoint range
+        auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
+        if (foundInfo == mProcess->breakpoints.end())
+        {
+        sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
+        cbInternalError(error);
+        return;
+        }
+        //check if the memory breakpoint is disabled (meaning we shouldn't intercept the exception)
+        //TODO: think about what happens with multiple breakpoints in one page where only one is disabled
+        const auto info = foundInfo->second;
+        if (!info.enabled)
+        return;
+        printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
+        //TODO: check if the right type is accessed (ExceptionInformation[0])
+        //TODO: execute the user callback (if present)
+        //TODO: single step and restore page protection
+        */
+        //New code ~Marques~
+        /* 0xcc breakpoing
+        mThread->StepInternal(std::bind([this, info]()
+        {
+        //only restore the bytes if the breakpoint still exists
+        if (mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
+        mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
+        }));
+        */
 
-		/* old code ~Duncan~
-		char error[128] = "";
-		auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
+        char error[128] = "";
+        auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
 
-		//check if the exception address is directly in the range of a memory breakpoint
-		auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
-		if (foundRange == mProcess->memoryBreakpointRanges.end())
-		{
-		//if not in range, check if a memory breakpoint is in the accessed page
-		auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-		if (foundPage != mProcess->memoryBreakpointPages.end())
-		{
-		//if the page contains a memory breakpoint we have to restore the old protection to correctly resume the debuggee
-		const auto & page = foundPage->second;
-		//TODO: single step and page protection changes
-		if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.NewProtect))
-		{
-		sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
-		cbInternalError(error);
-		}
-		}
-		return;
-		}
+        //check if the exception address is directly in the range of a memory breakpoint
+        auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
+        if (foundRange == mProcess->memoryBreakpointRanges.end())
+        {
+            //if not in range, check if a memory breakpoint is in the accessed page
+            auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
+            if (foundPage != mProcess->memoryBreakpointPages.end())
+            {
+                //if the page contains a memory breakpoint we have to restore the old protection to correctly resume the debuggee
+                const auto & page = foundPage->second;
+                //TODO: single step and page protection changes
+                //FIXED (marques):
+                //restored *OLD* page protection settings
+                if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
+                {
+                    sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
+                    cbInternalError(error);
+                }
+                mThread->StepInternal(std::bind([this]()
+                {
+                    return;
+                }));
+            }
+            return;
+        }
 
-		//find the breakpoint associated with the hit breakpoint range
-		auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
-		if (foundInfo == mProcess->breakpoints.end())
-		{
-		sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
-		cbInternalError(error);
-		return;
-		}
+        //find the breakpoint associated with the hit breakpoint range
+        auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
+        if (foundInfo == mProcess->breakpoints.end())
+        {
+            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
+            cbInternalError(error);
+            return;
+        }
 
-		//check if the memory breakpoint is disabled (meaning we shouldn't intercept the exception)
-		//TODO: think about what happens with multiple breakpoints in one page where only one is disabled
-		const auto info = foundInfo->second;
-		if (!info.enabled)
-		return;
+        //check if the memory breakpoint is disabled (meaning we shouldn't intercept the exception)
+        //TODO: think about what happens with multiple breakpoints in one page where only one is disabled
+        //There is really no problem about this because enabled is a property of a range and ranges do not overlap.
+        const auto info = foundInfo->second;
+        if (!info.enabled)
+            return;
 
-		printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
+        printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
 
-		//TODO: check if the right type is accessed (ExceptionInformation[0])
-		//TODO: execute the user callback (if present)
-		//TODO: single step and restore page protection
-		*/
+        //TODO: check if the right type is accessed (ExceptionInformation[0])
+        //FIXED: Marques
+        auto bpxPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
+        if (bpxPage == mProcess->memoryBreakpointPages.end())
+        {
+            sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", exceptionAddress & ~(PAGE_SIZE - 1));
+            cbInternalError(error);
+            return;
+        }
+        /*
+        Access = 1,
+        Read = 2,
+        Write = 4,
+        Execute = 8
+        */
+        //Read but our bpx page is not bp on Read
+        if ((exceptionRecord.ExceptionInformation[0]) && (!(bpxPage->second.Type & 0x2)))
+        {
+            //perhaps the program generated such exception
+            return;
+        }
 
-		//New code ~Marques~
+        //Exception on write but page bp information does not have bp on write
+        if ((exceptionRecord.ExceptionInformation[0] == 1) && (!(bpxPage->second.Type & 0x4)))
+        {
+            return;
+        }
 
-		/* 0xcc breakpoing
-		mThread->StepInternal(std::bind([this, info]()
-		{
-		//only restore the bytes if the breakpoint still exists
-		if (mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
-		mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
-		}));
+        //caused by data execution prevention but page bp information does not have bp on exec
+        if ((exceptionRecord.ExceptionInformation[0] == 8) && (!(bpxPage->second.Type & 0x8)))
+        {
+            return;
+        }
 
-		*/
+        //generic breakpoint callback function.
+        cbBreakpoint(info);
 
-		char error[128] = "";
-		auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
-
-		//check if the exception address is directly in the range of a memory breakpoint
-		auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
-		if (foundRange == mProcess->memoryBreakpointRanges.end())
-		{
-			//if not in range, check if a memory breakpoint is in the accessed page
-			auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-			if (foundPage != mProcess->memoryBreakpointPages.end())
-			{
-				//if the page contains a memory breakpoint we have to restore the old protection to correctly resume the debuggee
-				const auto & page = foundPage->second;
-				//TODO: single step and page protection changes
-				//FIXED (marques):
-				//restored *OLD* page protection settings
-				if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
-				{
-					sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
-					cbInternalError(error);
-				}
-				mThread->StepInternal(std::bind([this]()
-				{
-					return;
-				}));
-			}
-			return;
-		}
-
-		//find the breakpoint associated with the hit breakpoint range
-		auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
-		if (foundInfo == mProcess->breakpoints.end())
-		{
-			sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
-			cbInternalError(error);
-			return;
-		}
-
-		//check if the memory breakpoint is disabled (meaning we shouldn't intercept the exception)
-		//TODO: think about what happens with multiple breakpoints in one page where only one is disabled
-		//There is really no problem about this because enabled is a property of a range and ranges do not overlap.
-		const auto info = foundInfo->second;
-		if (!info.enabled)
-			return;
-
-		printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
-
-		//TODO: check if the right type is accessed (ExceptionInformation[0])
-		//FIXED: Marques
-		auto bpxPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-		if (bpxPage == mProcess->memoryBreakpointPages.end())
-		{
-			sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", exceptionAddress & ~(PAGE_SIZE - 1));
-			cbInternalError(error);
-			return;
-		}
-		/*
-		Access = 1,
-		Read = 2,
-		Write = 4,
-		Execute = 8
-		*/
-		//Read but our bpx page is not bp on Read
-		if ((exceptionRecord.ExceptionInformation[0]) && (!(bpxPage->second.Type & 0x2)))
-		{
-			//perhaps the program generated such exception
-			return;
-		}
-
-		//Exception on write but page bp information does not have bp on write
-		if ((exceptionRecord.ExceptionInformation[0] == 1) && (!(bpxPage->second.Type & 0x4)))
-		{
-			return;
-		}
-
-		//caused by data execution prevention but page bp information does not have bp on exec
-		if ((exceptionRecord.ExceptionInformation[0] == 8) && (!(bpxPage->second.Type & 0x8)))
-		{
-			return;
-		}
-
-		//generic breakpoint callback function.
-		cbBreakpoint(info);
-
-		//TODO: execute the user callback (if present)
-		//FIXED: Marques
-		auto bpxCb = mProcess->breakpointCallbacks.find({ BreakpointType::Memory, info.address });
-		if (bpxCb != mProcess->breakpointCallbacks.end())
-		{
-			bpxCb->second(info);
-		}
+        //TODO: execute the user callback (if present)
+        //FIXED: Marques
+        auto bpxCb = mProcess->breakpointCallbacks.find({ BreakpointType::Memory, info.address });
+        if (bpxCb != mProcess->breakpointCallbacks.end())
+        {
+            bpxCb->second(info);
+        }
 
 
-		mContinueStatus = DBG_CONTINUE;
-		//TODO: single step and restore page protection
-		//FIXED:
-		if (!mProcess->MemProtect(bpxPage->first, PAGE_SIZE, bpxPage->second.OldProtect))
-		{
-			sprintf_s(error, "MemProtect failed on 0x%p", bpxPage->first);
-			cbInternalError(error);
-		}
-		//Pass info as well
-		auto pageAddr = bpxPage->first;
-		auto pageProperties = bpxPage->second;
-		mThread->StepInternal(std::bind([this, info, pageAddr, pageProperties]()
-		{
-			//Check if the bpx still exists
-			auto found_range = mProcess->memoryBreakpointRanges.find(Range(info.address, info.address));
-			if (found_range != mProcess->memoryBreakpointRanges.end())
-			{
-				mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.NewProtect);
-			}
-			return;
-		}));
+        mContinueStatus = DBG_CONTINUE;
+        //TODO: single step and restore page protection
+        //FIXED:
+        if (!mProcess->MemProtect(bpxPage->first, PAGE_SIZE, bpxPage->second.OldProtect))
+        {
+            sprintf_s(error, "MemProtect failed on 0x%p", bpxPage->first);
+            cbInternalError(error);
+        }
+        //Pass info as well
+        auto pageAddr = bpxPage->first;
+        auto pageProperties = bpxPage->second;
+        mThread->StepInternal(std::bind([this, info, pageAddr, pageProperties]()
+        {
+            //Check if the bpx still exists
+            auto found_range = mProcess->memoryBreakpointRanges.find(Range(info.address, info.address));
+            if (found_range != mProcess->memoryBreakpointRanges.end())
+            {
+                mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.NewProtect);
+            }
+            return;
+        }));
 
-		if (foundInfo->second.singleshoot)
-		{
-			mProcess->DeleteMemoryBreakpoint(exceptionAddress);
-		}
+        if (foundInfo->second.singleshoot)
+        {
+            mProcess->DeleteMemoryBreakpoint(exceptionAddress);
+        }
 
-	}
+    }
 
 
     void Debugger::exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
