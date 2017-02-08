@@ -39,7 +39,7 @@ namespace GleeBug
             nullptr,
             nullptr,
             FALSE,
-            DEBUG_PROCESS | CREATE_NEW_CONSOLE,
+            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | CREATE_NEW_CONSOLE,
             nullptr,
             szCurrentDirectory,
             &mMainStartupInfo,
