@@ -239,10 +239,13 @@ namespace GleeBug
         */
         //Read but our bpx page is not bp on Read
         //We shouldn't care about other stuff such as Write or Execute since these breakpoints are implemented with Access Violation.
-        if ((exceptionRecord.ExceptionInformation[0]==0) && (!(bpxPage->second.Type & 0x2)))
+        if (!(bpxPage->second.Type & 0x1))
         {
-            //perhaps the program generated such exception
-            return;
+            if ((exceptionRecord.ExceptionInformation[0] == 0) && (!(bpxPage->second.Type & 0x2)))
+            {
+                //perhaps the program generated such exception
+                return;
+            }
         }
 
         //generic breakpoint callback function.

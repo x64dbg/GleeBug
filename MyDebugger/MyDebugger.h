@@ -32,7 +32,7 @@ protected:
         auto addr = mRegisters->Esi();
 #endif //_WIN64
         printf("Addr: 0x%p\n", addr);
-        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute))
+        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Access, false))
             puts("Memory breakpoint set!");
         else
             puts("Failed to set memory breakpoint...");
