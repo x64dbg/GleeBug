@@ -8,14 +8,32 @@ using namespace GleeBug;
 class MyDebugger : public Debugger
 {
 protected:
+    void cbMemoryBreakpoint2(const BreakpointInfo & info)
+    {
+        printf("Reached memory breakpoint#2! GIP: 0x%p\n",
+            mRegisters->Gip());
+    }
+
     void cbMemoryBreakpoint(const BreakpointInfo & info)
     {
         unsigned char dataToExec[4];
+        const char tmp[] = "aaaa";
+
         printf("Reached memory breakpoint! GIP: 0x%p\n",
             mRegisters->Gip());
 
         mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
-        printf("\n You Bpxed Correctly: ");
+        printf("\n What are my bytes? I am so lost.. Dump: ");
+        for (int i = 0; i < 4; i++)
+        {
+            printf("%02X ", dataToExec[i]);
+        }
+
+        mProcess->DeleteMemoryBreakpoint(mRegisters->Gip());
+        mProcess->SetMemoryBreakpoint(mRegisters->Gip() + 1, 0x1, this, &MyDebugger::cbMemoryBreakpoint2, MemoryType::Access, false);
+        memcpy(dataToExec, tmp, 4);
+        mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
+        printf("\n What are my bytes? I am so lost.. Dump: ");
         for (int i = 0; i < 4; i++)
         {
             printf("%02X ", dataToExec[i]);
@@ -32,7 +50,7 @@ protected:
         auto addr = mRegisters->Esi();
 #endif //_WIN64
         printf("Addr: 0x%p\n", addr);
-        if (mProcess->SetMemoryBreakpoint(addr, 0x1000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Access, false))
+        if (mProcess->SetMemoryBreakpoint(addr, 0x1, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Access, false))
             puts("Memory breakpoint set!");
         else
             puts("Failed to set memory breakpoint...");
