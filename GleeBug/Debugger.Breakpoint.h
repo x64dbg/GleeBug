@@ -69,6 +69,7 @@ namespace GleeBug
                 HardwareSlot slot;
                 HardwareType type;
                 HardwareSize size;
+                bool enabled;
             } hardware;
             struct
             {
@@ -84,7 +85,6 @@ namespace GleeBug
     struct BreakpointInfo
     {
         ptr address;
-        bool enabled;
         bool singleshoot;
         BreakpointType type;
         BreakpointInternalInfo internal;

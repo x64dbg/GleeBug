@@ -78,7 +78,6 @@ namespace GleeBug
     {
         DWORD dwOldProtect;
         auto vps = VirtualProtectEx(hProcess, LPVOID(address), size, newProtect, &dwOldProtect);
-        printf("MemProtect(0x%p, 0x%X, %08X, %08X) = %d\n", address, size, newProtect, dwOldProtect, vps);
         if (!vps)
             return false;
         if (oldProtect)

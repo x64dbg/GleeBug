@@ -44,9 +44,6 @@ namespace GleeBug
                 return;
             const auto info = foundInfo->second;
 
-            if (!info.enabled)
-                return; //not a valid software breakpoint
-
             //set continue status
             mContinueStatus = DBG_CONTINUE;
 
@@ -142,7 +139,7 @@ namespace GleeBug
         if (foundInfo == mProcess->breakpoints.end())
             return; //not a valid hardware breakpoint
         const auto info = foundInfo->second;
-        if (info.internal.hardware.slot != breakpointSlot || !info.enabled)
+        if (info.internal.hardware.slot != breakpointSlot)
             return; //not a valid hardware breakpoint
 
         //set continue status
@@ -238,10 +235,6 @@ namespace GleeBug
         //TODO: think about what happens with multiple breakpoints in one page where only one is disabled
         //There is really no problem about this because enabled is a property of a range and ranges do not overlap.
         const auto info = foundInfo->second;
-        if (!info.enabled)
-            return;
-
-        printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
 
         //TODO: check if the right type is accessed (ExceptionInformation[0])
         //FIXED: 
@@ -434,10 +427,6 @@ namespace GleeBug
         //TODO: think about what happens with multiple breakpoints in one page where only one is disabled
         //There is really no problem about this because enabled is a property of a range and ranges do not overlap.
         const auto info = foundInfo->second;
-        if (!info.enabled)
-            return;
-
-        printf("memory breakpoint: 0x%p (size: %d)\n", info.address, info.internal.memory.size);
 
         //TODO: check if the right type is accessed (ExceptionInformation[0])
         //FIXED: 
@@ -452,8 +441,6 @@ namespace GleeBug
             return;
         }
 
-
-        
         /*
         Access = 1,
         Read = 2,

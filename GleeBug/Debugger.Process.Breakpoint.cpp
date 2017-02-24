@@ -12,7 +12,6 @@ namespace GleeBug
         //setup the breakpoint information struct
         BreakpointInfo info = {};
         info.address = address;
-        info.enabled = true;
         info.singleshoot = singleshoot;
         info.type = BreakpointType::Software;
 
@@ -64,13 +63,10 @@ namespace GleeBug
             return false;
         const auto & info = found->second;
 
-        //restore the breakpoint bytes if the breakpoint is enabled
-        if (info.enabled)
-        {
-            if (!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
-                return false;
-            FlushInstructionCache(hProcess, nullptr, 0);
-        }
+        //restore the breakpoint bytes
+        if (!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
+            return false;
+        FlushInstructionCache(hProcess, nullptr, 0);
 
         //remove the breakpoint from the maps
         softwareBreakpointReferences.erase(info.address);
@@ -84,7 +80,7 @@ namespace GleeBug
         //find a free hardware breakpoint slot
         for (int i = 0; i < HWBP_COUNT; i++)
         {
-            if (!hardwareBreakpoints[i].enabled)
+            if (!hardwareBreakpoints[i].internal.hardware.enabled)
             {
                 slot = HardwareSlot(i);
                 return true;
@@ -122,7 +118,6 @@ namespace GleeBug
         //setup the breakpoint information struct
         BreakpointInfo info = {};
         info.address = address;
-        info.enabled = true;
         info.singleshoot = singleshoot;
         info.type = BreakpointType::Hardware;
         info.internal.hardware.slot = slot;
@@ -160,7 +155,7 @@ namespace GleeBug
         const auto & info = found->second;
 
         //delete the hardware breakpoint from the internal buffer
-        hardwareBreakpoints[int(info.internal.hardware.slot)].enabled = false;
+        hardwareBreakpoints[int(info.internal.hardware.slot)].internal.hardware.enabled = false;
 
         //delete the hardware breakpoint from the registers
         bool success = true;
@@ -333,7 +328,6 @@ namespace GleeBug
         //setup the breakpoint information struct
         BreakpointInfo info = {};
         info.address = address;
-        info.enabled = true;
         info.singleshoot = singleshoot;
         info.type = BreakpointType::Memory;
         info.internal.memory.type = type;
@@ -386,8 +380,8 @@ namespace GleeBug
             if (data.Refcount)
             {
                 //TODO: properly determine the new protection flag
-				//Are there any other protections left?
-				//If so add the guard
+                //Are there any other protections left?
+                //If so add the guard
                 if (data.Type & ~uint32(info.internal.memory.type))
                     data.NewProtect = data.OldProtect | PAGE_GUARD;
                 Protect = data.NewProtect;

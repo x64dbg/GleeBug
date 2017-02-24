@@ -12,7 +12,7 @@ namespace GleeBug
         permanentDep(false)
     {
         for (int i = 0; i < HWBP_COUNT; i++)
-            hardwareBreakpoints[i].enabled = false;
+            hardwareBreakpoints[i].internal.hardware.enabled = false;
     }
 
     void Process::StepOver(const StepCallback & cbStep)
