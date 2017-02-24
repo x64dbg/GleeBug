@@ -44,21 +44,17 @@ namespace GleeBug
     {
         memset(&this->mOldContext, 0, sizeof(CONTEXT));
         this->mOldContext.ContextFlags = CONTEXT_ALL; //TODO: granular control over what's required
-        if (GetThreadContext(this->hThread, &this->mOldContext))
-        {
-            this->registers.SetContext(this->mOldContext);
-            return true;
-        }
-        return false;
+        this->registers.setContextLazy(&this->mOldContext, this->hThread);
+        return true;
     }
 
-    bool Thread::RegWriteContext() const
+    bool Thread::RegWriteContext()
     {
         //check if something actually changed
-        if (memcmp(&this->mOldContext, this->registers.GetContext(), sizeof(CONTEXT)) == 0)
+        if (memcmp(&this->mOldContext, &this->registers.mContext, sizeof(CONTEXT)) == 0)
             return true;
         //update the context
-        return !!SetThreadContext(this->hThread, this->registers.GetContext());
+        return !!SetThreadContext(this->hThread, &this->registers.mContext);
     }
 
     void Thread::StepInto()

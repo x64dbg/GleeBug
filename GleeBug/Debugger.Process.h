@@ -394,6 +394,24 @@ namespace GleeBug
             StepOver(std::bind(callback, debugger));
         }
 
+        bool RegReadContext()
+        {
+            auto result = true;
+            for(auto & thread : this->threads)
+                if(!thread.second.RegReadContext())
+                    result = false;
+            return result;
+        }
+
+        bool RegWriteContext()
+        {
+            auto result = true;
+            for(auto & thread : this->threads)
+                if(!thread.second.RegWriteContext())
+                    result = false;
+            return result;
+        }
+
         private:
             Capstone mCapstone;
     };

@@ -102,13 +102,45 @@ namespace GleeBug
         memset(&this->mContext, 0, sizeof(CONTEXT));
     }
 
-    const CONTEXT* Registers::GetContext() const
+    const CONTEXT* Registers::GetContext()
     {
+        handleLazyContext();
         return &mContext;
     }
 
     void Registers::SetContext(const CONTEXT & context)
     {
+        handleLazyContext();
         this->mContext = context;
+    }
+
+    void Registers::setContextLazy(CONTEXT* oldContext, HANDLE hThread)
+    {
+        this->mLazyOldContext = oldContext;
+        this->mLazyThread = hThread;
+        this->mLazySet = true;
+        this->mContext = *this->mLazyOldContext;        
+    }
+
+    bool Registers::handleLazyContext()
+    {
+        if(!this->mLazySet)
+            return true;
+
+        if(!this->mLazyOldContext || !this->mLazyThread) //assert
+            __debugbreak();
+
+        //TODO: handle failure of GetThreadContext
+        auto result = false;
+        if(GetThreadContext(this->mLazyThread, this->mLazyOldContext))
+        {
+            this->mContext = *this->mLazyOldContext;
+            result = true;
+        }
+        
+        this->mLazyOldContext = nullptr;
+        this->mLazyThread = nullptr;
+        this->mLazySet = false;        
+        return result;
     }
 };

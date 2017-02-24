@@ -55,7 +55,7 @@ namespace GleeBug
         \brief Write the register context to the thread. This does nothing if the registers did not change.
         \return true if it succeeds, false if it fails.
         */
-        bool RegWriteContext() const;
+        bool RegWriteContext();
 
         /**
         \brief Step into.

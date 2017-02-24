@@ -235,6 +235,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
             return 0;
+        if(mIsRunning)
+            thread->RegReadContext();
         return thread->registers.Get(registerFromDword(IndexOfRegister));
     }
 
@@ -243,7 +245,11 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
+        if(mIsRunning)
+            thread->RegWriteContext();
         return true;
     }
 
@@ -252,6 +258,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
         auto context = thread->registers.GetContext();
         titcontext->cax = thread->registers.Gax();
@@ -294,6 +302,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         thread->registers.Gax = titcontext->cax;
         thread->registers.Gcx = titcontext->ccx;
         thread->registers.Gdx = titcontext->cdx;
@@ -328,6 +338,8 @@ public:
         context.SegCs = titcontext->cs;
         context.SegSs = titcontext->ss;
         thread->registers.SetContext(context);
+        if(mIsRunning)
+            thread->RegWriteContext();
         return true;
     }
 
@@ -449,11 +461,17 @@ public:
     {
         if (!mProcess)
             return false;
-        return mProcess->SetHardwareBreakpoint(bpxAddress,
+        if(mIsRunning)
+            mProcess->RegReadContext();
+        if(!mProcess->SetHardwareBreakpoint(bpxAddress,
             (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
         {
             (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
-        }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize));
+        }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize)))
+            return false;
+        if(mIsRunning)
+            mProcess->RegWriteContext();
+        return true;
     }
 
     bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)

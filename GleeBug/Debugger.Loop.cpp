@@ -44,8 +44,6 @@ namespace GleeBug
                 {
                     mThread = mProcess->thread = &threadFound->second;
                     mRegisters = &mThread->registers;
-                    if (!mThread->RegReadContext())
-                        cbInternalError("ThreadInfo::RegReadContext() failed!");
                 }
                 else
                 {
@@ -63,6 +61,10 @@ namespace GleeBug
                     mProcess = nullptr;
                 }
             }
+
+            //read register contexts
+            if(mProcess && !mProcess->RegReadContext())
+                cbInternalError("Process::RegReadContext() failed!");                        
 
             //call the pre debug event callback
             cbPreDebugEvent(mDebugEvent);
@@ -120,12 +122,9 @@ namespace GleeBug
                     mThread->registers.TrapFlag = false;
             }
 
-            //write the register context
-            if (mThread)
-            {
-                if (!mThread->RegWriteContext())
-                    cbInternalError("ThreadInfo::RegWriteContext() failed!");
-            }
+            //write register contexts
+            if(mProcess && !mProcess->RegWriteContext())
+                cbInternalError("Process::RegWriteContext() failed!");
 
             //continue the debug event
             if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
