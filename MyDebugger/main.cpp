@@ -7,9 +7,9 @@
 static void testDebugger()
 {
 #ifdef _WIN64
-    wchar_t szFilePath[256] = L"c:\\test64.exe";
+    wchar_t szFilePath[256] = L"c:\\MembpTest_x64.exe";
 #else //x86
-    wchar_t szFilePath[256] = L"c:\\test32.exe";
+    wchar_t szFilePath[256] = L"c:\\MembpTest_x32.exe";
 #endif //_WIN64
     wchar_t szCommandLine[256] = L"";
     wchar_t szCurrentDir[256] = L"c:\\";
@@ -161,7 +161,7 @@ static void testCorkami()
 
 int main()
 {
-    testPeFile(L"C:\\test64.exe");
+    testDebugger();
     //testCorkami();
     //testPeFile(L"c:\\!exclude\\pe\\bin\\appendedhdr.exe");
     puts("");

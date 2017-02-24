@@ -7,3 +7,4 @@ Release/
 *.vcxproj.user
 docs/
 .vs/
+*.VC.db

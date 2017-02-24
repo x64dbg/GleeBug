@@ -44,9 +44,10 @@ namespace GleeBug
 
     enum class MemoryType
     {
-        Acess,
-        Write,
-        Execute
+        Access = 1,
+        Read = 2,
+        Write = 4,
+        Execute = 8
     };
 
     /**
@@ -68,6 +69,7 @@ namespace GleeBug
                 HardwareSlot slot;
                 HardwareType type;
                 HardwareSize size;
+                bool enabled;
             } hardware;
             struct
             {
@@ -83,10 +85,20 @@ namespace GleeBug
     struct BreakpointInfo
     {
         ptr address;
-        bool enabled;
         bool singleshoot;
         BreakpointType type;
         BreakpointInternalInfo internal;
+    };
+
+    /**
+    \brief Structure for memory breakpoint management.
+    */
+    struct MemoryBreakpointData
+    {
+        uint32 Refcount;
+        uint32 Type;
+        DWORD OldProtect;
+        DWORD NewProtect;
     };
 };
 

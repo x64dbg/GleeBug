@@ -5,6 +5,7 @@
 
 //defines
 #define GLEEBUG_HWBP_COUNT 4
+#define GLEEBUG_PAGE_SIZE 0x1000
 
 namespace GleeBug
 {
@@ -15,9 +16,11 @@ namespace GleeBug
     class Thread;
     enum class BreakpointType;
     struct BreakpointInfo;
+    struct MemoryBreakpointData;
 
     //constants
     const int HWBP_COUNT = GLEEBUG_HWBP_COUNT;
+    const int PAGE_SIZE = GLEEBUG_PAGE_SIZE;
 
     //key typedefs
     typedef std::pair<BreakpointType, ptr> BreakpointKey;
@@ -33,6 +36,8 @@ namespace GleeBug
     typedef std::map<BreakpointKey, BreakpointInfo> BreakpointMap;
     typedef std::map<BreakpointKey, BreakpointCallback> BreakpointCallbackMap;
     typedef std::unordered_map<ptr, BreakpointMap::iterator> SoftwareBreakpointMap;
+    typedef std::set<Range, RangeCompare> MemoryBreakpointSet;
+    typedef std::unordered_map<ptr, MemoryBreakpointData> MemoryBreakpointMap;
 
     //vector typedefs
     typedef std::vector<StepCallback> StepCallbackVector;

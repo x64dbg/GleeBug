@@ -271,6 +271,10 @@ namespace GleeBug
         */
         virtual void exceptionHardwareBreakpoint(ptr exceptionAddress);
 
+        virtual void exceptionGuardPage(const EXCEPTION_RECORD & exceptionRecord, bool firstChance);
+
+        virtual void exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance);
+
     protected: //variables
         STARTUPINFOW mMainStartupInfo;
         PROCESS_INFORMATION mMainProcess;

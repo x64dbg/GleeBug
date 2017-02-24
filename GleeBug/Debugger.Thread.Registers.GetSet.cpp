@@ -54,8 +54,10 @@
 
 namespace GleeBug
 {
-    ptr Registers::Get(R reg) const
+    ptr Registers::Get(R reg)
     {
+        handleLazyContext();
+
         switch (reg)
         {
         case R::DR0:
@@ -244,6 +246,8 @@ namespace GleeBug
 
     void Registers::Set(R reg, ptr value)
     {
+        handleLazyContext();
+
         switch (reg)
         {
         case R::DR0:
@@ -513,21 +517,27 @@ namespace GleeBug
         }
     }
 
-    bool Registers::GetFlag(F flag) const
+    bool Registers::GetFlag(F flag)
     {
+        handleLazyContext();
+
         return (mContext.EFlags & ptr(flag)) == ptr(flag);
     }
 
     void Registers::SetFlag(F flag, bool set)
     {
+        handleLazyContext();
+
         if (set)
             mContext.EFlags |= ptr(flag);
         else
             mContext.EFlags &= ~ptr(flag);
     }
 
-    void* Registers::getPtr(R reg) const
+    void* Registers::getPtr(R reg)
     {
+        handleLazyContext();
+
         switch (reg)
         {
         case R::DR0:

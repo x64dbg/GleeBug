@@ -186,6 +186,12 @@ public:
         return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
     }
 
+    HANDLE TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
+    {
+        //TODO
+        return OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+    }
+
     ULONG_PTR ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
     {
         //TODO
@@ -229,6 +235,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
             return 0;
+        if(mIsRunning)
+            thread->RegReadContext();
         return thread->registers.Get(registerFromDword(IndexOfRegister));
     }
 
@@ -237,7 +245,11 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
+        if(mIsRunning)
+            thread->RegWriteContext();
         return true;
     }
 
@@ -246,6 +258,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
         auto context = thread->registers.GetContext();
         titcontext->cax = thread->registers.Gax();
@@ -288,6 +302,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
+        if(mIsRunning)
+            thread->RegReadContext();
         thread->registers.Gax = titcontext->cax;
         thread->registers.Gcx = titcontext->ccx;
         thread->registers.Gdx = titcontext->cdx;
@@ -322,6 +338,8 @@ public:
         context.SegCs = titcontext->cs;
         context.SegSs = titcontext->ss;
         thread->registers.SetContext(context);
+        if(mIsRunning)
+            thread->RegWriteContext();
         return true;
     }
 
@@ -423,14 +441,19 @@ public:
     //Memory Breakpoints
     bool SetMemoryBPXEx(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory, DWORD BreakPointType, bool RestoreOnHit, LPVOID bpxCallBack)
     {
-        //TODO
-        return false;
+        if (!mProcess)
+            return false;
+        return mProcess->SetMemoryBreakpoint(ptr(MemoryStart), ptr(SizeOfMemory), [bpxCallBack](const BreakpointInfo & info)
+        {
+            (MEMBPCALLBACK(bpxCallBack))((const void*)info.address);
+        }, memtypeFromTitan(BreakPointType), !RestoreOnHit);
     }
 
     bool RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
     {
-        //TODO
-        return false;
+        if (!mProcess)
+            return false;
+        return mProcess->DeleteMemoryBreakpoint(ptr(MemoryStart));
     }
 
     //Hardware Breakpoints
@@ -438,11 +461,17 @@ public:
     {
         if (!mProcess)
             return false;
-        return mProcess->SetHardwareBreakpoint(bpxAddress,
+        if(mIsRunning)
+            mProcess->RegReadContext();
+        if(!mProcess->SetHardwareBreakpoint(bpxAddress,
             (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
         {
             (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
-        }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize));
+        }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize)))
+            return false;
+        if(mIsRunning)
+            mProcess->RegWriteContext();
+        return true;
     }
 
     bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)
@@ -660,12 +689,30 @@ private: //functions
         }
     }
 
+    static MemoryType memtypeFromTitan(DWORD type)
+    {
+        switch (type)
+        {
+        case UE_MEMORY:
+            return MemoryType::Access;
+        case UE_MEMORY_READ: 
+            return MemoryType::Read;
+        case UE_MEMORY_WRITE:
+            return MemoryType::Write;
+        case UE_MEMORY_EXECUTE:
+            return MemoryType::Execute;
+        default:
+            return MemoryType::Access;
+        }
+    }
+
 private: //variables
     bool mSetDebugPrivilege = false;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;
     typedef CUSTOMHANDLER HWBPCALLBACK;
+    typedef CUSTOMHANDLER MEMBPCALLBACK;
     CUSTOMHANDLER mCbCREATEPROCESS = nullptr;
     CUSTOMHANDLER mCbEXITPROCESS = nullptr;
     CUSTOMHANDLER mCbCREATETHREAD = nullptr;

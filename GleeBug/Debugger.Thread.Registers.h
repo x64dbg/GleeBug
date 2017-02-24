@@ -11,6 +11,7 @@ namespace GleeBug
     class Registers
     {
         friend class Register;
+        friend class Thread;
 
     public:
         /**
@@ -123,7 +124,7 @@ namespace GleeBug
         \param reg The register to get.
         \return The register value.
         */
-        ptr Get(R reg) const;
+        ptr Get(R reg);
 
         /**
         \brief Sets a given register.
@@ -137,7 +138,7 @@ namespace GleeBug
         \param flag The flag to get.
         \return true if the flag is set, false otherwise.
         */
-        bool GetFlag(F flag) const;
+        bool GetFlag(F flag);
 
         /**
         \brief Sets a flag.
@@ -149,7 +150,7 @@ namespace GleeBug
         \brief Gets a pointer to the context object.
         \return This function will never return a nullptr.
         */
-        const CONTEXT* GetContext() const;
+        const CONTEXT* GetContext();
 
         /**
         \brief Sets the CONTEXT.
@@ -160,7 +161,24 @@ namespace GleeBug
     private:
         CONTEXT mContext;
 
-        void* getPtr(R reg) const;
+        CONTEXT* mLazyOldContext = nullptr;
+        HANDLE mLazyThread = nullptr;
+        bool mLazySet = false;
+
+        /**
+        \brief Lazily set CONTEXT. This will only actually retrieve the context if a function in this thread is called.
+        \param oldContext Pointer to the old context, used to determine if updates are required.
+        \param hThread Handle of the thread to get the context from if required.
+        */
+        void setContextLazy(CONTEXT* oldContext, HANDLE hThread);
+
+        /**
+        \brief Retrieve the actual context if setContextLazy has been called.
+        \return Whether retrieving the actual context was successful.
+        */
+        bool handleLazyContext();
+
+        void* getPtr(R reg);
     };
 };
 

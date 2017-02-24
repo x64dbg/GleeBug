@@ -74,6 +74,17 @@ namespace GleeBug
         return MemReadUnsafe(address, &byte, sizeof(byte));
     }
 
+    bool Process::MemProtect(ptr address, ptr size, DWORD newProtect, DWORD* oldProtect)
+    {
+        DWORD dwOldProtect;
+        auto vps = VirtualProtectEx(hProcess, LPVOID(address), size, newProtect, &dwOldProtect);
+        if (!vps)
+            return false;
+        if (oldProtect)
+            *oldProtect = dwOldProtect;
+        return true;
+    }
+
     ptr Process::MemFindPattern(ptr data, size_t datasize, const Pattern::WildcardPattern & pattern, bool safe) const
     {
         std::vector<uint8> buffer(datasize);

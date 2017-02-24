@@ -117,6 +117,11 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, boo
     return emu.TitanOpenProces(dwDesiredAccess, bInheritHandle, dwProcessId);
 }
 
+__declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
+{
+    return emu.TitanOpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+}
+
 __declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
 {
     return emu.ImporterGetRemoteAPIAddress(hProcess, APIAddress);
