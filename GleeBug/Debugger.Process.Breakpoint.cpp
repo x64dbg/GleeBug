@@ -199,6 +199,7 @@ namespace GleeBug
 
     static DWORD RemoveExecuteAccess(DWORD dwAccess)
     {
+        //These settings can trigger access violation.
         DWORD dwBase = dwAccess & 0xFF;
         DWORD dwHigh = dwAccess & 0xFFFFFF00;
         switch (dwBase)
@@ -208,7 +209,7 @@ namespace GleeBug
         case PAGE_EXECUTE_READ:
         case PAGE_EXECUTE_READWRITE:
         case PAGE_EXECUTE_WRITECOPY:
-            return dwHigh | (dwBase >> 4);
+            return dwHigh | (dwBase >> 4); //This removes execute in deed; https://msdn.microsoft.com/en-us/library/windows/desktop/aa366786(v=vs.85).aspx - 0x1337 tricks
         default:
             return dwAccess;
         }
@@ -252,12 +253,16 @@ namespace GleeBug
         else
         {
             auto & oldData = found->second;
-            data.Type = oldData.Type | uint32(type);
-            data.OldProtect = oldData.OldProtect;
-            data.Refcount = oldData.Refcount + 1;
-            if (data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read)) //Access/Read always becomes PAGE_GUARD
-                data.NewProtect = data.OldProtect | PAGE_GUARD;
-            else if (data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute))) //Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
+            data.Type = oldData.Type | uint32(type); //combines new protection
+            data.OldProtect = oldData.OldProtect; // old protection remains the same
+            data.Refcount = oldData.Refcount + 1; //increment reference count
+            if (oldData.Type == uint32(type)) // Edge case for when you need to set a mem bpx on a same page with the same type, you just leave newProtect = OldProtect.
+            {
+                data.NewProtect = data.OldProtect;   
+            }
+            else if (data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read)) // Access/Read always becomes PAGE_GUARD ; This page cannot access or Read?
+                data.NewProtect = data.OldProtect | PAGE_GUARD; //as before
+            else if (data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute))) // Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
                 data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;
         }
 
@@ -381,6 +386,8 @@ namespace GleeBug
             if (data.Refcount)
             {
                 //TODO: properly determine the new protection flag
+				//Are there any other protections left?
+				//If so add the guard
                 if (data.Type & ~uint32(info.internal.memory.type))
                     data.NewProtect = data.OldProtect | PAGE_GUARD;
                 Protect = data.NewProtect;
