@@ -20,10 +20,13 @@ namespace GleeBug
             static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
             if (GPDP)
             {
+                //If you use mProcess->hProcess GetProcessDEPPolicy will put garbage in bPermanent.
+                auto hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, mProcess->dwProcessId);
                 DWORD lpFlags;
                 BOOL bPermanent;
-                if (GPDP(mProcess->hProcess, &lpFlags, &bPermanent))
-                    mProcess->permanentDep = lpFlags && bPermanent;
+                if (GPDP(hProcess, &lpFlags, &bPermanent))
+                    mProcess->permanentDep = lpFlags != 0 && bPermanent;
+                CloseHandle(hProcess);
             }
 #else
             mProcess->permanentDep = true;
