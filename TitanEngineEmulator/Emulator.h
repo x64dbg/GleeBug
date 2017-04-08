@@ -156,12 +156,6 @@ public:
     }
 
     //Misc
-    bool IsJumpGoingToExecuteEx(HANDLE hProcess, HANDLE hThread, ULONG_PTR InstructionAddress, ULONG_PTR RegFlags)
-    {
-        //TODO
-        return false;
-    }
-
     void* GetPEBLocation(HANDLE hProcess)
     {
         //TODO
@@ -204,22 +198,6 @@ public:
         if (!mProcess || !CallBack)
             return;
         mProcess->StepOver(STEPCALLBACK(CallBack));
-    }
-
-    void SingleStep(DWORD StepCount, LPVOID CallBack)
-    {
-        if (!mThread || !CallBack)
-            return;
-        mThread->StepInto([this, StepCount, CallBack]()
-        {
-            if (!StepCount)
-            {
-                if (CallBack)
-                    (STEPCALLBACK(CallBack))();
-            }
-            else
-                SingleStep(StepCount - 1, CallBack);
-        });
     }
 
     void StepInto(LPVOID CallBack)
@@ -511,13 +489,6 @@ public:
     {
         //TODO
         return false;
-    }
-
-    //Threader
-    ULONG_PTR ThreaderCreateRemoteThread(ULONG_PTR ThreadStartAddress, bool AutoCloseTheHandle, LPVOID ThreadPassParameter, LPDWORD ThreadId)
-    {
-        //TODO
-        return 0;
     }
 
 protected:

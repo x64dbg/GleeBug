@@ -92,11 +92,6 @@ __declspec(dllexport) STARTUPINFOW* TITCALL TitanGetStartupInformation()
 }
 
 //Misc
-__declspec(dllexport) bool TITCALL IsJumpGoingToExecuteEx(HANDLE hProcess, HANDLE hThread, ULONG_PTR InstructionAddress, ULONG_PTR RegFlags)
-{
-    return emu.IsJumpGoingToExecuteEx(hProcess, hThread, InstructionAddress, RegFlags);
-}
-
 __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
 {
     return emu.GetPEBLocation(hProcess);
@@ -295,18 +290,7 @@ __declspec(dllexport) void TITCALL StepOver(LPVOID traceCallBack)
     emu.StepOver(traceCallBack);
 }
 
-__declspec(dllexport) void TITCALL SingleStep(DWORD StepCount, LPVOID StepCallBack)
-{
-    emu.SingleStep(StepCount, StepCallBack);
-}
-
 __declspec(dllexport) void TITCALL StepInto(LPVOID traceCallBack)
 {
     emu.StepInto(traceCallBack);
-}
-
-//Threader
-__declspec(dllexport) ULONG_PTR TITCALL ThreaderCreateRemoteThread(ULONG_PTR ThreadStartAddress, bool AutoCloseTheHandle, LPVOID ThreadPassParameter, LPDWORD ThreadId)
-{
-    return emu.ThreaderCreateRemoteThread(ThreadStartAddress, AutoCloseTheHandle, ThreadPassParameter, ThreadId);
 }
