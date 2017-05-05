@@ -161,7 +161,7 @@ namespace GleeBug
     private:
         CONTEXT mContext;
 
-        CONTEXT* mLazyOldContext = nullptr;
+        LPCONTEXT mLazyOldContext = nullptr;
         HANDLE mLazyThread = nullptr;
         bool mLazySet = false;
 

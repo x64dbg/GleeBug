@@ -6,7 +6,6 @@
 #include "Debugger.Dll.h"
 #include "Debugger.Breakpoint.h"
 #include "Static.Pattern.h"
-#include <capstone_wrapper/capstone_wrapper.h>
 
 namespace GleeBug
 {
@@ -411,9 +410,6 @@ namespace GleeBug
                     result = false;
             return result;
         }
-
-        private:
-            Capstone mCapstone;
     };
 };
 

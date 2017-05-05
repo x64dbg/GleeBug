@@ -19,6 +19,23 @@
 #define BIND(thisPtr, funcPtr) std::bind(&funcPtr, thisPtr)
 #define BIND1(thisPtr, funcPtr) std::bind(&funcPtr, thisPtr, std::placeholders::_1)
 
+#ifdef _WIN64
+#define X64DBG_MOD L"x64dbg.dll"
+#else
+#define X64DBG_MOD L"x32dbg.dll"
+#endif //_WIN64
+
+#define DPRINTF() \
+    static auto dprintf = (int(*)(const char* format, ...))GetProcAddress(GetModuleHandleW(X64DBG_MOD), "_plugin_logprintf"); \
+    if(!dprintf) \
+        dprintf = printf
+
+#ifdef _WIN64
+#define GleeArchValue(x32value, x64value) x64value
+#else
+#define GleeArchValue(x32value, x64value) x32value
+#endif //_WIN64
+
 namespace GleeBug
 {
     typedef int8_t int8;

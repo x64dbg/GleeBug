@@ -130,17 +130,21 @@ namespace GleeBug
         if(!this->mLazyOldContext || !this->mLazyThread) //assert
             __debugbreak();
 
+        auto oldContext = this->mLazyOldContext;
+        auto lazyThread = this->mLazyThread;
+
+        this->mLazyOldContext = nullptr;
+        this->mLazyThread = nullptr;
+        this->mLazySet = false;
+
         //TODO: handle failure of GetThreadContext
         auto result = false;
-        if(GetThreadContext(this->mLazyThread, this->mLazyOldContext))
+        if(GetThreadContext(lazyThread, oldContext))
         {
-            this->mContext = *this->mLazyOldContext;
+            this->mContext = *oldContext;
             result = true;
         }
         
-        this->mLazyOldContext = nullptr;
-        this->mLazyThread = nullptr;
-        this->mLazySet = false;        
         return result;
     }
 };
