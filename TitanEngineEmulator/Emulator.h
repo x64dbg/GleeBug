@@ -247,7 +247,7 @@ public:
             return 0;
         auto thread = threadFromHandle(hActiveThread);
         if(!thread)
-            __debugbreak(); //return 0;
+            return 0;
         if(mIsRunning)
             thread->RegReadContext();
         return thread->registers.Get(registerFromDword(IndexOfRegister));
@@ -257,7 +257,7 @@ public:
     {
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
-            __debugbreak(); //return false;
+            return false;
         if(mIsRunning)
             thread->RegReadContext();
         thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
@@ -272,7 +272,7 @@ public:
             return false;
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
-            __debugbreak(); //return false;
+            return false;
         if(mIsRunning)
             thread->RegReadContext();
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
@@ -316,7 +316,7 @@ public:
     {
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
-            __debugbreak(); //return false;
+            return false;
         if(mIsRunning)
             thread->RegReadContext();
         thread->registers.Gax = titcontext->cax;
