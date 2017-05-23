@@ -385,12 +385,42 @@ public:
     ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
     {
         //TODO
+        switch(WhichData)
+        {
+        case UE_PE_OFFSET:
+            break;
+        case UE_IMPORTTABLEADDRESS:
+            break;
+        case UE_IMPORTTABLESIZE:
+            break;
+        case UE_CHARACTERISTICS:
+            break;
+        case UE_DLLCHARACTERISTICS:
+            break;
+        case UE_OEP:
+            break;
+        case UE_SECTIONNUMBER:
+            break;
+        case UE_SECTIONVIRTUALOFFSET: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
+            break;
+        case UE_SECTIONVIRTUALSIZE: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
+            break;
+        case UE_SECTIONNAME:
+            break;
+        }
         return 0;
     }
 
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
     {
         //TODO
+        switch(WhichData)
+        {
+        case UE_IMAGEBASE:
+            break;
+        case UE_OEP:
+            break;
+        }
         return 0;
     }
 
@@ -398,12 +428,6 @@ public:
     {
         //TODO
         return false;
-    }
-
-    long GetPE32SectionNumberFromVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert)
-    {
-        //TODO
-        return 0;
     }
 
     bool TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
@@ -511,7 +535,12 @@ public:
     //Generic Breakpoints
     bool RemoveAllBreakPoints(DWORD RemoveOption)
     {
-        //TODO
+        for(auto & it : mProcesses)
+        {
+            auto breakpoints = it.second.breakpoints; //explicit copy
+            for(const auto & jt : breakpoints)
+                it.second.DeleteGenericBreakpoint(jt.second);
+        }
         return false;
     }
 

@@ -109,6 +109,7 @@
 #define UE_NUMBEROFRVAANDSIZES 22
 #define UE_BASEOFCODE 23
 #define UE_BASEOFDATA 24
+#define UE_DLLCHARACTERISTICS 25
 //leaving some enum space here for future additions
 #define UE_SECTIONNAME 40
 #define UE_SECTIONVIRTUALOFFSET 41

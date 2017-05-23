@@ -204,11 +204,6 @@ __declspec(dllexport) bool TITCALL IsFileDLLW(const wchar_t* szFileName, ULONG_P
     return emu.IsFileDLLW(szFileName, FileMapVA);
 }
 
-__declspec(dllexport) long TITCALL GetPE32SectionNumberFromVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert)
-{
-    return emu.GetPE32SectionNumberFromVA(FileMapVA, AddressToConvert);
-}
-
 __declspec(dllexport) bool TITCALL TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
 {
     return emu.TLSGrabCallBackDataW(szFileName, ArrayOfCallBacks, NumberOfCallBacks);
