@@ -1,5 +1,6 @@
 #include <GleeBug/Debugger.h>
 #include "TitanEngine.h"
+#include "ntdll.h"
 
 using namespace GleeBug;
 
@@ -66,8 +67,7 @@ public:
         auto process = processFromHandle(hProcess);
         if (!process)
             return false;
-        //TODO process->MemWriteSafe
-        return process->MemWriteUnsafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
+        return process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
@@ -158,14 +158,44 @@ public:
     //Misc
     void* GetPEBLocation(HANDLE hProcess)
     {
-        //TODO
-        return nullptr;
+        ULONG RequiredLen = 0;
+        void* PebAddress = 0;
+        PROCESS_BASIC_INFORMATION myProcessBasicInformation[5] = { 0 };
+
+        if(NtQueryInformationProcess(hProcess, ProcessBasicInformation, myProcessBasicInformation, sizeof(PROCESS_BASIC_INFORMATION), &RequiredLen) == 0)
+        {
+            PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
+        }
+        else
+        {
+            if(NtQueryInformationProcess(hProcess, ProcessBasicInformation, myProcessBasicInformation, RequiredLen, &RequiredLen) == 0)
+            {
+                PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
+            }
+        }
+
+        return PebAddress;
     }
 
-    void* GetTEBLocation(HANDLE hProcess)
+    void* GetTEBLocation(HANDLE hThread)
     {
-        //TODO
-        return nullptr;
+        ULONG RequiredLen = 0;
+        void* TebAddress = 0;
+        THREAD_BASIC_INFORMATION myThreadBasicInformation[5] = { 0 };
+
+        if(NtQueryInformationThread(hThread, ThreadBasicInformation, myThreadBasicInformation, sizeof(THREAD_BASIC_INFORMATION), &RequiredLen) == 0)
+        {
+            TebAddress = (void*)myThreadBasicInformation->TebBaseAddress;
+        }
+        else
+        {
+            if(NtQueryInformationThread(hThread, ThreadBasicInformation, myThreadBasicInformation, RequiredLen, &RequiredLen) == 0)
+            {
+                TebAddress = (void*)myThreadBasicInformation->TebBaseAddress;
+            }
+        }
+
+        return TebAddress;
     }
 
     bool HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
@@ -184,12 +214,6 @@ public:
     {
         //TODO
         return OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
-    }
-
-    ULONG_PTR ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
-    {
-        //TODO
-        return 0;
     }
 
     //Stepping

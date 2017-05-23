@@ -97,9 +97,9 @@ __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
     return emu.GetPEBLocation(hProcess);
 }
 
-__declspec(dllexport) void* TITCALL GetTEBLocation(HANDLE hProcess)
+__declspec(dllexport) void* TITCALL GetTEBLocation(HANDLE hThread)
 {
-    return emu.GetTEBLocation(hProcess);
+    return emu.GetTEBLocation(hThread);
 }
 
 __declspec(dllexport) bool TITCALL HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
@@ -115,11 +115,6 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, boo
 __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
 {
     return emu.TitanOpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
-}
-
-__declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddress(HANDLE hProcess, ULONG_PTR APIAddress)
-{
-    return emu.ImporterGetRemoteAPIAddress(hProcess, APIAddress);
 }
 
 //Registers
