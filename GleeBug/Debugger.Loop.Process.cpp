@@ -11,6 +11,7 @@ namespace GleeBug
             mMainProcess.hThread = createProcess.hThread;
             mMainProcess.dwProcessId = mDebugEvent.dwProcessId;
             mMainProcess.dwThreadId = mDebugEvent.dwThreadId;
+            cbAttachBreakpoint();
         }
 
         //process housekeeping
