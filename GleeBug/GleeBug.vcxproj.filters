@@ -83,9 +83,6 @@
     <ClCompile Include="Static.Pattern.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GleeBug.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="zyan-disassembler-engine\src\Decoder.c">
       <Filter>Source Files\Zydis</Filter>
     </ClCompile>

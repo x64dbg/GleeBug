@@ -1,6 +1,9 @@
 #include <GleeBug/Debugger.h>
+#include <GleeBug/Static.Pe.h>
+#include <GleeBug/Static.Bufferfile.h>
 #include "TitanEngine.h"
 #include "ntdll.h"
+#include "FileMap.h"
 
 using namespace GleeBug;
 
@@ -54,7 +57,7 @@ public:
     }
 
     //Memory
-    bool MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead) const
+    bool MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead)
     {
         auto process = processFromHandle(hProcess);
         if (!process)
@@ -72,6 +75,7 @@ public:
 
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
     {
+        //TODO: this is fucking inefficient
         if (!mProcess)
             return false;
         for (DWORD i = 0; i < MemorySize; i++)
@@ -177,25 +181,30 @@ public:
         return PebAddress;
     }
 
-    void* GetTEBLocation(HANDLE hThread)
+    static bool getThreadInfo(HANDLE hThread, THREAD_BASIC_INFORMATION & tbi)
     {
         ULONG RequiredLen = 0;
-        void* TebAddress = 0;
         THREAD_BASIC_INFORMATION myThreadBasicInformation[5] = { 0 };
-
         if(NtQueryInformationThread(hThread, ThreadBasicInformation, myThreadBasicInformation, sizeof(THREAD_BASIC_INFORMATION), &RequiredLen) == 0)
         {
-            TebAddress = (void*)myThreadBasicInformation->TebBaseAddress;
+            tbi = myThreadBasicInformation[0];
+            return true;
         }
         else
         {
             if(NtQueryInformationThread(hThread, ThreadBasicInformation, myThreadBasicInformation, RequiredLen, &RequiredLen) == 0)
             {
-                TebAddress = (void*)myThreadBasicInformation->TebBaseAddress;
+                tbi = myThreadBasicInformation[0];
+                return true;
             }
         }
+        return false;
+    }
 
-        return TebAddress;
+    void* GetTEBLocation(HANDLE hThread)
+    {
+        THREAD_BASIC_INFORMATION tbi;
+        return getThreadInfo(hThread, tbi) ? tbi.TebBaseAddress : nullptr;
     }
 
     bool HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
@@ -232,11 +241,13 @@ public:
     }
 
     //Registers
-    ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister) const
+    ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
     {
-        auto thread = threadFromHandle(hActiveThread);
-        if (!thread)
+        if(!hActiveThread)
             return 0;
+        auto thread = threadFromHandle(hActiveThread);
+        if(!thread)
+            __debugbreak(); //return 0;
         if(mIsRunning)
             thread->RegReadContext();
         return thread->registers.Get(registerFromDword(IndexOfRegister));
@@ -246,7 +257,7 @@ public:
     {
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
-            return false;
+            __debugbreak(); //return false;
         if(mIsRunning)
             thread->RegReadContext();
         thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
@@ -255,11 +266,13 @@ public:
         return true;
     }
 
-    bool GetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext) const
+    bool GetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
     {
+        if(!hActiveThread)
+            return false;
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
-            return false;
+            __debugbreak(); //return false;
         if(mIsRunning)
             thread->RegReadContext();
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
@@ -303,7 +316,7 @@ public:
     {
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
-            return false;
+            __debugbreak(); //return false;
         if(mIsRunning)
             thread->RegReadContext();
         thread->registers.Gax = titcontext->cax;
@@ -357,77 +370,149 @@ public:
         memset(x87FPURegisters, 0, sizeof(x87FPURegister_t) * 8);
     }
 
+    struct MappedPe
+    {
+        FileMap<unsigned char>* file;
+        BufferFile* buffer;
+        Pe* pe;
+    };
+
+    std::unordered_map<ULONG_PTR, MappedPe> mappedFiles;
+
     //PE
     bool StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
     {
-        //TODO
-        return false;
+        auto file = new ::FileMap<unsigned char>;
+        if(!file->Map(szFileName, DesiredAccess == UE_ACCESS_ALL))
+            __debugbreak(); //return false;
+        *FileHandle = file->hFile;
+        *LoadedSize = file->size;
+        *FileMap = file->hMap;
+        *FileMapVA = ULONG_PTR(file->data);
+        MappedPe mappedPe;
+        mappedPe.file = std::move(file);
+        mappedPe.buffer = new BufferFile(mappedPe.file->data, mappedPe.file->size);
+        mappedPe.pe = new Pe(*mappedPe.buffer);
+        if(mappedPe.pe->Parse(true) != Pe::ErrorOk)
+            __debugbreak();
+        mappedFiles.insert({ *FileMapVA, mappedPe });
+        return true;
     }
 
     bool StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
     {
-        //TODO
-        return false;
+        auto found = mappedFiles.find(FileMapVA);
+        if(found == mappedFiles.end())
+            __debugbreak(); //return false;
+        delete found->second.pe;
+        delete found->second.buffer;
+        delete found->second.file;
+        mappedFiles.erase(found);
+        return true;
     }
 
     ULONG_PTR ConvertFileOffsetToVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
     {
-        //TODO
-        return 0;
+        auto found = mappedFiles.find(FileMapVA);
+        if(found == mappedFiles.end())
+            __debugbreak(); //return 0;
+        if(!found->second.pe->IsValidPe())
+            __debugbreak(); //return 0;
+        return found->second.pe->ConvertOffsetToRva(uint32(AddressToConvert));
     }
 
     ULONG_PTR ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
     {
-        //TODO
-        return 0;
+        auto found = mappedFiles.find(FileMapVA);
+        if(found == mappedFiles.end())
+            __debugbreak(); //return 0;
+        if(!found->second.pe->IsValidPe())
+            __debugbreak(); //return 0;
+        return found->second.pe->ConvertRvaToOffset(uint32(AddressToConvert));
     }
 
     ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
     {
-        //TODO
+        auto found = mappedFiles.find(FileMapVA);
+        if(found == mappedFiles.end())
+            __debugbreak(); //return 0;
+        if(!found->second.pe->IsValidPe())
+            __debugbreak(); //return 0;
+#ifdef _WIN64
+        if(!found->second.pe->IsPe64()) __debugbreak(); //return 0;
+        auto headers = found->second.pe->GetNtHeaders64();
+#else
+        if(found->second.pe->IsPe64()) __debugbreak(); //return 0;
+        auto headers = found->second.pe->GetNtHeaders32();
+#endif //_WIN64
+        const auto & sections = found->second.pe->GetSections();
         switch(WhichData)
         {
         case UE_PE_OFFSET:
-            break;
+            return headers.Offset();
         case UE_IMPORTTABLEADDRESS:
-            break;
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
         case UE_IMPORTTABLESIZE:
-            break;
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
+        case UE_EXPORTTABLEADDRESS:
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+        case UE_EXPORTTABLESIZE:
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
         case UE_CHARACTERISTICS:
-            break;
+            return headers->FileHeader.Characteristics;
         case UE_DLLCHARACTERISTICS:
-            break;
+            return headers->OptionalHeader.DllCharacteristics;
         case UE_OEP:
-            break;
+            return headers->OptionalHeader.AddressOfEntryPoint;
         case UE_SECTIONNUMBER:
-            break;
+            return sections.size();
         case UE_SECTIONVIRTUALOFFSET: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
-            break;
+            return WhichSection < sections.size() ? sections[WhichSection].GetHeader().VirtualAddress : 0;
         case UE_SECTIONVIRTUALSIZE: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
-            break;
+            return WhichSection < sections.size() ? sections[WhichSection].GetHeader().Misc.VirtualSize : 0;
         case UE_SECTIONNAME:
-            break;
+            return WhichSection < sections.size() ? ULONG_PTR(&sections[WhichSection].GetHeader().Name[0]) : 0;
+        default:
+            __debugbreak();
         }
         return 0;
     }
 
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
     {
-        //TODO
+        FileMap<unsigned char> file;
+        if(!file.Map(szFileName))
+            __debugbreak(); //return 0;
+        BufferFile buf(file.data, file.size);
+        Pe pe(buf);
+        if(pe.Parse(true) != Pe::ErrorOk)
+            __debugbreak(); //return 0;
+        if(!pe.IsValidPe())
+            __debugbreak(); //return 0;
+#ifdef _WIN64
+        if(!pe.IsPe64()) __debugbreak(); //return 0;
+        auto headers = pe.GetNtHeaders64().Data();
+#else
+        if(pe.IsPe64()) __debugbreak(); //return 0;
+        auto headers = pe.GetNtHeaders32().Data();
+#endif //_WIN64
         switch(WhichData)
         {
+        case UE_CHARACTERISTICS:
+            return headers->FileHeader.Characteristics;
         case UE_IMAGEBASE:
-            break;
+            return headers->OptionalHeader.ImageBase;
         case UE_OEP:
-            break;
+            return headers->OptionalHeader.AddressOfEntryPoint;
+        default:
+            __debugbreak();
         }
         return 0;
     }
 
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
     {
-        //TODO
-        return false;
+        return (GetPE32DataW(szFileName, NULL, UE_CHARACTERISTICS) & IMAGE_FILE_DLL) == IMAGE_FILE_DLL;
     }
 
     bool TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
@@ -663,20 +748,26 @@ private: //functions
         }
     }
 
-    Thread* threadFromHandle(HANDLE hThread) const
+    Thread* threadFromHandle(HANDLE hThread)
     {
-        if(!hThread)
-            return mThread;
-        //TODO: properly implement this
-        return mThread;
+        THREAD_BASIC_INFORMATION tbi;
+        if(!getThreadInfo(hThread, tbi))
+            return nullptr;
+        auto foundP = mProcesses.find(uint32(tbi.ClientId.UniqueProcess));
+        if(foundP == mProcesses.end())
+            return nullptr;
+        auto foundT = foundP->second.threads.find(uint32(tbi.ClientId.UniqueThread));
+        if(foundT == foundP->second.threads.end())
+            return nullptr;
+        return &foundT->second;
     }
 
-    Process* processFromHandle(HANDLE hProcess) const
+    Process* processFromHandle(HANDLE hProcess)
     {
-        if(!hProcess)
-            return mProcess;
-        //TODO: properly implement this
-        return mProcess;
+        auto foundP = mProcesses.find(GetProcessId(hProcess));
+        if(foundP == mProcesses.end())
+            return nullptr;
+        return &foundP->second;
     }
 
     static HardwareType hwtypeFromTitan(DWORD type)

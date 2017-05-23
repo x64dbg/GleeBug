@@ -159,11 +159,6 @@ __declspec(dllexport) bool TITCALL StaticFileLoadW(const wchar_t* szFileName, DW
     return emu.StaticFileLoadW(szFileName, DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
 }
 
-__declspec(dllexport) bool TITCALL StaticFileLoad(const char* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
-{
-    return StaticFileLoadW(Utf8ToUtf16(szFileName).c_str(), DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
-}
-
 __declspec(dllexport) bool TITCALL StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
 {
     return emu.StaticFileUnloadW(szFileName, CommitChanges, FileHandle, LoadedSize, FileMap, FileMapVA);
@@ -192,11 +187,6 @@ __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR File
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
 {
     return emu.GetPE32DataW(szFileName, WhichSection, WhichData);
-}
-
-__declspec(dllexport) ULONG_PTR TITCALL GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
-{
-    return GetPE32DataW(Utf8ToUtf16(szFileName).c_str(), WhichSection, WhichData);
 }
 
 __declspec(dllexport) bool TITCALL IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
