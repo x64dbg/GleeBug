@@ -174,7 +174,7 @@ public:
         return false;
     }
 
-    HANDLE TitanOpenProces(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
+    HANDLE TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
     {
         //TODO
         return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);

@@ -109,7 +109,7 @@ __declspec(dllexport) bool TITCALL HideDebugger(HANDLE hProcess, DWORD PatchAPIL
 
 __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
 {
-    return emu.TitanOpenProces(dwDesiredAccess, bInheritHandle, dwProcessId);
+    return emu.TitanOpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
 }
 
 __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
