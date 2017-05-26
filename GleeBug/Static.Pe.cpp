@@ -230,9 +230,15 @@ namespace GleeBug
 
         std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
         {
-            return a.header.PointerToRawData < b.header.PointerToRawData;
+            if(a.header.PointerToRawData < b.header.PointerToRawData)
+                return true;
+            if(a.header.PointerToRawData > b.header.PointerToRawData)
+                return false;
+            //dupsec.exe has 2 identical sections (besides the VirtualAddress)
+            return a.header.VirtualAddress < b.header.VirtualAddress;
         });
 
+        /*
         //get after section headers data
         auto firstRawAddress = sortedHeaders[0].header.PointerToRawData;
         auto afterDataSize = mOffset < firstRawAddress ? firstRawAddress - mOffset : 0;
@@ -248,10 +254,13 @@ namespace GleeBug
             section.beforeData = readRegion<uint8>(beforeSize);
             if (!section.beforeData)
                 return ErrorBeforeSectionDataRead;
-            section.data = readRegion<uint8>(section.header.SizeOfRawData);
-            if (!section.data)
+            //bigSoRD.exe: if raw size is bigger than virtual size, then virtual size is taken.
+            auto rawSize = min(section.header.SizeOfRawData, section.header.Misc.VirtualSize);
+            section.data = readRegion<uint8>(rawSize);
+            if (rawSize && !section.data)
                 return ErrorSectionDataRead;
         }
+        */
 
         //re-sort the sections by index
         std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
@@ -282,7 +291,11 @@ namespace GleeBug
         {
             //offset -> section index
             auto offset = section.GetHeader().PointerToRawData;
-            mOffsetSectionMap.insert({ Range(offset, offset + section.GetHeader().SizeOfRawData - 1), section.GetIndex() });
+            //bigSoRD.exe: if raw size is bigger than virtual size, then virtual size is taken.
+            auto rsize = min(section.GetHeader().SizeOfRawData, section.GetHeader().Misc.VirtualSize);
+            if(!rsize) //65535sects.exe
+                continue;
+            mOffsetSectionMap.insert({ Range(offset, offset + rsize - 1), section.GetIndex() });
 
             //rva -> section index
             auto rva = alignAdjustAddress(section.GetHeader().VirtualAddress, alignment);

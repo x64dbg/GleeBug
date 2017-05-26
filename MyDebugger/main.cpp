@@ -161,8 +161,8 @@ static void testCorkami()
 
 int main()
 {
-    testDebugger();
-    //testCorkami();
+    //testDebugger();
+    testCorkami();
     //testPeFile(L"c:\\!exclude\\pe\\bin\\appendedhdr.exe");
     puts("");
     system("pause");
