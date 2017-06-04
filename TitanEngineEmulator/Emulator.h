@@ -240,6 +240,32 @@ public:
         mThread->StepInto(STEPCALLBACK(CallBack));
     }
 
+    struct ThreadSuspender
+    {
+        ThreadSuspender(Thread* thread, bool running, bool writeRegs)
+            : thread(running ? thread : nullptr), writeRegs(writeRegs)
+        {
+            if(this->thread)
+            {
+                this->thread->Suspend();
+                this->thread->RegReadContext();
+            }
+        }
+
+        ~ThreadSuspender()
+        {
+            if(this->thread)
+            {
+                if(this->writeRegs)
+                    this->thread->RegWriteContext();
+                this->thread->Resume();
+            }
+        }
+
+        Thread* thread;
+        bool writeRegs;
+    };
+
     //Registers
     ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
     {
@@ -248,8 +274,7 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if(!thread)
             return 0;
-        if(mIsRunning)
-            thread->RegReadContext();
+        ThreadSuspender suspender(thread, mIsRunning, false);
         return thread->registers.Get(registerFromDword(IndexOfRegister));
     }
 
@@ -258,11 +283,8 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread)
             return false;
-        if(mIsRunning)
-            thread->RegReadContext();
+        ThreadSuspender suspender(thread, mIsRunning, true);
         thread->registers.Set(registerFromDword(IndexOfRegister), NewRegisterValue);
-        if(mIsRunning)
-            thread->RegWriteContext();
         return true;
     }
 
@@ -273,8 +295,7 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
-        if(mIsRunning)
-            thread->RegReadContext();
+        ThreadSuspender suspender(thread, mIsRunning, false);
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
         auto context = thread->registers.GetContext();
         titcontext->cax = thread->registers.Gax();
@@ -317,8 +338,7 @@ public:
         auto thread = threadFromHandle(hActiveThread);
         if (!thread || !titcontext)
             return false;
-        if(mIsRunning)
-            thread->RegReadContext();
+        ThreadSuspender suspender(thread, mIsRunning, true);
         thread->registers.Gax = titcontext->cax;
         thread->registers.Gcx = titcontext->ccx;
         thread->registers.Gdx = titcontext->cdx;
@@ -353,8 +373,6 @@ public:
         context.SegCs = titcontext->cs;
         context.SegSs = titcontext->ss;
         thread->registers.SetContext(context);
-        if(mIsRunning)
-            thread->RegWriteContext();
         return true;
     }
 
@@ -572,16 +590,25 @@ public:
     {
         if (!mProcess)
             return false;
-        if(mIsRunning)
+        auto running = mIsRunning;
+        if(running)
+        {
+            for(auto & thread : mProcess->threads)
+                thread.second->Suspend();
             mProcess->RegReadContext();
+        }
         if(!mProcess->SetHardwareBreakpoint(bpxAddress,
             (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
         {
             (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
         }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize)))
             return false;
-        if(mIsRunning)
+        if(running)
+        {
             mProcess->RegWriteContext();
+            for(auto & thread : mProcess->threads)
+                thread.second->Resume();
+        }
         return true;
     }
 
@@ -622,9 +649,9 @@ public:
     {
         for(auto & it : mProcesses)
         {
-            auto breakpoints = it.second.breakpoints; //explicit copy
+            auto breakpoints = it.second->breakpoints; //explicit copy
             for(const auto & jt : breakpoints)
-                it.second.DeleteGenericBreakpoint(jt.second);
+                it.second->DeleteGenericBreakpoint(jt.second);
         }
         return false;
     }
@@ -756,10 +783,10 @@ private: //functions
         auto foundP = mProcesses.find(uint32(tbi.ClientId.UniqueProcess));
         if(foundP == mProcesses.end())
             return nullptr;
-        auto foundT = foundP->second.threads.find(uint32(tbi.ClientId.UniqueThread));
-        if(foundT == foundP->second.threads.end())
+        auto foundT = foundP->second->threads.find(uint32(tbi.ClientId.UniqueThread));
+        if(foundT == foundP->second->threads.end())
             return nullptr;
-        return &foundT->second;
+        return foundT->second.get();
     }
 
     Process* processFromHandle(HANDLE hProcess)
@@ -767,7 +794,7 @@ private: //functions
         auto foundP = mProcesses.find(GetProcessId(hProcess));
         if(foundP == mProcesses.end())
             return nullptr;
-        return &foundP->second;
+        return foundP->second.get();
     }
 
     static HardwareType hwtypeFromTitan(DWORD type)

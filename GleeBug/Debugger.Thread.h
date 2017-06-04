@@ -36,14 +36,7 @@ namespace GleeBug
         /**
         \brief Copy constructor.
         */
-        Thread(const Thread & other);
-
-        /**
-        \brief Assignment operator.
-        \param other The other object.
-        \return A shallow copy of this object.
-        */
-        Thread & operator=(const Thread & other);
+        Thread(const Thread & other) = delete;
 
         /**
         \brief Read the register context from the thread. This fills the RegistersInfo member.
@@ -116,6 +109,18 @@ namespace GleeBug
         \return true if the hardware breakpoint was deleted, false otherwise.
         */
         bool DeleteHardwareBreakpoint(HardwareSlot slot);
+
+        /**
+        \brief Suspends this thread.
+        \return true if it succeeds, false if it fails.
+        */
+        bool Suspend();
+
+        /**
+        \brief Resumes this thread.
+        \return true if it succeeds, false if it fails.
+        */
+        bool Resume();
 
     private:
         CONTEXT mOldContext;

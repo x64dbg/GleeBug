@@ -16,19 +16,19 @@ namespace GleeBug
 
         //process housekeeping
         mProcesses.insert({ mDebugEvent.dwProcessId,
-            Process(createProcess.hProcess,
+            std::make_unique<Process>(createProcess.hProcess,
             mDebugEvent.dwProcessId,
             mDebugEvent.dwThreadId,
             createProcess) });
-        mProcess = &mProcesses.find(mDebugEvent.dwProcessId)->second;
+        mProcess = mProcesses.find(mDebugEvent.dwProcessId)->second.get();
 
         //thread housekeeping (main thread is created implicitly)
         mProcess->threads.insert({ mDebugEvent.dwThreadId,
-            Thread(createProcess.hThread,
+            std::make_unique<Thread>(createProcess.hThread,
             mDebugEvent.dwThreadId,
             createProcess.lpThreadLocalBase,
             createProcess.lpStartAddress) });
-        mThread = mProcess->thread = &mProcess->threads.find(mDebugEvent.dwThreadId)->second;
+        mThread = mProcess->thread = mProcess->threads.find(mDebugEvent.dwThreadId)->second.get();
         mRegisters = &mThread->registers;
 
         //read thread context from main thread

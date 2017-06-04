@@ -2,6 +2,7 @@
 #define DEBUGGER_GLOBAL_H
 
 #include "GleeBug.h"
+#include <memory>
 
 //defines
 #define GLEEBUG_HWBP_COUNT 4
@@ -30,9 +31,9 @@ namespace GleeBug
     typedef std::function<void(const BreakpointInfo & info)> BreakpointCallback;
 
     //map typedefs
-    typedef std::map<uint32, Process> ProcessMap;
+    typedef std::map<uint32, std::unique_ptr<Process>> ProcessMap;
     typedef std::map<Range, Dll, RangeCompare> DllMap;
-    typedef std::map<uint32, Thread> ThreadMap;
+    typedef std::map<uint32, std::unique_ptr<Thread>> ThreadMap;
     typedef std::map<BreakpointKey, BreakpointInfo> BreakpointMap;
     typedef std::map<BreakpointKey, BreakpointCallback> BreakpointCallbackMap;
     typedef std::unordered_map<ptr, BreakpointMap::iterator> SoftwareBreakpointMap;

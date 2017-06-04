@@ -19,6 +19,11 @@ namespace GleeBug
         */
         Registers();
 
+        /**
+        \brief Copy constructor.
+        */
+        Registers(const Registers &) = delete;
+
 #include "Debugger.Thread.Registers.Register.h"
 
         Register<R::DR0, ptr> Dr0;

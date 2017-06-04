@@ -13,39 +13,17 @@ namespace GleeBug
     {
     }
 
-    Thread::Thread(const Thread & other) :
-        hThread(other.hThread),
-        dwThreadId(other.dwThreadId),
-        lpThreadLocalBase(other.lpThreadLocalBase),
-        lpStartAddress(other.lpStartAddress),
-        registers(), //create new registers
-        stepCallbacks(other.stepCallbacks),
-        isSingleStepping(other.isSingleStepping),
-        isInternalStepping(other.isInternalStepping),
-        cbInternalStep(other.cbInternalStep)
-    {
-    }
-
-    Thread & Thread::operator=(const Thread& other)
-    {
-        hThread = other.hThread;
-        dwThreadId = other.dwThreadId;
-        lpThreadLocalBase = other.lpThreadLocalBase;
-        lpStartAddress = other.lpStartAddress;
-        registers = Registers(); //create new registers
-        stepCallbacks = other.stepCallbacks;
-        isSingleStepping = other.isSingleStepping;
-        isInternalStepping = other.isInternalStepping;
-        cbInternalStep = other.cbInternalStep;
-        return *this;
-    }
-
     bool Thread::RegReadContext()
     {
         memset(&this->mOldContext, 0, sizeof(CONTEXT));
         this->mOldContext.ContextFlags = CONTEXT_ALL; //TODO: granular control over what's required
-        this->registers.setContextLazy(&this->mOldContext, this->hThread);
-        return true;
+        if(GetThreadContext(this->hThread, &this->mOldContext))
+        {
+            this->registers.SetContext(this->mOldContext);
+            return true;
+        }
+        __debugbreak();
+        return false;
     }
 
     bool Thread::RegWriteContext()
@@ -54,7 +32,10 @@ namespace GleeBug
         if (memcmp(&this->mOldContext, &this->registers.mContext, sizeof(CONTEXT)) == 0)
             return true;
         //update the context
-        return !!SetThreadContext(this->hThread, &this->registers.mContext);
+        if(SetThreadContext(this->hThread, &this->registers.mContext))
+            return true;
+        __debugbreak();
+        return false;
     }
 
     void Thread::StepInto()
@@ -84,5 +65,15 @@ namespace GleeBug
         registers.TrapFlag.Set();
         isInternalStepping = true;
         cbInternalStep = cbStep;
+    }
+
+    bool Thread::Suspend()
+    {
+        return SuspendThread(hThread) != -1;
+    }
+
+    bool Thread::Resume()
+    {
+        return ResumeThread(hThread) != -1;
     }
 };

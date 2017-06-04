@@ -38,11 +38,11 @@ namespace GleeBug
             auto processFound = mProcesses.find(mDebugEvent.dwProcessId);
             if (processFound != mProcesses.end())
             {
-                mProcess = &processFound->second;
+                mProcess = processFound->second.get();
                 auto threadFound = mProcess->threads.find(mDebugEvent.dwThreadId);
                 if (threadFound != mProcess->threads.end())
                 {
-                    mThread = mProcess->thread = &threadFound->second;
+                    mThread = mProcess->thread = threadFound->second.get();
                     mRegisters = &mThread->registers;
                 }
                 else

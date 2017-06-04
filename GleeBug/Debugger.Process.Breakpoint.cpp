@@ -100,7 +100,7 @@ namespace GleeBug
         bool success = true;
         for (auto & thread : threads)
         {
-            if (!thread.second.SetHardwareBreakpoint(address, slot, type, size))
+            if (!thread.second->SetHardwareBreakpoint(address, slot, type, size))
             {
                 success = false;
                 break;
@@ -111,7 +111,7 @@ namespace GleeBug
         if (!success)
         {
             for (auto & thread : threads)
-                thread.second.DeleteHardwareBreakpoint(slot);
+                thread.second->DeleteHardwareBreakpoint(slot);
             return false;
         }
 
@@ -161,7 +161,7 @@ namespace GleeBug
         bool success = true;
         for (auto & thread : threads)
         {
-            if (!thread.second.DeleteHardwareBreakpoint(info.internal.hardware.slot))
+            if (!thread.second->DeleteHardwareBreakpoint(info.internal.hardware.slot))
                 success = false;
         }
 

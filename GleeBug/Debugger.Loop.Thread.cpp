@@ -6,13 +6,13 @@ namespace GleeBug
     {
         //thread housekeeping
         mProcess->threads.insert({ mDebugEvent.dwThreadId,
-            Thread(createThread.hThread,
+            std::make_unique<Thread>(createThread.hThread,
             mDebugEvent.dwThreadId,
             createThread.lpThreadLocalBase,
             createThread.lpStartAddress) });
 
         //set the current thread
-        mThread = mProcess->thread = &mProcess->threads.find(mDebugEvent.dwThreadId)->second;
+        mThread = mProcess->thread = mProcess->threads.find(mDebugEvent.dwThreadId)->second.get();
         mRegisters = &mThread->registers;
         if (!mThread->RegReadContext())
             cbInternalError("Thread::RegReadContext() failed!");

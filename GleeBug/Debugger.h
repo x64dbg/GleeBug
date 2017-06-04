@@ -19,6 +19,11 @@ namespace GleeBug
         Debugger();
 
         /**
+        \brief Copy constructor.
+        */
+        Debugger(const Debugger &) = delete;
+
+        /**
         \brief Destructs the Debugger instance.
         */
         virtual ~Debugger();

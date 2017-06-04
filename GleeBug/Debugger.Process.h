@@ -24,7 +24,7 @@ namespace GleeBug
         bool systemBreakpoint;
         bool permanentDep;
 
-        ThreadMap threads; //DO NOT COPY THESE OBJECTS!
+        ThreadMap threads;
         DllMap dlls;
         BreakpointMap breakpoints;
         SoftwareBreakpointMap softwareBreakpointReferences;
@@ -41,6 +41,11 @@ namespace GleeBug
         \param createProcessInfo The process creation info.
         */
         explicit Process(HANDLE hProcess, uint32 dwProcessId, uint32 dwMainThreadId, const CREATE_PROCESS_DEBUG_INFO & createProcessInfo);
+
+        /**
+        \brief Copy constructor.
+        */
+        Process(const Process &) = delete;
 
         /**
         \brief Read memory from the process.
@@ -397,7 +402,7 @@ namespace GleeBug
         {
             auto result = true;
             for(auto & thread : this->threads)
-                if(!thread.second.RegReadContext())
+                if(!thread.second->RegReadContext())
                     result = false;
             return result;
         }
@@ -406,7 +411,7 @@ namespace GleeBug
         {
             auto result = true;
             for(auto & thread : this->threads)
-                if(!thread.second.RegWriteContext())
+                if(!thread.second->RegWriteContext())
                     result = false;
             return result;
         }
