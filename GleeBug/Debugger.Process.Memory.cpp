@@ -65,7 +65,7 @@ namespace GleeBug
     bool Process::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
         //TODO: correctly implement this
-        return MemWrite(address, buffer, size, bytesWritten);
+        return MemWrite(address, buffer, size, bytesWritten, false);
     }
 
     bool Process::MemIsValidPtr(ptr address) const
