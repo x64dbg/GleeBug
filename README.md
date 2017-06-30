@@ -1,6 +1,6 @@
 # GleeBug
 
-[![Build status](https://ci.appveyor.com/api/projects/status/k5hgwxxqcc6fiskw?svg=true)](https://ci.appveyor.com/project/mrexodia/gleebug)
+[![Build status](https://ci.appveyor.com/api/projects/status/k5hgwxxqcc6fiskw?svg=true)](https://ci.appveyor.com/project/mrexodia/gleebug/build/artifacts)
 
 GleeBug is a **Debugging Framework for Windows** aimed at making debugging enjoyable. It should be complete and easy to use. Feel free to clone and send a pull request or report a bug!
 
