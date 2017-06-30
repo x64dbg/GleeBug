@@ -48,6 +48,8 @@ public:
 
     void DebugLoop()
     {
+        processFromHandleCache.clear();
+        threadFromHandleCache.clear();
         Start();
     }
 
@@ -775,26 +777,48 @@ private: //functions
         }
     }
 
+    std::unordered_map<HANDLE, Thread*> threadFromHandleCache;
+
     Thread* threadFromHandle(HANDLE hThread)
     {
-        THREAD_BASIC_INFORMATION tbi;
-        if(!getThreadInfo(hThread, tbi))
-            return nullptr;
-        auto foundP = mProcesses.find(uint32(tbi.ClientId.UniqueProcess));
-        if(foundP == mProcesses.end())
-            return nullptr;
-        auto foundT = foundP->second->threads.find(uint32(tbi.ClientId.UniqueThread));
-        if(foundT == foundP->second->threads.end())
-            return nullptr;
-        return foundT->second.get();
+        auto found = threadFromHandleCache.find(hThread);
+        if(found != threadFromHandleCache.end())
+            return found->second;
+        auto result = [this, hThread]() -> Thread*
+        {
+            THREAD_BASIC_INFORMATION tbi;
+            if(!getThreadInfo(hThread, tbi))
+                return nullptr;
+            auto foundP = mProcesses.find(uint32(tbi.ClientId.UniqueProcess));
+            if(foundP == mProcesses.end())
+                return nullptr;
+            auto foundT = foundP->second->threads.find(uint32(tbi.ClientId.UniqueThread));
+            if(foundT == foundP->second->threads.end())
+                return nullptr;
+            return foundT->second.get();
+        }();
+        if(result)
+            threadFromHandleCache[hThread] = result;
+        return result;
     }
+
+    std::unordered_map<HANDLE, Process*> processFromHandleCache;
 
     Process* processFromHandle(HANDLE hProcess)
     {
-        auto foundP = mProcesses.find(GetProcessId(hProcess));
-        if(foundP == mProcesses.end())
-            return nullptr;
-        return foundP->second.get();
+        auto found = processFromHandleCache.find(hProcess);
+        if(found != processFromHandleCache.end())
+            return found->second;
+        auto result = [this, hProcess]() -> Process*
+        {
+            auto foundP = mProcesses.find(GetProcessId(hProcess));
+            if(foundP == mProcesses.end())
+                return nullptr;
+            return foundP->second.get();
+        }();
+        if(result)
+            processFromHandleCache[hProcess] = result;
+        return result;
     }
 
     static HardwareType hwtypeFromTitan(DWORD type)
