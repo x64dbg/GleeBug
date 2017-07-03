@@ -451,21 +451,9 @@ public:
         return found->second.pe->ConvertRvaToOffset(uint32(AddressToConvert));
     }
 
-    ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
+    template<typename T>
+    ULONG_PTR GetPE32DataW_impl(const Region<T> & headers, DWORD WhichSection, DWORD WhichData, const std::vector<Section> & sections)
     {
-        auto found = mappedFiles.find(FileMapVA);
-        if(found == mappedFiles.end())
-            __debugbreak(); //return 0;
-        if(!found->second.pe->IsValidPe())
-            __debugbreak(); //return 0;
-#ifdef _WIN64
-        if(!found->second.pe->IsPe64()) __debugbreak(); //return 0;
-        auto headers = found->second.pe->GetNtHeaders64();
-#else
-        if(found->second.pe->IsPe64()) __debugbreak(); //return 0;
-        auto headers = found->second.pe->GetNtHeaders32();
-#endif //_WIN64
-        const auto & sections = found->second.pe->GetSections();
         switch(WhichData)
         {
         case UE_PE_OFFSET:
@@ -487,15 +475,30 @@ public:
         case UE_SECTIONNUMBER:
             return sections.size();
         case UE_SECTIONVIRTUALOFFSET: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
-            return WhichSection < sections.size() ? sections[WhichSection].GetHeader().VirtualAddress : 0;
+            return WhichSection < sections.size() ? sections.at(WhichSection).GetHeader().VirtualAddress : 0;
         case UE_SECTIONVIRTUALSIZE: //WhichSection: IMAGE_DIRECTORY_ENTRY_EXCEPTION
-            return WhichSection < sections.size() ? sections[WhichSection].GetHeader().Misc.VirtualSize : 0;
+            return WhichSection < sections.size() ? sections.at(WhichSection).GetHeader().Misc.VirtualSize : 0;
         case UE_SECTIONNAME:
-            return WhichSection < sections.size() ? ULONG_PTR(&sections[WhichSection].GetHeader().Name[0]) : 0;
+            return WhichSection < sections.size() ? ULONG_PTR(&sections.at(WhichSection).GetHeader().Name[0]) : 0;
+        case UE_IMAGEBASE:
+            return headers->OptionalHeader.ImageBase;
         default:
             __debugbreak();
         }
         return 0;
+    }
+
+    ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
+    {
+        auto found = mappedFiles.find(FileMapVA);
+        if(found == mappedFiles.end())
+            __debugbreak(); //return 0;
+        if(!found->second.pe->IsValidPe())
+            __debugbreak(); //return 0;
+        auto sections = found->second.pe->GetSections();
+        return found->second.pe->IsPe64()
+            ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
+            : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);        
     }
 
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
@@ -509,27 +512,12 @@ public:
             __debugbreak(); //return 0;
         if(!pe.IsValidPe())
             __debugbreak(); //return 0;
-#ifdef _WIN64
-        if(!pe.IsPe64()) __debugbreak(); //return 0;
-        auto headers = pe.GetNtHeaders64().Data();
-#else
-        if(pe.IsPe64()) __debugbreak(); //return 0;
-        auto headers = pe.GetNtHeaders32().Data();
-#endif //_WIN64
-        switch(WhichData)
-        {
-        case UE_CHARACTERISTICS:
-            return headers->FileHeader.Characteristics;
-        case UE_IMAGEBASE:
-            return headers->OptionalHeader.ImageBase;
-        case UE_OEP:
-            return headers->OptionalHeader.AddressOfEntryPoint;
-        default:
-            __debugbreak();
-        }
-        return 0;
+        auto sections = pe.GetSections();
+        return pe.IsPe64()
+            ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
+            : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
     }
-
+    
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
     {
         return (GetPE32DataW(szFileName, NULL, UE_CHARACTERISTICS) & IMAGE_FILE_DLL) == IMAGE_FILE_DLL;
