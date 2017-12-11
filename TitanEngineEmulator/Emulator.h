@@ -621,19 +621,6 @@ public:
         return result;
     }
 
-    //Librarian Breakpoints
-    bool LibrarianSetBreakPoint(const char* szLibraryName, DWORD bpxType, bool SingleShoot, LPVOID bpxCallBack)
-    {
-        //TODO
-        return false;
-    }
-
-    bool LibrarianRemoveBreakPoint(const char* szLibraryName, DWORD bpxType)
-    {
-        //TODO
-        return false;
-    }
-
     //Generic Breakpoints
     bool RemoveAllBreakPoints(DWORD RemoveOption)
     {

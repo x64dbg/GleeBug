@@ -247,17 +247,6 @@ __declspec(dllexport) bool TITCALL GetUnusedHardwareBreakPointRegister(LPDWORD R
     return emu.GetUnusedHardwareBreakPointRegister(RegisterIndex);
 }
 
-//Librarian Breakpoints
-__declspec(dllexport) bool TITCALL LibrarianSetBreakPoint(const char* szLibraryName, DWORD bpxType, bool SingleShoot, LPVOID bpxCallBack)
-{
-    return emu.LibrarianSetBreakPoint(szLibraryName, bpxType, SingleShoot, bpxCallBack);
-}
-
-__declspec(dllexport) bool TITCALL LibrarianRemoveBreakPoint(const char* szLibraryName, DWORD bpxType)
-{
-    return emu.LibrarianRemoveBreakPoint(szLibraryName, bpxType);
-}
-
 //Generic Breakpoints
 __declspec(dllexport) bool TITCALL RemoveAllBreakPoints(DWORD RemoveOption)
 {
