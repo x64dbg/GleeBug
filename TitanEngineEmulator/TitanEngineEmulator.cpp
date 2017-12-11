@@ -97,6 +97,11 @@ __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
     return emu.GetPEBLocation(hProcess);
 }
 
+__declspec(dllexport) void* TITCALL GetPEBLocation64(HANDLE hProcess)
+{
+    return emu.GetPEBLocation64(hProcess);
+}
+
 __declspec(dllexport) void* TITCALL GetTEBLocation(HANDLE hThread)
 {
     return emu.GetTEBLocation(hThread);

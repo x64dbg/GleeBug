@@ -25,5 +25,8 @@
     <ClInclude Include="FileMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PEB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

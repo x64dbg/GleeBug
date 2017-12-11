@@ -4,6 +4,7 @@
 #include "TitanEngine.h"
 #include "ntdll.h"
 #include "FileMap.h"
+#include "PEB.h"
 
 using namespace GleeBug;
 
@@ -183,6 +184,46 @@ public:
         return PebAddress;
     }
 
+    void* GetPEBLocation64(HANDLE hProcess)
+    {
+        void* PebAddress = 0;
+#ifndef _WIN64
+        if(isThisProcessWow64())
+        {
+            typedef NTSTATUS(WINAPI * t_NtWow64QueryInformationProcess64)(HANDLE ProcessHandle, PROCESSINFOCLASS ProcessInformationClass, PVOID ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
+            static auto _NtWow64QueryInformationProcess64 = (t_NtWow64QueryInformationProcess64)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtWow64QueryInformationProcess64");
+            if(_NtWow64QueryInformationProcess64)
+            {
+                struct PROCESS_BASIC_INFORMATION64
+                {
+                    DWORD ExitStatus;
+                    DWORD64 PebBaseAddress;
+                    DWORD64 AffinityMask;
+                    DWORD BasePriority;
+                    DWORD64 UniqueProcessId;
+                    DWORD64 InheritedFromUniqueProcessId;
+                } myProcessBasicInformation[5];
+
+                ULONG RequiredLen = 0;
+
+                if(_NtWow64QueryInformationProcess64(hProcess, ProcessBasicInformation, myProcessBasicInformation, sizeof(PROCESS_BASIC_INFORMATION64), &RequiredLen) == 0)
+                {
+                    PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
+                }
+                else
+                {
+                    if(_NtWow64QueryInformationProcess64(hProcess, ProcessBasicInformation, myProcessBasicInformation, RequiredLen, &RequiredLen) == 0)
+                    {
+                        PebAddress = (void*)myProcessBasicInformation->PebBaseAddress;
+                    }
+                }
+            }
+        }
+#endif //_WIN64
+        return PebAddress;
+
+    }
+
     static bool getThreadInfo(HANDLE hThread, THREAD_BASIC_INFORMATION & tbi)
     {
         ULONG RequiredLen = 0;
@@ -211,7 +252,66 @@ public:
 
     bool HideDebugger(HANDLE hProcess, DWORD PatchAPILevel)
     {
-        //TODO
+        PEB_CURRENT myPEB = { 0 };
+        SIZE_T ueNumberOfBytesRead = 0;
+        void* heapFlagsAddress = 0;
+        DWORD heapFlags = 0;
+        void* heapForceFlagsAddress = 0;
+        DWORD heapForceFlags = 0;
+
+#ifndef _WIN64
+        PEB64 myPEB64 = { 0 };
+        void* AddressOfPEB64 = GetPEBLocation64(hProcess);
+#endif
+
+        void* AddressOfPEB = GetPEBLocation(hProcess);
+
+        if(!AddressOfPEB)
+            return false;
+
+        if(ReadProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, sizeof(PEB_CURRENT), &ueNumberOfBytesRead))
+        {
+#ifndef _WIN64
+            if(AddressOfPEB64)
+            {
+                ReadProcessMemory(hProcess, AddressOfPEB64, (void*)&myPEB64, sizeof(PEB64), &ueNumberOfBytesRead);
+            }
+#endif
+            myPEB.BeingDebugged = FALSE;
+            myPEB.NtGlobalFlag &= ~0x70;
+
+#ifndef _WIN64
+            myPEB64.BeingDebugged = FALSE;
+            myPEB64.NtGlobalFlag &= ~0x70;
+#endif
+
+#ifdef _WIN64
+            heapFlagsAddress = (void*)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(true));
+            heapForceFlagsAddress = (void*)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(true));
+#else
+            heapFlagsAddress = (void*)((LONG_PTR)myPEB.ProcessHeap + getHeapFlagsOffset(false));
+            heapForceFlagsAddress = (void*)((LONG_PTR)myPEB.ProcessHeap + getHeapForceFlagsOffset(false));
+#endif //_WIN64
+            ReadProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
+            ReadProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
+
+            heapFlags &= HEAP_GROWABLE;
+            heapForceFlags = 0;
+
+            WriteProcessMemory(hProcess, heapFlagsAddress, &heapFlags, sizeof(DWORD), 0);
+            WriteProcessMemory(hProcess, heapForceFlagsAddress, &heapForceFlags, sizeof(DWORD), 0);
+
+            if(WriteProcessMemory(hProcess, AddressOfPEB, (void*)&myPEB, sizeof(PEB_CURRENT), &ueNumberOfBytesRead))
+            {
+#ifndef _WIN64
+                if(AddressOfPEB64)
+                {
+                    WriteProcessMemory(hProcess, AddressOfPEB64, (void*)&myPEB64, sizeof(PEB64), &ueNumberOfBytesRead);
+                }
+#endif
+                return true;
+            }
+        }
         return false;
     }
 
@@ -890,6 +990,93 @@ private: //functions
         CloseHandle(hToken);
         return dwLastError;
     }
+
+    static bool isAtleastVista()
+    {
+        static bool isAtleastVista = false;
+        static bool isSet = false;
+        if(isSet)
+            return isAtleastVista;
+        OSVERSIONINFO versionInfo = { 0 };
+        versionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+        GetVersionEx(&versionInfo);
+        isAtleastVista = versionInfo.dwMajorVersion >= 6;
+        isSet = true;
+        return isAtleastVista;
+    }
+
+    //Quote from The Ultimate Anti-Debugging Reference by Peter Ferrie
+    //Flags field exists at offset 0x0C in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x40 on the 32-bit versions of Windows Vista and later.
+    //Flags field exists at offset 0x14 in the heap on the 64-bit versions of Windows XP, and at offset 0x70 in the heap on the 64-bit versions of Windows Vista and later.
+    //ForceFlags field exists at offset 0x10 in the heap on the 32-bit versions of Windows NT, Windows 2000, and Windows XP; and at offset 0x44 on the 32-bit versions of Windows Vista and later.
+    //ForceFlags field exists at offset 0x18 in the heap on the 64-bit versions of Windows XP, and at offset 0x74 in the heap on the 64-bit versions of Windows Vista and later.
+    static int getHeapFlagsOffset(bool x64)
+    {
+        if(x64)  //x64 offsets
+        {
+            if(isAtleastVista())
+            {
+                return 0x70;
+            }
+            else
+            {
+                return 0x14;
+            }
+        }
+        else //x86 offsets
+        {
+            if(isAtleastVista())
+            {
+                return 0x40;
+            }
+            else
+            {
+                return 0x0C;
+            }
+        }
+    }
+
+    static int getHeapForceFlagsOffset(bool x64)
+    {
+        if(x64)  //x64 offsets
+        {
+            if(isAtleastVista())
+            {
+                return 0x74;
+            }
+            else
+            {
+                return 0x18;
+            }
+        }
+        else //x86 offsets
+        {
+            if(isAtleastVista())
+            {
+                return 0x44;
+            }
+            else
+            {
+                return 0x10;
+            }
+        }
+    }
+
+#ifndef _WIN64
+    static bool isThisProcessWow64()
+    {
+        typedef BOOL(WINAPI * tIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
+        BOOL bIsWow64 = FALSE;
+        static auto fnIsWow64Process = (tIsWow64Process)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
+
+        if(fnIsWow64Process)
+        {
+            fnIsWow64Process(GetCurrentProcess(), &bIsWow64);
+        }
+
+        return (bIsWow64 != FALSE);
+    }
+#endif
 
 private: //variables
     bool mSetDebugPrivilege = false;
