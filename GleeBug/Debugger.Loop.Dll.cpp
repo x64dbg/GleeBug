@@ -18,7 +18,8 @@ namespace GleeBug
         cbLoadDllEvent(loadDll, dll);
 
         //close the file handle
-        CloseHandle(loadDll.hFile);
+        if(loadDll.hFile)
+            CloseHandle(loadDll.hFile);
     }
 
     void Debugger::unloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll)

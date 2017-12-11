@@ -39,7 +39,8 @@ namespace GleeBug
         cbCreateProcessEvent(createProcess, *mProcess);
 
         //close the file handle
-        CloseHandle(createProcess.hFile);
+        if(createProcess.hFile)
+            CloseHandle(createProcess.hFile);
     }
 
     void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)
