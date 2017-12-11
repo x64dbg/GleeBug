@@ -217,14 +217,26 @@ public:
 
     HANDLE TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
     {
-        //TODO
-        return OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+        if(mSetDebugPrivilege)
+            setDebugPrivilege(GetCurrentProcess(), true);
+        HANDLE hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
+        DWORD dwLastError = GetLastError();
+        if(mSetDebugPrivilege)
+            setDebugPrivilege(GetCurrentProcess(), false);
+        SetLastError(dwLastError);
+        return hProcess;
     }
 
     HANDLE TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
     {
-        //TODO
-        return OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+        if(mSetDebugPrivilege)
+            setDebugPrivilege(GetCurrentProcess(), true);
+        HANDLE hThread = OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+        DWORD dwLastError = GetLastError();
+        if(mSetDebugPrivilege)
+            setDebugPrivilege(GetCurrentProcess(), false);
+        SetLastError(dwLastError);
+        return hThread;
     }
 
     //Stepping
@@ -845,6 +857,38 @@ private: //functions
         default:
             return MemoryType::Access;
         }
+    }
+
+    static DWORD setDebugPrivilege(HANDLE hProcess, bool bEnablePrivilege)
+    {
+        DWORD dwLastError;
+        HANDLE hToken = 0;
+        if(!OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+        {
+            dwLastError = GetLastError();
+            if(hToken)
+                CloseHandle(hToken);
+            return dwLastError;
+        }
+        TOKEN_PRIVILEGES tokenPrivileges;
+        memset(&tokenPrivileges, 0, sizeof(TOKEN_PRIVILEGES));
+        LUID luid;
+        if(!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid))
+        {
+            dwLastError = GetLastError();
+            CloseHandle(hToken);
+            return dwLastError;
+        }
+        tokenPrivileges.PrivilegeCount = 1;
+        tokenPrivileges.Privileges[0].Luid = luid;
+        if(bEnablePrivilege)
+            tokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+        else
+            tokenPrivileges.Privileges[0].Attributes = 0;
+        AdjustTokenPrivileges(hToken, FALSE, &tokenPrivileges, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+        dwLastError = GetLastError();
+        CloseHandle(hToken);
+        return dwLastError;
     }
 
 private: //variables
