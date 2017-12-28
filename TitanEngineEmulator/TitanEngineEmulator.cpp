@@ -174,11 +174,6 @@ __declspec(dllexport) bool TITCALL IsFileDLLW(const wchar_t* szFileName, ULONG_P
     return emu.IsFileDLLW(szFileName, FileMapVA);
 }
 
-__declspec(dllexport) bool TITCALL TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
-{
-    return emu.TLSGrabCallBackDataW(szFileName, ArrayOfCallBacks, NumberOfCallBacks);
-}
-
 //Software Breakpoints
 __declspec(dllexport) bool TITCALL SetBPX(ULONG_PTR bpxAddress, DWORD bpxType, LPVOID bpxCallBack)
 {

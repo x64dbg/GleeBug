@@ -823,6 +823,10 @@ public:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
         case UE_RELOCATIONTABLESIZE:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size;
+        case UE_TLSTABLEADDRESS:
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
+        case UE_TLSTABLESIZE:
+            return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size;
         default:
             __debugbreak();
         }
@@ -862,12 +866,6 @@ public:
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
     {
         return (GetPE32DataW(szFileName, NULL, UE_CHARACTERISTICS) & IMAGE_FILE_DLL) == IMAGE_FILE_DLL;
-    }
-
-    bool TLSGrabCallBackDataW(const wchar_t* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks)
-    {
-        //TODO
-        return false;
     }
 
     //Software Breakpoints
