@@ -4,72 +4,72 @@ namespace GleeBug
 {
     void Debugger::exceptionBreakpoint(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
-        if (!mProcess->systemBreakpoint) //handle system breakpoint
+        //check if the breakpoint exists
+        auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
+        if(foundInfo == mProcess->breakpoints.end())
         {
-            //set internal state
-            mProcess->systemBreakpoint = true;
-            mContinueStatus = DBG_CONTINUE;
-
-            //get process DEP policy
-#ifndef _WIN64
-            typedef BOOL(WINAPI * GETPROCESSDEPPOLICY)(
-                _In_  HANDLE  /*hProcess*/,
-                _Out_ LPDWORD /*lpFlags*/,
-                _Out_ PBOOL   /*lpPermanent*/
-                );
-            static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
-            if (GPDP)
+            if(!mProcess->systemBreakpoint) //handle system breakpoint
             {
-                //If you use mProcess->hProcess GetProcessDEPPolicy will put garbage in bPermanent.
-                auto hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, mProcess->dwProcessId);
-                DWORD lpFlags;
-                BOOL bPermanent;
-                if (GPDP(hProcess, &lpFlags, &bPermanent))
-                    mProcess->permanentDep = lpFlags != 0 && bPermanent;
-                CloseHandle(hProcess);
-            }
+                //set internal state
+                mProcess->systemBreakpoint = true;
+                mContinueStatus = DBG_CONTINUE;
+
+                //get process DEP policy (TODO: what happens if a breakpoint is hit before the system breakpoint?)
+#ifndef _WIN64
+                typedef BOOL(WINAPI * GETPROCESSDEPPOLICY)(
+                    _In_  HANDLE  /*hProcess*/,
+                    _Out_ LPDWORD /*lpFlags*/,
+                    _Out_ PBOOL   /*lpPermanent*/
+                    );
+                static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
+                if(GPDP)
+                {
+                    //If you use mProcess->hProcess GetProcessDEPPolicy will put garbage in bPermanent.
+                    auto hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, mProcess->dwProcessId);
+                    DWORD lpFlags;
+                    BOOL bPermanent;
+                    if(GPDP(hProcess, &lpFlags, &bPermanent))
+                        mProcess->permanentDep = lpFlags != 0 && bPermanent;
+                    CloseHandle(hProcess);
+                }
 #else
-            mProcess->permanentDep = true;
+                mProcess->permanentDep = true;
 #endif //_WIN64
 
-            //call the callback
-            cbSystemBreakpoint();
+                //call the callback
+                cbSystemBreakpoint();
+            }
+            return;
         }
-        else
+
+        const auto info = foundInfo->second;
+
+        //set continue status
+        mContinueStatus = DBG_CONTINUE;
+
+        //set back the instruction pointer
+        mRegisters->Gip = info.address;
+
+        //restore the original breakpoint byte and do an internal step
+        mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
+        mThread->StepInternal(std::bind([this, info]()
         {
-            //check if the breakpoint exists
-            auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
-            if (foundInfo == mProcess->breakpoints.end())
-                return;
-            const auto info = foundInfo->second;
+            //only restore the bytes if the breakpoint still exists
+            if(mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
+                mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
+        }));
 
-            //set continue status
-            mContinueStatus = DBG_CONTINUE;
+        //call the generic callback
+        cbBreakpoint(info);
 
-            //set back the instruction pointer
-            mRegisters->Gip = info.address;
+        //call the user callback
+        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Software, info.address });
+        if(foundCallback != mProcess->breakpointCallbacks.end())
+            foundCallback->second(info);
 
-            //restore the original breakpoint byte and do an internal step
-            mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
-            mThread->StepInternal(std::bind([this, info]()
-            {
-                //only restore the bytes if the breakpoint still exists
-                if (mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
-                    mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
-            }));
-
-            //call the generic callback
-            cbBreakpoint(info);
-
-            //call the user callback
-            auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Software, info.address });
-            if (foundCallback != mProcess->breakpointCallbacks.end())
-                foundCallback->second(info);
-
-            //delete the breakpoint if it is singleshoot
-            if (info.singleshoot)
-                mProcess->DeleteGenericBreakpoint(info);
-        }
+        //delete the breakpoint if it is singleshoot
+        if(info.singleshoot)
+            mProcess->DeleteGenericBreakpoint(info);
     }
 
     void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
