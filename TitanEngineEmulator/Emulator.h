@@ -152,16 +152,6 @@ public:
             mSetDebugPrivilege = VariableSet;
     }
 
-    PROCESS_INFORMATION* TitanGetProcessInformation()
-    {
-        return &mMainProcess;
-    }
-
-    STARTUPINFOW* TitanGetStartupInformation()
-    {
-        return &mMainStartupInfo;
-    }
-
     //Misc
     void* GetPEBLocation(HANDLE hProcess)
     {

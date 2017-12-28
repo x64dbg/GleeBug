@@ -81,25 +81,10 @@ __declspec(dllexport) void TITCALL SetEngineVariable(DWORD VariableId, bool Vari
     emu.SetEngineVariable(VariableId, VariableSet);
 }
 
-__declspec(dllexport) PROCESS_INFORMATION* TITCALL TitanGetProcessInformation()
-{
-    return emu.TitanGetProcessInformation();
-}
-
-__declspec(dllexport) STARTUPINFOW* TITCALL TitanGetStartupInformation()
-{
-    return emu.TitanGetStartupInformation();
-}
-
 //Misc
 __declspec(dllexport) void* TITCALL GetPEBLocation(HANDLE hProcess)
 {
     return emu.GetPEBLocation(hProcess);
-}
-
-__declspec(dllexport) void* TITCALL GetPEBLocation64(HANDLE hProcess)
-{
-    return emu.GetPEBLocation64(hProcess);
 }
 
 __declspec(dllexport) void* TITCALL GetTEBLocation(HANDLE hThread)
@@ -126,11 +111,6 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool
 __declspec(dllexport) ULONG_PTR TITCALL GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
 {
     return emu.GetContextDataEx(hActiveThread, IndexOfRegister);
-}
-
-__declspec(dllexport) ULONG_PTR TITCALL GetContextData(DWORD IndexOfRegister)
-{
-    return GetContextDataEx(nullptr, IndexOfRegister);
 }
 
 __declspec(dllexport) bool TITCALL SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)
@@ -177,11 +157,6 @@ __declspec(dllexport) ULONG_PTR TITCALL ConvertFileOffsetToVA(ULONG_PTR FileMapV
 __declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
 {
     return emu.ConvertVAtoFileOffsetEx(FileMapVA, FileSize, ImageBase, AddressToConvert, AddressIsRVA, ReturnType);
-}
-
-__declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffset(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
-{
-    return ConvertVAtoFileOffsetEx(FileMapVA, 0, 0, AddressToConvert, false, ReturnType);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
