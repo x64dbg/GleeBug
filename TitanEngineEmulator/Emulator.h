@@ -764,13 +764,13 @@ protected:
             mCbEXITTHREAD(&exitThread);
     }
 
-    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) override
+    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) override
     {
         if (mCbLOADDLL)
             mCbLOADDLL(&loadDll);
     }
 
-    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) override
+    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) override
     {
         if (mCbUNLOADDLL)
             mCbUNLOADDLL(&unloadDll);

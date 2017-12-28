@@ -159,13 +159,13 @@ protected:
             exitThread.dwExitCode);
     }
 
-    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) override
+    void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) override
     {
         printf("DLL loaded at 0x%p\n",
             loadDll.lpBaseOfDll);
     }
 
-    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) override
+    void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) override
     {
         printf("DLL 0x%p unloaded\n",
             unloadDll.lpBaseOfDll);

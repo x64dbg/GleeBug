@@ -123,16 +123,14 @@ namespace GleeBug
         /**
         \brief DLL load debug event callback. Called after event is internally processed. Provide an implementation to use this callback.
         \param loadDll Information about the DLL loaded.
-        \param dll Dll of the loaded DLL.
         */
-        virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll, const Dll & dll) {};
+        virtual void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) {};
 
         /**
         \brief DLL unload debug event callback. Called before event is internally processed. Provide an implementation to use this callback.
         \param unloadDll Information about the DLL unloaded.
-        \param dll Dll of the unloaded DLL.
         */
-        virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll, const Dll & dll) {};
+        virtual void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) {};
 
         /**
         \brief Exception debug event callback. Called before the event is internally processed. Provide an implementation to use this callback.

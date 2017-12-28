@@ -25,7 +25,6 @@ namespace GleeBug
         bool permanentDep;
 
         ThreadMap threads;
-        DllMap dlls;
         BreakpointMap breakpoints;
         SoftwareBreakpointMap softwareBreakpointReferences;
         BreakpointCallbackMap breakpointCallbacks;

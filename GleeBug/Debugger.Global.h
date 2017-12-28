@@ -32,7 +32,6 @@ namespace GleeBug
 
     //map typedefs
     typedef std::map<uint32, std::unique_ptr<Process>> ProcessMap;
-    typedef std::map<Range, Dll, RangeCompare> DllMap;
     typedef std::map<uint32, std::unique_ptr<Thread>> ThreadMap;
     typedef std::map<BreakpointKey, BreakpointInfo> BreakpointMap;
     typedef std::map<BreakpointKey, BreakpointCallback> BreakpointCallbackMap;
