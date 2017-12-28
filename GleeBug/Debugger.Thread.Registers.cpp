@@ -96,6 +96,13 @@ namespace GleeBug
         Gsp(this),
         Gip(this),
 
+        Gs(this),
+        Fs(this),
+        Es(this),
+        Ds(this),
+        Cs(this),
+        Ss(this),
+
         TrapFlag(this),
         ResumeFlag(this)
     {

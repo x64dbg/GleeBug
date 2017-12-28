@@ -399,6 +399,7 @@ namespace GleeBug
 
         bool RegReadContext()
         {
+            //TODO: lazily retrieve the context
             auto result = true;
             for(auto & thread : this->threads)
                 if(!thread.second->RegReadContext())

@@ -119,6 +119,13 @@ namespace GleeBug
         Register<R::GSP, ptr> Gsp;
         Register<R::GIP, ptr> Gip;
 
+        Register<R::GS, uint16> Gs;
+        Register<R::FS, uint16> Fs;
+        Register<R::ES, uint16> Es;
+        Register<R::DS, uint16> Ds;
+        Register<R::CS, uint16> Cs;
+        Register<R::SS, uint16> Ss;
+
 #include "Debugger.Thread.Registers.Flag.h"
 
         Flag<F::Trap> TrapFlag;

@@ -239,7 +239,21 @@ namespace GleeBug
         case R::GIP:
             return ptr(contextGip);
 
+        case R::GS:
+            return ptr(mContext.SegGs);
+        case R::FS:
+            return ptr(mContext.SegFs);
+        case R::ES:
+            return ptr(mContext.SegEs);
+        case R::DS:
+            return ptr(mContext.SegDs);
+        case R::CS:
+            return ptr(mContext.SegCs);
+        case R::SS:
+            return ptr(mContext.SegSs);
+
         default:
+            __debugbreak();
             return 0;
         }
     }
@@ -514,6 +528,28 @@ namespace GleeBug
         case R::GIP:
             contextGip = value;
             break;
+
+        case R::GS:
+            mContext.SegGs = value;
+            break;
+        case R::FS:
+            mContext.SegFs = value;
+            break;
+        case R::ES:
+            mContext.SegEs = value;
+            break;
+        case R::DS:
+            mContext.SegDs = value;
+            break;
+        case R::CS:
+            mContext.SegCs = value;
+            break;
+        case R::SS:
+            mContext.SegSs = value;
+            break;
+
+        default:
+            __debugbreak();
         }
     }
 
@@ -719,7 +755,21 @@ namespace GleeBug
         case R::GIP:
             return REGPTR(contextGip);
 
+        case R::GS:
+            return REGPTR(mContext.SegGs);
+        case R::FS:
+            return REGPTR(mContext.SegFs);
+        case R::ES:
+            return REGPTR(mContext.SegEs);
+        case R::DS:
+            return REGPTR(mContext.SegDs);
+        case R::CS:
+            return REGPTR(mContext.SegCs);
+        case R::SS:
+            return REGPTR(mContext.SegSs);
+
         default:
+            __debugbreak();
             return nullptr;
         }
     }

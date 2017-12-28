@@ -4,6 +4,7 @@ namespace GleeBug
 {
     bool Process::MemReadUnsafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
+        //TODO: change page protection if reading failed
         ptr read;
         if (!bytesRead)
             bytesRead = &read;

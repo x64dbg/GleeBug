@@ -100,6 +100,13 @@ enum class R
     GBP,
     GSP,
     GIP,
+
+    GS,
+    FS,
+    ES,
+    DS,
+    CS,
+    SS
 }; //R
 
 /**

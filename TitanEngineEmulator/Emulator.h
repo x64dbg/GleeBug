@@ -6,6 +6,139 @@
 #include "FileMap.h"
 #include "PEB.h"
 
+// Related to floating x87 registers
+#define GetSTInTOPStackFromStatusWord(StatusWord) ((StatusWord & 0x3800) >> 11)
+#define Getx87r0PositionInRegisterArea(STInTopStack) ((8 - STInTopStack) % 8)
+#define Calculatex87registerPositionInRegisterArea(x87r0_position, index) (((x87r0_position + index) % 8))
+#define GetRegisterAreaOf87register(register_area, x87r0_position, index) (((char *) register_area) + 10 * Calculatex87registerPositionInRegisterArea(x87r0_position, index) )
+#define GetSTValueFromIndex(x87r0_position, index) ((x87r0_position + index) % 8)
+
+#ifdef _WIN64
+//https://stackoverflow.com/a/869597/1806760
+template<typename T> struct identity
+{
+    typedef T type;
+};
+
+template<typename Dst> Dst implicit_cast(typename identity<Dst>::type t)
+{
+    return t;
+}
+
+//https://github.com/electron/crashpad/blob/4054e6cba3ba023d9c00260518ec2912607ae17c/snapshot/cpu_context.cc
+enum
+{
+    kX87TagValid = 0,
+    kX87TagZero,
+    kX87TagSpecial,
+    kX87TagEmpty,
+};
+
+typedef uint8_t X87Register[10];
+
+union X87OrMMXRegister
+{
+    struct
+    {
+        X87Register st;
+        uint8_t st_reserved[6];
+    };
+    struct
+    {
+        uint8_t mm_value[8];
+        uint8_t mm_reserved[8];
+    };
+};
+
+static_assert(sizeof(X87OrMMXRegister) == sizeof(M128A), "sizeof(X87OrMMXRegister) != sizeof(M128A)");
+
+static uint16_t FxsaveToFsaveTagWord(
+    uint16_t fsw,
+    uint8_t fxsave_tag,
+    const X87OrMMXRegister* st_mm)
+{
+    // The x87 tag word (in both abridged and full form) identifies physical
+    // registers, but |st_mm| is arranged in logical stack order. In order to map
+    // physical tag word bits to the logical stack registers they correspond to,
+    // the "stack top" value from the x87 status word is necessary.
+    int stack_top = (fsw >> 11) & 0x7;
+
+    uint16_t fsave_tag = 0;
+    for(int physical_index = 0; physical_index < 8; ++physical_index)
+    {
+        bool fxsave_bit = (fxsave_tag & (1 << physical_index)) != 0;
+        uint8_t fsave_bits;
+
+        if(fxsave_bit)
+        {
+            int st_index = (physical_index + 8 - stack_top) % 8;
+            const X87Register & st = st_mm[st_index].st;
+
+            uint32_t exponent = ((st[9] & 0x7f) << 8) | st[8];
+            if(exponent == 0x7fff)
+            {
+                // Infinity, NaN, pseudo-infinity, or pseudo-NaN. If it was important to
+                // distinguish between these, the J bit and the M bit (the most
+                // significant bit of |fraction|) could be consulted.
+                fsave_bits = kX87TagSpecial;
+            }
+            else
+            {
+                // The integer bit the "J bit".
+                bool integer_bit = (st[7] & 0x80) != 0;
+                if(exponent == 0)
+                {
+                    uint64_t fraction = ((implicit_cast<uint64_t>(st[7]) & 0x7f) << 56) |
+                        (implicit_cast<uint64_t>(st[6]) << 48) |
+                        (implicit_cast<uint64_t>(st[5]) << 40) |
+                        (implicit_cast<uint64_t>(st[4]) << 32) |
+                        (implicit_cast<uint32_t>(st[3]) << 24) |
+                        (st[2] << 16) | (st[1] << 8) | st[0];
+                    if(!integer_bit && fraction == 0)
+                    {
+                        fsave_bits = kX87TagZero;
+                    }
+                    else
+                    {
+                        // Denormal (if the J bit is clear) or pseudo-denormal.
+                        fsave_bits = kX87TagSpecial;
+                    }
+                }
+                else if(integer_bit)
+                {
+                    fsave_bits = kX87TagValid;
+                }
+                else
+                {
+                    // Unnormal.
+                    fsave_bits = kX87TagSpecial;
+                }
+            }
+        }
+        else
+        {
+            fsave_bits = kX87TagEmpty;
+        }
+
+        fsave_tag |= (fsave_bits << (physical_index * 2));
+    }
+
+    return fsave_tag;
+}
+
+static uint8_t FsaveToFxsaveTagWord(uint16_t fsave_tag)
+{
+    uint8_t fxsave_tag = 0;
+    for(int physical_index = 0; physical_index < 8; ++physical_index)
+    {
+        const uint8_t fsave_bits = (fsave_tag >> (physical_index * 2)) & 0x3;
+        const bool fxsave_bit = fsave_bits != kX87TagEmpty;
+        fxsave_tag |= fxsave_bit << physical_index;
+    }
+    return fxsave_tag;
+}
+#endif //_WIN64
+
 using namespace GleeBug;
 
 class Emulator : public Debugger
@@ -401,7 +534,7 @@ public:
             return false;
         ThreadSuspender suspender(thread, mIsRunning, false);
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
-        auto context = thread->registers.GetContext();
+        //General purpose registers
         titcontext->cax = thread->registers.Gax();
         titcontext->ccx = thread->registers.Gcx();
         titcontext->cdx = thread->registers.Gdx();
@@ -421,19 +554,61 @@ public:
         titcontext->r15 = thread->registers.R15();
 #endif //_WIN64
         titcontext->cip = thread->registers.Gip();
+        // Flags
         titcontext->eflags = thread->registers.Eflags();
-        titcontext->gs = (unsigned short)context->SegGs;
-        titcontext->fs = (unsigned short)context->SegFs;
-        titcontext->es = (unsigned short)context->SegEs;
-        titcontext->ds = (unsigned short)context->SegDs;
-        titcontext->cs = (unsigned short)context->SegCs;
-        titcontext->ss = (unsigned short)context->SegSs;
+        // Debug registers
         titcontext->dr0 = thread->registers.Dr0();
         titcontext->dr1 = thread->registers.Dr1();
         titcontext->dr2 = thread->registers.Dr2();
         titcontext->dr3 = thread->registers.Dr3();
         titcontext->dr6 = thread->registers.Dr6();
         titcontext->dr7 = thread->registers.Dr7();
+        // Segments
+        titcontext->gs = thread->registers.Gs();
+        titcontext->fs = thread->registers.Fs();
+        titcontext->es = thread->registers.Es();
+        titcontext->ds = thread->registers.Ds();
+        titcontext->cs = thread->registers.Cs();
+        titcontext->ss = thread->registers.Ss();
+        // x87
+        auto context = thread->registers.GetContext();
+#ifdef _WIN64
+        titcontext->x87fpu.ControlWord = context->FltSave.ControlWord;
+        titcontext->x87fpu.StatusWord = context->FltSave.StatusWord;
+        titcontext->x87fpu.TagWord = FxsaveToFsaveTagWord(context->FltSave.StatusWord, context->FltSave.TagWord, (const X87OrMMXRegister*)context->FltSave.FloatRegisters);
+        titcontext->x87fpu.ErrorSelector = context->FltSave.ErrorSelector;
+        titcontext->x87fpu.ErrorOffset = context->FltSave.ErrorOffset;
+        titcontext->x87fpu.DataSelector = context->FltSave.DataSelector;
+        titcontext->x87fpu.DataOffset = context->FltSave.DataOffset;
+        // Skip titcontext->x87fpu.Cr0NpxState (https://github.com/x64dbg/x64dbg/issues/255)
+        titcontext->MxCsr = context->MxCsr;
+
+        for(int i = 0; i < 8; i++)
+            memcpy(&titcontext->RegisterArea[i * 10], &context->FltSave.FloatRegisters[i], 10);
+
+        for(int i = 0; i < 16; i++)
+            memcpy(&titcontext->XmmRegisters[i], &context->FltSave.XmmRegisters[i], 16);
+#else //x86
+        titcontext->x87fpu.ControlWord = (WORD)context->FloatSave.ControlWord;
+        titcontext->x87fpu.StatusWord = (WORD)context->FloatSave.StatusWord;
+        titcontext->x87fpu.TagWord = (WORD)context->FloatSave.TagWord;
+        titcontext->x87fpu.ErrorSelector = context->FloatSave.ErrorSelector;
+        titcontext->x87fpu.ErrorOffset = context->FloatSave.ErrorOffset;
+        titcontext->x87fpu.DataSelector = context->FloatSave.DataSelector;
+        titcontext->x87fpu.DataOffset = context->FloatSave.DataOffset;
+        titcontext->x87fpu.Cr0NpxState = context->FloatSave.Cr0NpxState;
+
+        memcpy(titcontext->RegisterArea, context->FloatSave.RegisterArea, 80);
+
+        // MXCSR ExtendedRegisters[24]
+        memcpy(&(titcontext->MxCsr), &(context->ExtendedRegisters[24]), sizeof(titcontext->MxCsr));
+
+        // for x86 copy the 8 Xmm Registers from ExtendedRegisters[(10+n)*16]; (n is the index of the xmm register) to the XMM register
+        for(int i = 0; i < 8; i++)
+            memcpy(&(titcontext->XmmRegisters[i]), &context->ExtendedRegisters[(10 + i) * 16], 16);
+#endif //_WIN64
+
+        //TODO: AVX
         return true;
     }
 
@@ -443,6 +618,7 @@ public:
         if (!thread || !titcontext)
             return false;
         ThreadSuspender suspender(thread, mIsRunning, true);
+        // General purpose registers
         thread->registers.Gax = titcontext->cax;
         thread->registers.Gcx = titcontext->ccx;
         thread->registers.Gdx = titcontext->cdx;
@@ -462,34 +638,93 @@ public:
         thread->registers.R15 = titcontext->r15;
 #endif //_WIN64
         thread->registers.Gip = titcontext->cip;
+        // Flags
         thread->registers.Eflags = uint32(titcontext->eflags);
+        // Debug registers
         thread->registers.Dr0 = titcontext->dr0;
         thread->registers.Dr1 = titcontext->dr1;
         thread->registers.Dr2 = titcontext->dr2;
         thread->registers.Dr3 = titcontext->dr3;
         thread->registers.Dr6 = titcontext->dr6;
         thread->registers.Dr7 = titcontext->dr7;
+        // Segments
+        thread->registers.Gs = titcontext->gs;
+        thread->registers.Fs = titcontext->fs;
+        thread->registers.Es = titcontext->es;
+        thread->registers.Ds = titcontext->ds;
+        thread->registers.Cs = titcontext->cs;
+        thread->registers.Ss = titcontext->ss;
+        // x87
         auto context = *(thread->registers.GetContext());
-        context.SegGs = titcontext->gs;
-        context.SegFs = titcontext->fs;
-        context.SegEs = titcontext->es;
-        context.SegDs = titcontext->ds;
-        context.SegCs = titcontext->cs;
-        context.SegSs = titcontext->ss;
+#ifdef _WIN64
+        context.FltSave.ControlWord = titcontext->x87fpu.ControlWord;
+        context.FltSave.StatusWord = titcontext->x87fpu.StatusWord;
+        context.FltSave.TagWord = FsaveToFxsaveTagWord(titcontext->x87fpu.TagWord);
+        context.FltSave.ErrorSelector = (WORD)titcontext->x87fpu.ErrorSelector;
+        context.FltSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
+        context.FltSave.DataSelector = (WORD)titcontext->x87fpu.DataSelector;
+        context.FltSave.DataOffset = titcontext->x87fpu.DataOffset;
+        // Skip titcontext->x87fpu.Cr0NpxState
+        context.MxCsr = titcontext->MxCsr;
+
+        for(int i = 0; i < 8; i++)
+            memcpy(&context.FltSave.FloatRegisters[i], &(titcontext->RegisterArea[i * 10]), 10);
+
+        for(int i = 0; i < 16; i++)
+            memcpy(&(context.FltSave.XmmRegisters[i]), &(titcontext->XmmRegisters[i]), 16);
+#else //x86
+        context.FloatSave.ControlWord = titcontext->x87fpu.ControlWord;
+        context.FloatSave.StatusWord = titcontext->x87fpu.StatusWord;
+        context.FloatSave.TagWord = titcontext->x87fpu.TagWord;
+        context.FloatSave.ErrorSelector = titcontext->x87fpu.ErrorSelector;
+        context.FloatSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
+        context.FloatSave.DataSelector = titcontext->x87fpu.DataSelector;
+        context.FloatSave.DataOffset = titcontext->x87fpu.DataOffset;
+        context.FloatSave.Cr0NpxState = titcontext->x87fpu.Cr0NpxState;
+
+        memcpy(context.FloatSave.RegisterArea, titcontext->RegisterArea, 80);
+
+        // MXCSR ExtendedRegisters[24]
+        memcpy(&(context.ExtendedRegisters[24]), &titcontext->MxCsr, sizeof(titcontext->MxCsr));
+
+        // for x86 copy the 8 Xmm Registers from ExtendedRegisters[(10+n)*16]; (n is the index of the xmm register) to the XMM register
+        for(int i = 0; i < 8; i++)
+            memcpy(&context.ExtendedRegisters[(10 + i) * 16], &(titcontext->XmmRegisters[i]), 16);
+#endif //_WIN64
+        //TODO: AVX
         thread->registers.SetContext(context);
         return true;
     }
 
     void GetMMXRegisters(uint64_t mmx[8], TITAN_ENGINE_CONTEXT_t* titcontext)
     {
-        //TODO
-        memset(mmx, 0, sizeof(uint64_t) * 8);
+        int STInTopStack = GetSTInTOPStackFromStatusWord(titcontext->x87fpu.StatusWord);
+        DWORD x87r0_position = Getx87r0PositionInRegisterArea(STInTopStack);
+        int i;
+
+        for(i = 0; i < 8; i++)
+            mmx[i] = *((uint64_t*)GetRegisterAreaOf87register(titcontext->RegisterArea, x87r0_position, i));
     }
 
     void Getx87FPURegisters(x87FPURegister_t x87FPURegisters[8], TITAN_ENGINE_CONTEXT_t* titcontext)
     {
-        //TODO
-        memset(x87FPURegisters, 0, sizeof(x87FPURegister_t) * 8);
+        /*
+        GET Actual TOP register from StatusWord to order the FPUx87registers like in the FPU internal order.
+        The TOP field (bits 13-11) is where the FPU keeps track of which of its 80-bit registers is at the TOP.
+        The register number for the FPU's internal numbering system of the 80-bit registers would be displayed in that field.
+        When the programmer specifies one of the FPU 80-bit registers ST(x) in an instruction, the FPU adds (modulo 8) the ST number
+        supplied to the value in this TOP field to determine in which of its registers the required data is located.
+        */
+
+        int STInTopStack = GetSTInTOPStackFromStatusWord(titcontext->x87fpu.StatusWord);
+        DWORD x87r0_position = Getx87r0PositionInRegisterArea(STInTopStack);
+
+        for(int i = 0; i < 8; i++)
+        {
+            memcpy(x87FPURegisters[i].data, GetRegisterAreaOf87register(titcontext->RegisterArea, x87r0_position, i), 10);
+            x87FPURegisters[i].st_value = GetSTValueFromIndex(x87r0_position, i);
+            x87FPURegisters[i].tag = (int)((titcontext->x87fpu.TagWord >> (i * 2)) & 0x3);
+        }
     }
 
     struct MappedPe
@@ -604,7 +839,7 @@ public:
         auto sections = found->second.pe->GetSections();
         return found->second.pe->IsPe64()
             ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
-            : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);        
+            : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
     }
 
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
@@ -623,7 +858,7 @@ public:
             ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
             : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
     }
-    
+
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
     {
         return (GetPE32DataW(szFileName, NULL, UE_CHARACTERISTICS) & IMAGE_FILE_DLL) == IMAGE_FILE_DLL;
@@ -853,7 +1088,14 @@ private: //functions
 #endif //_WIN64
         case UE_CIP: return Registers::R::GIP;
         case UE_CSP: return Registers::R::GSP;
+        case UE_SEG_GS: return Registers::R::GS;
+        case UE_SEG_FS: return Registers::R::FS;
+        case UE_SEG_ES: return Registers::R::ES;
+        case UE_SEG_DS: return Registers::R::DS;
+        case UE_SEG_CS: return Registers::R::CS;
+        case UE_SEG_SS: return Registers::R::SS;
         default:
+            __debugbreak();
             return Registers::R::EAX;
         }
     }
@@ -942,7 +1184,7 @@ private: //functions
         {
         case UE_MEMORY:
             return MemoryType::Access;
-        case UE_MEMORY_READ: 
+        case UE_MEMORY_READ:
             return MemoryType::Read;
         case UE_MEMORY_WRITE:
             return MemoryType::Write;
