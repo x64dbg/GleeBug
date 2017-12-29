@@ -195,6 +195,7 @@
     <ClInclude Include="Debugger.Thread.Registers.h" />
     <ClInclude Include="Debugger.Thread.Registers.Register.h" />
     <ClInclude Include="GleeBug.h" />
+    <ClInclude Include="oprintf.h" />
     <ClInclude Include="Static.BufferFile.h" />
     <ClInclude Include="Static.File.h" />
     <ClInclude Include="Static.Global.h" />
