@@ -107,12 +107,13 @@ namespace GleeBug
         ResumeFlag(this)
     {
         memset(&this->mContext, 0, sizeof(CONTEXT));
+        InitializeCriticalSection(&mCr);
     }
 
-    CONTEXT* Registers::GetContext()
+    LockedPtr<CONTEXT> Registers::GetContext()
     {
         handleLazyContext();
-        return &mContext;
+        return LockedPtr<CONTEXT>(&mCr, &mContext);
     }
 
     /*void Registers::SetContext(const CONTEXT & context)
@@ -130,6 +131,8 @@ namespace GleeBug
 
     bool Registers::handleLazyContext()
     {
+        ScopedCriticalSection lock(&mCr);
+
         if(!this->mLazySet)
             return true;
 

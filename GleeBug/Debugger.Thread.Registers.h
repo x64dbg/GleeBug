@@ -5,6 +5,63 @@
 
 namespace GleeBug
 {
+    class ScopedCriticalSection
+    {
+        PCRITICAL_SECTION cr;
+
+    public:
+        ScopedCriticalSection(PCRITICAL_SECTION cr)
+            : cr(cr)
+        {
+            EnterCriticalSection(cr);
+        }
+
+        ~ScopedCriticalSection()
+        {
+            LeaveCriticalSection(cr);
+        }
+    };
+
+    template<class T>
+    class LockedPtr
+    {
+        PCRITICAL_SECTION locker;
+        T* ptr;
+
+    public:
+        explicit LockedPtr(PCRITICAL_SECTION locker, T* ptr)
+            : locker(locker), ptr(ptr)
+        {
+            EnterCriticalSection(locker);
+        }
+
+        ~LockedPtr()
+        {
+            LeaveCriticalSection(locker);
+        }
+
+        LockedPtr(const LockedPtr<T> &) = delete;
+
+        LockedPtr<T> &operator=(const LockedPtr<T> &) = delete;
+
+        LockedPtr(LockedPtr<T> && other)
+            : locker(other.locker), ptr(other.ptr)
+        {
+            other.locker = nullptr;
+            other.ptr = nullptr;
+        }
+
+        /*operator T*() const
+        {
+            return ptr;
+        }*/
+
+        T* operator->() const
+        {
+            return ptr;
+        }
+    };
+
     /**
     \brief Thread register context.
     */
@@ -162,7 +219,7 @@ namespace GleeBug
         \brief Gets a pointer to the context object.
         \return This function will never return a nullptr.
         */
-        CONTEXT* GetContext();
+        LockedPtr<CONTEXT> GetContext();
 
         /**
         \brief Sets the CONTEXT.
@@ -172,6 +229,7 @@ namespace GleeBug
 
     private:
         CONTEXT mContext;
+        CRITICAL_SECTION mCr;
 
         LPCONTEXT mLazyOldContext = nullptr;
         HANDLE mLazyThread = nullptr;

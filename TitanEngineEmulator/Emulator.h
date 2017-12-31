@@ -533,6 +533,7 @@ public:
         if (!thread || !titcontext)
             return false;
         ThreadSuspender suspender(thread, mIsRunning, false);
+        auto context = thread->registers.GetContext();
         memset(titcontext, 0, sizeof(TITAN_ENGINE_CONTEXT_t));
         //General purpose registers
         titcontext->cax = thread->registers.Gax();
@@ -571,7 +572,6 @@ public:
         titcontext->cs = thread->registers.Cs();
         titcontext->ss = thread->registers.Ss();
         // x87
-        auto context = thread->registers.GetContext();
 #ifdef _WIN64
         titcontext->x87fpu.ControlWord = context->FltSave.ControlWord;
         titcontext->x87fpu.StatusWord = context->FltSave.StatusWord;
@@ -618,6 +618,7 @@ public:
         if (!thread || !titcontext)
             return false;
         ThreadSuspender suspender(thread, mIsRunning, true);
+        auto context = thread->registers.GetContext();
         // General purpose registers
         thread->registers.Gax = titcontext->cax;
         thread->registers.Gcx = titcontext->ccx;
@@ -655,7 +656,6 @@ public:
         thread->registers.Cs = titcontext->cs;
         thread->registers.Ss = titcontext->ss;
         // x87
-        auto context = thread->registers.GetContext();
 #ifdef _WIN64
         context->FltSave.ControlWord = titcontext->x87fpu.ControlWord;
         context->FltSave.StatusWord = titcontext->x87fpu.StatusWord;

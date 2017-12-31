@@ -284,7 +284,7 @@ namespace GleeBug
         bool mBreakDebugger = false;
         DEBUG_EVENT mDebugEvent;
         ProcessMap mProcesses;
-        bool mIsRunning = false;
+        bool mIsRunning = false; //TODO: needs a dedicated critical section to prevent ContinueDebugEvent and change of registers to race 
         bool mIsDebugging = false;
         bool mDetach = false;
         bool mDetachAndBreak = false;
