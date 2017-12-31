@@ -162,13 +162,13 @@ namespace GleeBug
         \brief Gets a pointer to the context object.
         \return This function will never return a nullptr.
         */
-        const CONTEXT* GetContext();
+        CONTEXT* GetContext();
 
         /**
         \brief Sets the CONTEXT.
         \param context The context to set.
         */
-        void SetContext(const CONTEXT & context);
+        //void SetContext(const CONTEXT & context);
 
     private:
         CONTEXT mContext;

@@ -655,44 +655,43 @@ public:
         thread->registers.Cs = titcontext->cs;
         thread->registers.Ss = titcontext->ss;
         // x87
-        auto context = *(thread->registers.GetContext());
+        auto context = thread->registers.GetContext();
 #ifdef _WIN64
-        context.FltSave.ControlWord = titcontext->x87fpu.ControlWord;
-        context.FltSave.StatusWord = titcontext->x87fpu.StatusWord;
-        context.FltSave.TagWord = FsaveToFxsaveTagWord(titcontext->x87fpu.TagWord);
-        context.FltSave.ErrorSelector = (WORD)titcontext->x87fpu.ErrorSelector;
-        context.FltSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
-        context.FltSave.DataSelector = (WORD)titcontext->x87fpu.DataSelector;
-        context.FltSave.DataOffset = titcontext->x87fpu.DataOffset;
+        context->FltSave.ControlWord = titcontext->x87fpu.ControlWord;
+        context->FltSave.StatusWord = titcontext->x87fpu.StatusWord;
+        context->FltSave.TagWord = FsaveToFxsaveTagWord(titcontext->x87fpu.TagWord);
+        context->FltSave.ErrorSelector = (WORD)titcontext->x87fpu.ErrorSelector;
+        context->FltSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
+        context->FltSave.DataSelector = (WORD)titcontext->x87fpu.DataSelector;
+        context->FltSave.DataOffset = titcontext->x87fpu.DataOffset;
         // Skip titcontext->x87fpu.Cr0NpxState
-        context.MxCsr = titcontext->MxCsr;
+        context->MxCsr = titcontext->MxCsr;
 
         for(int i = 0; i < 8; i++)
-            memcpy(&context.FltSave.FloatRegisters[i], &(titcontext->RegisterArea[i * 10]), 10);
+            memcpy(&context->FltSave.FloatRegisters[i], &(titcontext->RegisterArea[i * 10]), 10);
 
         for(int i = 0; i < 16; i++)
-            memcpy(&(context.FltSave.XmmRegisters[i]), &(titcontext->XmmRegisters[i]), 16);
+            memcpy(&(context->FltSave.XmmRegisters[i]), &(titcontext->XmmRegisters[i]), 16);
 #else //x86
-        context.FloatSave.ControlWord = titcontext->x87fpu.ControlWord;
-        context.FloatSave.StatusWord = titcontext->x87fpu.StatusWord;
-        context.FloatSave.TagWord = titcontext->x87fpu.TagWord;
-        context.FloatSave.ErrorSelector = titcontext->x87fpu.ErrorSelector;
-        context.FloatSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
-        context.FloatSave.DataSelector = titcontext->x87fpu.DataSelector;
-        context.FloatSave.DataOffset = titcontext->x87fpu.DataOffset;
-        context.FloatSave.Cr0NpxState = titcontext->x87fpu.Cr0NpxState;
+        context->FloatSave.ControlWord = titcontext->x87fpu.ControlWord;
+        context->FloatSave.StatusWord = titcontext->x87fpu.StatusWord;
+        context->FloatSave.TagWord = titcontext->x87fpu.TagWord;
+        context->FloatSave.ErrorSelector = titcontext->x87fpu.ErrorSelector;
+        context->FloatSave.ErrorOffset = titcontext->x87fpu.ErrorOffset;
+        context->FloatSave.DataSelector = titcontext->x87fpu.DataSelector;
+        context->FloatSave.DataOffset = titcontext->x87fpu.DataOffset;
+        context->FloatSave.Cr0NpxState = titcontext->x87fpu.Cr0NpxState;
 
-        memcpy(context.FloatSave.RegisterArea, titcontext->RegisterArea, 80);
+        memcpy(context->FloatSave.RegisterArea, titcontext->RegisterArea, 80);
 
         // MXCSR ExtendedRegisters[24]
-        memcpy(&(context.ExtendedRegisters[24]), &titcontext->MxCsr, sizeof(titcontext->MxCsr));
+        memcpy(&(context->ExtendedRegisters[24]), &titcontext->MxCsr, sizeof(titcontext->MxCsr));
 
         // for x86 copy the 8 Xmm Registers from ExtendedRegisters[(10+n)*16]; (n is the index of the xmm register) to the XMM register
         for(int i = 0; i < 8; i++)
-            memcpy(&context.ExtendedRegisters[(10 + i) * 16], &(titcontext->XmmRegisters[i]), 16);
+            memcpy(&context->ExtendedRegisters[(10 + i) * 16], &(titcontext->XmmRegisters[i]), 16);
 #endif //_WIN64
         //TODO: AVX
-        thread->registers.SetContext(context);
         return true;
     }
 
