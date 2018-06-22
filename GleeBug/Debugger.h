@@ -33,11 +33,13 @@ namespace GleeBug
         \param szFilePath Full pathname of the file to debug.
         \param szCommandLine The command line to pass to the debuggee.
         \param szCurrentDirectory Pathname of the current directory.
+        \param newConsole Whether the process should start in a new console.
         \return true if the debuggee was started correctly, false otherwise.
         */
         bool Init(const wchar_t* szFilePath,
             const wchar_t* szCommandLine,
-            const wchar_t* szCurrentDirectory);
+            const wchar_t* szCurrentDirectory,
+            bool newConsole = true);
 
         /**
         \brief Attach to a debuggee.

@@ -13,7 +13,8 @@ namespace GleeBug
 
     bool Debugger::Init(const wchar_t* szFilePath,
         const wchar_t* szCommandLine,
-        const wchar_t* szCurrentDirectory)
+        const wchar_t* szCurrentDirectory,
+        bool newConsole)
     {
         memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
         memset(&mMainProcess, 0, sizeof(mMainProcess));
@@ -39,7 +40,7 @@ namespace GleeBug
             nullptr,
             nullptr,
             FALSE,
-            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | CREATE_NEW_CONSOLE,
+            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | (newConsole ? CREATE_NEW_CONSOLE : 0),
             nullptr,
             szCurrentDirectory,
             &mMainStartupInfo,
