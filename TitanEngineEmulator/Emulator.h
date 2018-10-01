@@ -818,6 +818,8 @@ public:
             return WhichSection < sections.size() ? ULONG_PTR(&sections.at(WhichSection).GetHeader().Name[0]) : 0;
         case UE_IMAGEBASE:
             return headers->OptionalHeader.ImageBase;
+        case UE_SIZEOFIMAGE:
+            return headers->OptionalHeader.SizeOfImage;
         case UE_RELOCATIONTABLEADDRESS:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress;
         case UE_RELOCATIONTABLESIZE:
