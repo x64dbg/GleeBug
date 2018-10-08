@@ -2,6 +2,7 @@
 #define MYDEBUGGER_H
 
 #include <GleeBug/Debugger.h>
+#include <GleeBug/Debugger.Thread.Registers.h>
 
 using namespace GleeBug;
 
@@ -11,36 +12,36 @@ protected:
     void cbMemoryBreakpoint2(const BreakpointInfo & info)
     {
         printf("Reached memory breakpoint#2! GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)Registers(mThread->hThread).Gip());
     }
 
     void cbMemoryBreakpoint(const BreakpointInfo & info)
     {
         unsigned char dataToExec[4];
         const char tmp[] = "aaaa";
-
+        Registers registers(mThread->hThread);
 
         printf("Reached memory breakpoint! GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
 
-        mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
+        mProcess->MemReadUnsafe(registers.Gip(), dataToExec, 4);
         printf("\n What are my bytes? I am so lost.. Dump: ");
         for (int i = 0; i < 4; i++)
         {
             printf("%02X ", dataToExec[i]);
         }
 
-        mProcess->DeleteMemoryBreakpoint(mRegisters->Gip());
+        mProcess->DeleteMemoryBreakpoint(registers.Gip());
         memcpy(dataToExec, tmp, 4);
-        mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
+        mProcess->MemReadUnsafe(registers.Gip(), dataToExec, 4);
         printf("\n What are my bytes? I am so lost.. Dump: ");
         for (int i = 0; i < 4; i++)
         {
             printf("%02X ", dataToExec[i]);
         }
-        mProcess->SetMemoryBreakpoint(mRegisters->Gip() + 1, 0x1, this, &MyDebugger::cbMemoryBreakpoint2, MemoryType::Access, false);
+        mProcess->SetMemoryBreakpoint(registers.Gip() + 1, 0x1, this, &MyDebugger::cbMemoryBreakpoint2, MemoryType::Access, false);
         memcpy(dataToExec, tmp, 4);
-        mProcess->MemReadUnsafe(mRegisters->Gip(), dataToExec, 4);
+        mProcess->MemReadUnsafe(registers.Gip(), dataToExec, 4);
         printf("\n What are my bytes? I am so lost.. Dump: ");
         for (int i = 0; i < 4; i++)
         {
@@ -50,14 +51,15 @@ protected:
 
     void cbEntryBreakpoint(const BreakpointInfo & info)
     {
+        Registers registers(mThread->hThread);
         printf("Reached entry breakpoint! GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
 #ifdef _WIN64
-        auto addr = mRegisters->Rbx();
+        auto addr = registers.Rbx();
 #else
-        auto addr = mRegisters->Esi();
+        auto addr = registers.Esi();
 #endif //_WIN64
-        printf("Addr: 0x%p\n", addr);
+        printf("Addr: 0x%p\n", (void*)addr);
         if (mProcess->SetMemoryBreakpoint(addr, 0x10000, this, &MyDebugger::cbMemoryBreakpoint, MemoryType::Execute, false))
             puts("Memory breakpoint set!");
         else
@@ -72,29 +74,32 @@ protected:
         mThread->StepInto([this]()
         {
             printf("Step after entry breakpoint! GIP: 0x%p\n",
-                mRegisters->Gip());
+                registers.Gip());
         });*/
     }
 
     void cbEntryHardwareBreakpoint(const BreakpointInfo & info)
     {
+        Registers registers(mThread->hThread);
         printf("Reached entry hardware breakpoint! GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
         if (mProcess->DeleteHardwareBreakpoint(info.address))
             printf("Entry hardware breakpoint deleted!\n");
         else
             printf("Failed to delete entry hardware breakpoint...\n");
         mThread->StepInto([this]()
         {
+            Registers registers(mThread->hThread);
             printf("Step after entry hardware breakpoint! GIP: 0x%p\n",
-                mRegisters->Gip());
+                (void*)registers.Gip());
         });
     }
 
     void cbStepSystem()
     {
+        Registers registers(mThread->hThread);
         printf("Reached step after system breakpoint, GIP: 0x%p!\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
     }
 
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) override
@@ -102,7 +107,7 @@ protected:
         ptr entry = ptr(createProcess.lpStartAddress);
         printf("Process %d created with entry 0x%p\n",
             mDebugEvent.dwProcessId,
-            entry);
+            (void*)entry);
         /*HardwareSlot slot;
         if (mProcess->GetFreeHardwareBreakpointSlot(slot))
         {
@@ -121,9 +126,9 @@ protected:
         entry = ptr(createProcess.lpBaseOfImage) + 0x108F; //MembpTest, main.cpp:43 (x32)
 #endif //_WIN64
         if(mProcess->SetBreakpoint(entry, this, &MyDebugger::cbEntryBreakpoint, true))
-            printf("Breakpoint set at 0x%p!\n", entry);
+            printf("Breakpoint set at 0x%p!\n", (void*)entry);
         else
-            printf("Failed to set breakpoint at 0x%p...\b", entry);
+            printf("Failed to set breakpoint at 0x%p...\b", (void*)entry);
         uint8 test[5];
         ptr start = entry - 2;
         printf("unsafe: ");
@@ -179,7 +184,7 @@ protected:
             exceptionInfo.ExceptionRecord.ExceptionCode,
             exceptionInfo.ExceptionRecord.ExceptionAddress);
         for (DWORD i = 0; i < exceptionInfo.ExceptionRecord.NumberParameters; i++)
-            printf("  ExceptionInformation[%d] = 0x%p\n", i, exceptionInfo.ExceptionRecord.ExceptionInformation[i]);
+            printf("  ExceptionInformation[%d] = 0x%p\n", i, (void*)exceptionInfo.ExceptionRecord.ExceptionInformation[i]);
     }
 
     void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString) override
@@ -198,14 +203,16 @@ protected:
 
     void cbAttachBreakpoint() override
     {
+        Registers registers(mThread->hThread);
         printf("Attach breakpoint reached, GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
     }
 
     void cbSystemBreakpoint() override
     {
+        Registers registers(mThread->hThread);
         printf("System breakpoint reached, GIP: 0x%p\n",
-            mRegisters->Gip());
+            (void*)registers.Gip());
         mThread->StepInto(this, &MyDebugger::cbStepSystem);
     }
 
@@ -218,16 +225,17 @@ protected:
     void cbBreakpoint(const BreakpointInfo & info) override
     {
         printf("Breakpoint on 0x%p!\n",
-            info.address);
+            (void*)info.address);
     }
 
     void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) override
     {
+        Registers registers(mThread->hThread);
         printf("Unhandled exception (%s) 0x%08X on 0x%p, GIP: 0x%p\n",
             firstChance ? "first chance" : "second chance",
             exceptionRecord.ExceptionCode,
             exceptionRecord.ExceptionAddress,
-            mRegisters->Gip());
+            (void*)registers.Gip());
     }
 };
 

@@ -2,7 +2,6 @@
 #define DEBUGGER_THREAD_H
 
 #include "Debugger.Global.h"
-#include "Debugger.Thread.Registers.h"
 #include "Debugger.Breakpoint.h"
 
 namespace GleeBug
@@ -18,7 +17,6 @@ namespace GleeBug
         ptr lpThreadLocalBase;
         ptr lpStartAddress;
 
-        Registers registers;
         StepCallbackVector stepCallbacks;
         bool isSingleStepping;
         bool isInternalStepping;
@@ -37,18 +35,6 @@ namespace GleeBug
         \brief Copy constructor.
         */
         Thread(const Thread & other) = delete;
-
-        /**
-        \brief Read the register context from the thread. This fills the RegistersInfo member.
-        \return true if it succeeds, false if it fails.
-        */
-        bool RegReadContext();
-
-        /**
-        \brief Write the register context to the thread. This does nothing if the registers did not change.
-        \return true if it succeeds, false if it fails.
-        */
-        bool RegWriteContext();
 
         /**
         \brief Step into.
@@ -121,9 +107,6 @@ namespace GleeBug
         \return true if it succeeds, false if it fails.
         */
         bool Resume();
-
-    private:
-        CONTEXT mOldContext;
     };
 };
 

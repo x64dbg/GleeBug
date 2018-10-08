@@ -1,4 +1,5 @@
 #include "Debugger.Thread.h"
+#include "Debugger.Thread.Registers.h"
 
 namespace GleeBug
 {
@@ -13,29 +14,9 @@ namespace GleeBug
     {
     }
 
-    bool Thread::RegReadContext()
-    {
-        memset(&this->mOldContext, 0, sizeof(CONTEXT));
-        this->mOldContext.ContextFlags = CONTEXT_ALL; //TODO: granular control over what's required
-        this->registers.setContextLazy(&this->mOldContext, this->hThread);
-        return true;
-    }
-
-    bool Thread::RegWriteContext()
-    {
-        //check if something actually changed
-        if (this->registers.mLazySet || memcmp(&this->mOldContext, &this->registers.mContext, sizeof(CONTEXT)) == 0)
-            return true;
-        //update the context
-        if(SetThreadContext(this->hThread, &this->registers.mContext))
-            return true;
-        __debugbreak();
-        return false;
-    }
-
     void Thread::StepInto()
     {
-        registers.TrapFlag.Set();
+        Registers(hThread).TrapFlag.Set();
         isSingleStepping = true;
     }
 
@@ -57,7 +38,7 @@ namespace GleeBug
 
     void Thread::StepInternal(const StepCallback & cbStep)
     {
-        registers.TrapFlag.Set();
+        Registers(hThread).TrapFlag.Set();
         isInternalStepping = true;
         cbInternalStep = cbStep;
     }

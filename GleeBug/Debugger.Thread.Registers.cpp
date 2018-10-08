@@ -2,7 +2,7 @@
 
 namespace GleeBug
 {
-    Registers::Registers() :
+    Registers::Registers(HANDLE hThread, DWORD ContextFlags) :
         Dr0(this),
         Dr1(this),
         Dr2(this),
@@ -106,54 +106,27 @@ namespace GleeBug
         TrapFlag(this),
         ResumeFlag(this)
     {
-        memset(&this->mContext, 0, sizeof(CONTEXT));
-        InitializeCriticalSection(&mCr);
-    }
-
-    LockedPtr<CONTEXT> Registers::GetContext()
-    {
-        handleLazyContext();
-        return LockedPtr<CONTEXT>(&mCr, &mContext);
-    }
-
-    /*void Registers::SetContext(const CONTEXT & context)
-    {
-        handleLazyContext();
-        this->mContext = context;
-    }*/
-
-    void Registers::setContextLazy(CONTEXT* oldContext, HANDLE hThread)
-    {
-        this->mLazyOldContext = oldContext;
-        this->mLazyThread = hThread;
-        this->mLazySet = true;
-    }
-
-    bool Registers::handleLazyContext()
-    {
-        ScopedCriticalSection lock(&mCr);
-
-        if(!this->mLazySet)
-            return true;
-
-        if(!this->mLazyOldContext || !this->mLazyThread) //assert
-            __debugbreak();
-
-        auto oldContext = this->mLazyOldContext;
-        auto lazyThread = this->mLazyThread;
-
-        this->mLazyOldContext = nullptr;
-        this->mLazyThread = nullptr;
-        this->mLazySet = false;
-
-        //TODO: handle failure of GetThreadContext
-        auto result = false;
-        if(GetThreadContext(lazyThread, oldContext))
+        memset(&mContext, 0, sizeof(CONTEXT));
+        mContext.ContextFlags = ContextFlags;
+        if (!!GetThreadContext(hThread, &mContext))
         {
-            this->mContext = *oldContext;
-            result = true;
+            this->hThread = hThread;
+            memcpy(&mOldContext, &mContext, sizeof(CONTEXT));
         }
-        
-        return result;
+        else
+        {
+            this->hThread = nullptr;
+        }
+    }
+
+    Registers::~Registers()
+    {
+        if (hThread && memcmp(&mContext, &mOldContext, sizeof(CONTEXT)) != 0)
+            SetThreadContext(hThread, &mContext);
+    }
+
+    PCONTEXT Registers::GetContext()
+    {
+        return &mContext;
     }
 };

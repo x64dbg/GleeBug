@@ -396,25 +396,6 @@ namespace GleeBug
             static_cast<void>(static_cast<Debugger*>(debugger));
             StepOver(std::bind(callback, debugger));
         }
-
-        bool RegReadContext()
-        {
-            //TODO: lazily retrieve the context
-            auto result = true;
-            for(auto & thread : this->threads)
-                if(!thread.second->RegReadContext())
-                    result = false;
-            return result;
-        }
-
-        bool RegWriteContext()
-        {
-            auto result = true;
-            for(auto & thread : this->threads)
-                if(!thread.second->RegWriteContext())
-                    result = false;
-            return result;
-        }
     };
 };
 

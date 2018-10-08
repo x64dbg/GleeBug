@@ -1,4 +1,5 @@
 #include "Debugger.Process.h"
+#include "Debugger.Thread.Registers.h"
 
 #define ZYDIS_EXPORTS
 #define ZYDIS_ENABLE_FEATURE_IMPLICITLY_USED_REGISTERS
@@ -22,7 +23,7 @@ namespace GleeBug
 
     void Process::StepOver(const StepCallback & cbStep)
     {
-        auto gip = thread->registers.Gip();
+        auto gip = Registers(thread->hThread, CONTEXT_CONTROL).Gip();
         unsigned char data[16];
         if (MemReadSafe(gip, data, sizeof(data)))
         {

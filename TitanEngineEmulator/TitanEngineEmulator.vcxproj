@@ -122,7 +122,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -139,7 +139,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -150,13 +150,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Global.Engine.Context.cpp" />
     <ClCompile Include="TitanEngineEmulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Emulator.h" />
     <ClInclude Include="FileMap.h" />
+    <ClInclude Include="Global.Engine.Context.h" />
+    <ClInclude Include="Hider.h" />
     <ClInclude Include="PEB.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="TitanEngine.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TitanEngine.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -56,8 +56,6 @@ namespace GleeBug
 {
     ptr Registers::Get(R reg)
     {
-        handleLazyContext();
-
         switch (reg)
         {
         case R::DR0:
@@ -260,8 +258,6 @@ namespace GleeBug
 
     void Registers::Set(R reg, ptr value)
     {
-        handleLazyContext();
-
         switch (reg)
         {
         case R::DR0:
@@ -530,22 +526,22 @@ namespace GleeBug
             break;
 
         case R::GS:
-            mContext.SegGs = value;
+            mContext.SegGs = (WORD)value;
             break;
         case R::FS:
-            mContext.SegFs = value;
+            mContext.SegFs = (WORD)value;
             break;
         case R::ES:
-            mContext.SegEs = value;
+            mContext.SegEs = (WORD)value;
             break;
         case R::DS:
-            mContext.SegDs = value;
+            mContext.SegDs = (WORD)value;
             break;
         case R::CS:
-            mContext.SegCs = value;
+            mContext.SegCs = (WORD)value;
             break;
         case R::SS:
-            mContext.SegSs = value;
+            mContext.SegSs = (WORD)value;
             break;
 
         default:
@@ -555,15 +551,11 @@ namespace GleeBug
 
     bool Registers::GetFlag(F flag)
     {
-        handleLazyContext();
-
         return (mContext.EFlags & ptr(flag)) == ptr(flag);
     }
 
     void Registers::SetFlag(F flag, bool set)
     {
-        handleLazyContext();
-
         if (set)
             mContext.EFlags |= ptr(flag);
         else
@@ -572,8 +564,6 @@ namespace GleeBug
 
     void* Registers::getPtr(R reg)
     {
-        handleLazyContext();
-
         switch (reg)
         {
         case R::DR0:

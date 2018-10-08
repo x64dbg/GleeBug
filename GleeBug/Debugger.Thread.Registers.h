@@ -5,63 +5,6 @@
 
 namespace GleeBug
 {
-    class ScopedCriticalSection
-    {
-        PCRITICAL_SECTION cr;
-
-    public:
-        ScopedCriticalSection(PCRITICAL_SECTION cr)
-            : cr(cr)
-        {
-            EnterCriticalSection(cr);
-        }
-
-        ~ScopedCriticalSection()
-        {
-            LeaveCriticalSection(cr);
-        }
-    };
-
-    template<class T>
-    class LockedPtr
-    {
-        PCRITICAL_SECTION locker;
-        T* ptr;
-
-    public:
-        explicit LockedPtr(PCRITICAL_SECTION locker, T* ptr)
-            : locker(locker), ptr(ptr)
-        {
-            EnterCriticalSection(locker);
-        }
-
-        ~LockedPtr()
-        {
-            LeaveCriticalSection(locker);
-        }
-
-        LockedPtr(const LockedPtr<T> &) = delete;
-
-        LockedPtr<T> &operator=(const LockedPtr<T> &) = delete;
-
-        LockedPtr(LockedPtr<T> && other)
-            : locker(other.locker), ptr(other.ptr)
-        {
-            other.locker = nullptr;
-            other.ptr = nullptr;
-        }
-
-        /*operator T*() const
-        {
-            return ptr;
-        }*/
-
-        T* operator->() const
-        {
-            return ptr;
-        }
-    };
-
     /**
     \brief Thread register context.
     */
@@ -71,15 +14,10 @@ namespace GleeBug
         friend class Thread;
 
     public:
-        /**
-        \brief Default constructor.
-        */
-        Registers();
-
-        /**
-        \brief Copy constructor.
-        */
+        Registers(HANDLE hThread, DWORD ContextFlags = CONTEXT_ALL);
+        ~Registers();
         Registers(const Registers &) = delete;
+        Registers(const Registers &&) = delete;
 
 #include "Debugger.Thread.Registers.Register.h"
 
@@ -219,34 +157,12 @@ namespace GleeBug
         \brief Gets a pointer to the context object.
         \return This function will never return a nullptr.
         */
-        LockedPtr<CONTEXT> GetContext();
-
-        /**
-        \brief Sets the CONTEXT.
-        \param context The context to set.
-        */
-        //void SetContext(const CONTEXT & context);
+        PCONTEXT GetContext();
 
     private:
+        HANDLE hThread;
         CONTEXT mContext;
-        CRITICAL_SECTION mCr;
-
-        LPCONTEXT mLazyOldContext = nullptr;
-        HANDLE mLazyThread = nullptr;
-        bool mLazySet = false;
-
-        /**
-        \brief Lazily set CONTEXT. This will only actually retrieve the context if a function in this thread is called.
-        \param oldContext Pointer to the old context, used to determine if updates are required.
-        \param hThread Handle of the thread to get the context from if required.
-        */
-        void setContextLazy(CONTEXT* oldContext, HANDLE hThread);
-
-        /**
-        \brief Retrieve the actual context if setContextLazy has been called.
-        \return Whether retrieving the actual context was successful.
-        */
-        bool handleLazyContext();
+        CONTEXT mOldContext;
 
         void* getPtr(R reg);
     };

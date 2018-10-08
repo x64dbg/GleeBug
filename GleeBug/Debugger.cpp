@@ -1,4 +1,5 @@
 #include "Debugger.h"
+#include "Debugger.Thread.Registers.h"
 
 namespace GleeBug
 {
@@ -14,7 +15,8 @@ namespace GleeBug
     bool Debugger::Init(const wchar_t* szFilePath,
         const wchar_t* szCommandLine,
         const wchar_t* szCurrentDirectory,
-        bool newConsole)
+        bool newConsole,
+        bool startSuspended)
     {
         memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
         memset(&mMainProcess, 0, sizeof(mMainProcess));
@@ -40,7 +42,7 @@ namespace GleeBug
             nullptr,
             nullptr,
             FALSE,
-            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | (newConsole ? CREATE_NEW_CONSOLE : 0),
+            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | (newConsole ? CREATE_NEW_CONSOLE : 0) | (startSuspended ? CREATE_SUSPENDED : 0),
             nullptr,
             szCurrentDirectory,
             &mMainStartupInfo,
@@ -72,8 +74,7 @@ namespace GleeBug
 
     bool Debugger::UnsafeDetach()
     {
-        mRegisters->TrapFlag = false;
-        mThread->RegWriteContext();
+        Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
         return !!DebugActiveProcessStop(mMainProcess.dwProcessId);
     }
 
@@ -85,12 +86,11 @@ namespace GleeBug
 
     bool Debugger::UnsafeDetachAndBreak()
     {
-        if (!mProcess || !mThread || !mRegisters) //fail when there is no process or thread currently specified
+        if (!mProcess || !mThread) //fail when there is no process or thread currently specified
             return false;
 
         //trigger an EXCEPTION_SINGLE_STEP in the debuggee
-        mRegisters->TrapFlag = true;
-        mThread->RegWriteContext();
+        Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = true;
 
         //detach from the process
         return UnsafeDetach();

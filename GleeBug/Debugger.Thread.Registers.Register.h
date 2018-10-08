@@ -8,6 +8,8 @@
 */
 enum class R
 {
+    Invalid,
+
     DR0,
     DR1,
     DR2,

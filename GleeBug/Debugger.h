@@ -39,7 +39,8 @@ namespace GleeBug
         bool Init(const wchar_t* szFilePath,
             const wchar_t* szCommandLine,
             const wchar_t* szCurrentDirectory,
-            bool newConsole = true);
+            bool newConsole = true,
+            bool startSuspended = false);
 
         /**
         \brief Attach to a debuggee.
@@ -301,11 +302,6 @@ namespace GleeBug
         \brief The current thread (can be null in some cases). Should be a copy of mProcess->thread.
         */
         Thread* mThread = nullptr;
-
-        /**
-        \brief The current thread registers (can be null in some cases). Should be a copy of mThread->registers.
-        */
-        Registers* mRegisters = nullptr;
     };
 };
 

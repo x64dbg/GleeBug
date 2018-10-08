@@ -1,4 +1,5 @@
 #include "Debugger.h"
+#include "Debugger.Thread.Registers.h"
 
 namespace GleeBug
 {
@@ -48,7 +49,7 @@ namespace GleeBug
         mContinueStatus = DBG_CONTINUE;
 
         //set back the instruction pointer
-        mRegisters->Gip = info.address;
+        Registers(mThread->hThread, CONTEXT_CONTROL).Gip = info.address;
 
         //restore the original breakpoint byte and do an internal step
         mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
@@ -107,27 +108,28 @@ namespace GleeBug
     void Debugger::exceptionHardwareBreakpoint(ptr exceptionAddress)
     {
         //determine the hardware breakpoint triggered
-        ptr dr6 = mRegisters->Dr6();
+        Registers registers(mThread->hThread, CONTEXT_DEBUG_REGISTERS);
+        ptr dr6 = registers.Dr6();
         HardwareSlot breakpointSlot;
         ptr breakpointAddress;
-        if (exceptionAddress == mRegisters->Dr0() || dr6 & 0x1)
+        if (exceptionAddress == registers.Dr0() || dr6 & 0x1)
         {
-            breakpointAddress = mRegisters->Dr0();
+            breakpointAddress = registers.Dr0();
             breakpointSlot = HardwareSlot::Dr0;
         }
-        else if (exceptionAddress == mRegisters->Dr1() || dr6 & 0x2)
+        else if (exceptionAddress == registers.Dr1() || dr6 & 0x2)
         {
-            breakpointAddress = mRegisters->Dr1();
+            breakpointAddress = registers.Dr1();
             breakpointSlot = HardwareSlot::Dr1;
         }
-        else if (exceptionAddress == mRegisters->Dr2() || dr6 & 0x4)
+        else if (exceptionAddress == registers.Dr2() || dr6 & 0x4)
         {
-            breakpointAddress = mRegisters->Dr2();
+            breakpointAddress = registers.Dr2();
             breakpointSlot = HardwareSlot::Dr2;
         }
-        else if (exceptionAddress == mRegisters->Dr3() || dr6 & 0x8)
+        else if (exceptionAddress == registers.Dr3() || dr6 & 0x8)
         {
-            breakpointAddress = mRegisters->Dr3();
+            breakpointAddress = registers.Dr3();
             breakpointSlot = HardwareSlot::Dr3;
         }
         else
@@ -192,7 +194,7 @@ namespace GleeBug
                 //We restore the protection
                 if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
-                    sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
+                    sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
                     cbInternalError(error);
                 }
 
@@ -225,7 +227,7 @@ namespace GleeBug
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
         if (foundInfo == mProcess->breakpoints.end())
         {
-            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
+            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
             cbInternalError(error);
             return;
         }
@@ -243,7 +245,7 @@ namespace GleeBug
 
         if (bpxPage == mProcess->memoryBreakpointPages.end())
         {
-            sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", exceptionAddress & ~(PAGE_SIZE - 1));
+            sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
             cbInternalError(error);
             return;
         }
@@ -260,7 +262,7 @@ namespace GleeBug
                     //We restore the protection
                     if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
                     {
-                        sprintf_s(error, "MemProtect failed on 0x%p", pageAddr);
+                        sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
                         cbInternalError(error);
                     }
 
@@ -323,7 +325,7 @@ namespace GleeBug
         //FIXED:
         if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
-            sprintf_s(error, "MemProtect failed on 0x%p", pageAddr);
+            sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
             cbInternalError(error);
         }
         //Pass info as well
@@ -384,7 +386,7 @@ namespace GleeBug
                 //We restore the protection
                 if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
-                    sprintf_s(error, "MemProtect failed on 0x%p", foundPage->first);
+                    sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
                     cbInternalError(error);
                 }
 
@@ -417,7 +419,7 @@ namespace GleeBug
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
         if (foundInfo == mProcess->breakpoints.end())
         {
-            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", exceptionAddress);
+            sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
             cbInternalError(error);
             return;
         }
@@ -435,7 +437,7 @@ namespace GleeBug
 
         if (bpxPage == mProcess->memoryBreakpointPages.end())
         {
-            sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", exceptionAddress & ~(PAGE_SIZE - 1));
+            sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
             cbInternalError(error);
             return;
         }
@@ -480,7 +482,7 @@ namespace GleeBug
         //FIXED:
         if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
-            sprintf_s(error, "MemProtect failed on 0x%p", pageAddr);
+            sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
             cbInternalError(error);
         }
         //Pass info as well

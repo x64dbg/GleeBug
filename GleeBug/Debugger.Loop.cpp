@@ -1,4 +1,5 @@
 #include "Debugger.h"
+#include "Debugger.Thread.Registers.h"
 
 namespace GleeBug
 {
@@ -43,17 +44,14 @@ namespace GleeBug
                 if (threadFound != mProcess->threads.end())
                 {
                     mThread = mProcess->thread = threadFound->second.get();
-                    mRegisters = &mThread->registers;
                 }
                 else
                 {
                     mThread = mProcess->thread = nullptr;
-                    mRegisters = nullptr;
                 }
             }
             else
             {
-                mRegisters = nullptr;
                 mThread = nullptr;
                 if (mProcess)
                 {
@@ -61,10 +59,6 @@ namespace GleeBug
                     mProcess = nullptr;
                 }
             }
-
-            //read register contexts
-            if(mProcess && !mProcess->RegReadContext())
-                cbInternalError("Process::RegReadContext() failed!");                        
 
             //call the pre debug event callback
             cbPreDebugEvent(mDebugEvent);
@@ -119,12 +113,8 @@ namespace GleeBug
             if (mDetach && mThread)
             {
                 if (mThread->isInternalStepping || mThread->isSingleStepping)
-                    mThread->registers.TrapFlag = false;
+                    Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
             }
-
-            //write register contexts
-            if(mProcess && !mProcess->RegWriteContext())
-                cbInternalError("Process::RegWriteContext() failed!");
 
             //continue the debug event
             if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))

@@ -56,7 +56,7 @@ static void printNtHeaders(T inth)
     puts("\n  Optional Header:");
     printf("    Magic     : %04X\n", ioh->Magic);
     printf("    EntryPoint: %08X\n", ioh->AddressOfEntryPoint);
-    printf("    ImageBase : %p\n", PVOID(ioh->ImageBase));
+    printf("    ImageBase : %llX\n", (uint64_t)ioh->ImageBase);
     printf("    Subsystem : %04X\n", ioh->Subsystem);
 }
 
@@ -156,7 +156,7 @@ static void testCorkami()
             printf("file: %ws\n\n", fileName.c_str());
         }
     }
-    printf("\n%d/%d parsed OK!\n", okCount, _countof(peTestFiles));
+    printf("\n%d/%zu parsed OK!\n", okCount, _countof(peTestFiles));
 }
 
 int main()

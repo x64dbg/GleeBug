@@ -13,9 +13,6 @@ namespace GleeBug
 
         //set the current thread
         mThread = mProcess->thread = mProcess->threads.find(mDebugEvent.dwThreadId)->second.get();
-        mRegisters = &mThread->registers;
-        if (!mThread->RegReadContext())
-            cbInternalError("Thread::RegReadContext() failed!");
 
         //call the debug event callback
         cbCreateThreadEvent(createThread, *mThread);
@@ -31,6 +28,5 @@ namespace GleeBug
 
         //set the current thread
         mThread = mProcess->thread = nullptr;
-        mRegisters = nullptr;
     }
 };
