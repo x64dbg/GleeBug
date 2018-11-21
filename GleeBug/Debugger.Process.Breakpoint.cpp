@@ -225,6 +225,7 @@ namespace GleeBug
 
     bool Process::SetNewPageProtection(ptr page, MemoryBreakpointData & data, MemoryType type)
     {
+        DPRINTF();
         //TODO: handle PAGE_NOACCESS and such correctly (since it cannot be combined with PAGE_GUARD)
 
         auto found = memoryBreakpointPages.find(page);
@@ -261,11 +262,14 @@ namespace GleeBug
                 data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;
         }
 
+        dprintf("SetNewPageProtection(%p, %X)\n", page, data.NewProtect);
         return MemProtect(page, PAGE_SIZE, data.NewProtect);
     }
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, MemoryType type, bool singleshoot)
     {
+        DPRINTF();
+        dprintf("SetMemoryBreakpoint(%p, %p, %d, %d)\n", address, size, type, singleshoot);
         //TODO: error reporting
 
         //basic checks
@@ -292,18 +296,20 @@ namespace GleeBug
             MemoryBreakpointData data;
             data.Type = uint32(type);
             auto alignedAddress = PAGE_ALIGN(address);
-            for (auto page = alignedAddress; page < alignedAddress + BYTES_TO_PAGES(size); page += PAGE_SIZE)
+            for (auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(size); page += PAGE_SIZE)
             {
                 MEMORY_BASIC_INFORMATION mbi;
                 if (!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)))
                 {
                     success = false;
+                    dprintf("!VirtualQueryEx\n");
                     break;
                 }
                 data.OldProtect = mbi.Protect;
                 if (!SetNewPageProtection(page, data, type))
                 {
                     success = false;
+                    dprintf("!SetNewPageProtection\n");
                     break;
                 }
                 tempData.addr = page;
@@ -369,7 +375,7 @@ namespace GleeBug
         //delete the memory breakpoint from the pages
         bool success = true;
         auto alignedAddress = PAGE_ALIGN(info.address);
-        for (auto page = alignedAddress; page < alignedAddress + BYTES_TO_PAGES(info.internal.memory.size); page += PAGE_SIZE)
+        for (auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(info.internal.memory.size); page += PAGE_SIZE)
         {
             auto foundData = memoryBreakpointPages.find(page);
             if (foundData == memoryBreakpointPages.end())
