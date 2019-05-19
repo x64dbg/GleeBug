@@ -104,6 +104,12 @@
     <ClCompile Include="zyan-disassembler-engine\src\Zydis.c">
       <Filter>Source Files\Zydis</Filter>
     </ClCompile>
+    <ClCompile Include="Emulation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Emulation.Instructions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.h">
@@ -191,6 +197,15 @@
       <Filter>Header Files\Zydis</Filter>
     </ClInclude>
     <ClInclude Include="oprintf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Emulation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Emulation.Instructions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Emulation.Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

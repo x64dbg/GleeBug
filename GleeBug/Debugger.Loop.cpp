@@ -1,5 +1,6 @@
 #include "Debugger.h"
 #include "Debugger.Thread.Registers.h"
+#include "Emulation.h"
 
 namespace GleeBug
 {
@@ -28,8 +29,26 @@ namespace GleeBug
         {
             //wait for a debug event
             mIsRunning = true;
-            if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
-                break;
+
+            bool emulatedEvent = false;
+
+            // We go over all active processes and see if any emulator has an active event
+            // if thats the case process the emulated event first.
+            for (auto&& process : mProcesses)
+            {
+                if (process.second->emulator.WaitForEvent(mDebugEvent))
+                {
+                    emulatedEvent = true;
+                }
+            }
+
+            // Emulated events have priority over normal debug events.
+            if (!emulatedEvent)
+            {
+                if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
+                    break;
+            }
+
             mIsRunning = false;
 
             //set default continue status
@@ -117,8 +136,19 @@ namespace GleeBug
             }
 
             //continue the debug event
-            if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
-                break;
+
+            bool continueEmulated = false;
+            if (mThread->isInternalStepping)
+            {
+                auto& emulator = mProcess->emulator;
+                continueEmulated = emulator.Emulate(mThread);
+            }
+
+            if (continueEmulated == false)
+            {
+                if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
+                    break;
+            }
 
             if (mDetach || mDetachAndBreak)
             {
