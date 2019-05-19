@@ -6,20 +6,27 @@
 #include "Debugger.Thread.h"
 #include "Debugger.Thread.Registers.h"
 
+#include <deque>
+
 namespace GleeBug
 {
 
 class Process;
 
-class Emulator
+class X86Emulator
 {
     bool _active = false;
     Thread *_activeThread = nullptr;
     Registers* _registers = nullptr;
+    Process* _process = nullptr;
+    bool _hasEvent = false;
+    DEBUG_EVENT _currentEvent{};
 
 public:
+    X86Emulator(Process* process);
+
     bool IsActive() const;
-    bool WaitForEvent(DEBUG_EVENT& debugEvent) const;
+    bool WaitForEvent(DEBUG_EVENT& debugEvent);
     bool Emulate(Thread* thread);
     void Flush();
 

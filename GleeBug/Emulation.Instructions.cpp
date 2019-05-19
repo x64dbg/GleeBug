@@ -69,11 +69,16 @@ template<uint16 MNEMONIC,
     typename OP2 = OpNone,
     typename OP3 = OpNone,
     typename OP4 = OpNone>
-struct InstrSig
+struct InstrSig : X86Instruction
 {
     static constexpr size_t Hash() noexcept
     {
         return InstructionDataHash(InstructionDataHash(N));
+    }
+
+    virtual uint16_t GetMnemonic() const
+    {
+        return MNEMONIC;
     }
 
     virtual bool Matches(const ZydisInstructionInfo& info) const
@@ -95,34 +100,29 @@ struct InstrSig
     }
 };
 
-static std::vector<X86Instruction*> _registeredInstructions;
+static std::vector<std::vector<X86Instruction*>> _registeredInstructions;
 
 template<typename T>
 struct X86InstructionRegistrator
 {
+    T inst;
     X86InstructionRegistrator()
     {
-        static T inst;
-        _registeredInstructions.push_back(&inst);
+        uint16_t groupId = inst.GetMnemonic();
+        if (groupId >= _registeredInstructions.size())
+        {
+            _registeredInstructions.resize(groupId + 1);
+        }
+        _registeredInstructions[groupId].push_back(&inst);
     }
 };
 
-const X86Instruction* LookupInstruction(const ZydisInstructionInfo& info)
-{
-    for (X86Instruction *instr : _registeredInstructions)
-    {
-        if(instr->Matches(info))
-            return instr;
-    }
-    return nullptr;
-}
-
-#define REGISTER_X86_INSTRUCTION(instrCls) static X86InstructionRegistrator<##instrCls##> __##instrCls##__()
+#define REGISTER_X86_INSTRUCTION(instrCls) static X86InstructionRegistrator<##instrCls##> __##instrCls##__
     
 template<typename T>
 struct SubImpl
 {
-    static T Execute(int32_t val1, int32_t val2, Registers& regs, uint32_t flagsOut)
+    static T Execute(T val1, T val2, Registers& regs, uint32_t flagsOut)
     {
         constexpr int NumBits = sizeof(T) * 8;
         constexpr T SignMask = T(1) << (NumBits - 1);
@@ -144,38 +144,123 @@ struct SubImpl
     }
 };
 
-struct Instr_Sub32 : X86Instruction, InstrSig< ZYDIS_MNEMONIC_SUB, OpSig<32, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
+struct Instr_MovR32R32 : InstrSig< ZYDIS_MNEMONIC_MOV, OpSig<32, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_REGISTER> >
 {
-    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) override
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
+    {
+        int32_t val1 = getRegisterValue<int32_t>(info.operands[1].reg, ctx.regs);
+
+        setRegisterValue(info.operands[0].reg, ctx.regs, val1);
+        return true;
+    }
+};
+
+struct Instr_MovR32I32 : InstrSig< ZYDIS_MNEMONIC_MOV, OpSig<32, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
+{
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
+    {
+        int32_t val1 = info.operands[1].imm.value.sdword;
+
+        setRegisterValue(info.operands[0].reg, ctx.regs, val1);
+        return true;
+    }
+};
+
+struct Instr_MovR64R64 : InstrSig< ZYDIS_MNEMONIC_MOV, OpSig<64, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<64, ZYDIS_OPERAND_TYPE_REGISTER> >
+{
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
+    {
+        int64_t val2 = getRegisterValue<int64_t>(info.operands[1].reg, ctx.regs);
+
+        setRegisterValue(info.operands[0].reg, ctx.regs, val2);
+        return true;
+    }
+};
+
+struct Instr_Sub32 : InstrSig< ZYDIS_MNEMONIC_SUB, OpSig<32, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
+{
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
     {
         // Value is sign extended.
-        int32_t val1 = getRegisterValue<int32_t>(info.operands[1].reg, ctx.regs);
+        int32_t val1 = getRegisterValue<int32_t>(info.operands[0].reg, ctx.regs);
         int32_t val2 = info.operands[1].imm.value.sdword;
 
         uint32_t flagsOut = 0;
         int32_t res = SubImpl<uint32_t>::Execute(val1, val2, ctx.regs, flagsOut);
 
-        setRegisterValue(info.operands[1].reg, ctx.regs, res);
+        setRegisterValue(info.operands[0].reg, ctx.regs, res);
+        ctx.regs.Eflags.Set(ctx.regs.Eflags.Get() | flagsOut);
+
+        return true;
     }
 };
-REGISTER_X86_INSTRUCTION(Instr_Sub32);
 
-struct Instr_Sub64 : X86Instruction, InstrSig< ZYDIS_MNEMONIC_SUB, OpSig<64, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
+struct Instr_SubR64I64 : InstrSig< ZYDIS_MNEMONIC_SUB, OpSig<64, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<64, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
 {
-    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) override
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
     {
         // Value is sign extended.
-        int64_t val1 = getRegisterValue<int64_t>(info.operands[1].reg, ctx.regs);
+        int64_t val1 = getRegisterValue<int64_t>(info.operands[0].reg, ctx.regs);
+        int64_t val2 = info.operands[1].imm.value.sqword;
+
+        uint32_t flagsOut = 0;
+        int64_t res = SubImpl<uint64_t>::Execute(val1, val2, ctx.regs, flagsOut);
+
+        setRegisterValue(info.operands[0].reg, ctx.regs, res);
+        ctx.regs.Eflags.Set(ctx.regs.Eflags.Get() | flagsOut);
+
+        return true;
+    }
+};
+
+struct Instr_SubR64I32 : InstrSig< ZYDIS_MNEMONIC_SUB, OpSig<64, ZYDIS_OPERAND_TYPE_REGISTER>, OpSig<32, ZYDIS_OPERAND_TYPE_IMMEDIATE> >
+{
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const override
+    {
+        // Value is sign extended.
+        int64_t val1 = getRegisterValue<int64_t>(info.operands[0].reg, ctx.regs);
         int64_t val2 = info.operands[1].imm.value.sdword;
 
         uint32_t flagsOut = 0;
         int64_t res = SubImpl<uint64_t>::Execute(val1, val2, ctx.regs, flagsOut);
 
-        setRegisterValue(info.operands[1].reg, ctx.regs, res);
+        setRegisterValue(info.operands[0].reg, ctx.regs, res);
+        ctx.regs.Eflags.Set(ctx.regs.Eflags.Get() | flagsOut);
+
+        return true;
     }
 };
 
-REGISTER_X86_INSTRUCTION(Instr_Sub64);
+static bool _initialzed = false;
+
+const X86Instruction* LookupInstruction(const ZydisInstructionInfo& info)
+{
+    if (_initialzed == false)
+    {
+        REGISTER_X86_INSTRUCTION(Instr_MovR32R32);
+        REGISTER_X86_INSTRUCTION(Instr_MovR32I32);
+        REGISTER_X86_INSTRUCTION(Instr_MovR64R64);
+        REGISTER_X86_INSTRUCTION(Instr_Sub32);
+        REGISTER_X86_INSTRUCTION(Instr_SubR64I64);
+        REGISTER_X86_INSTRUCTION(Instr_SubR64I32);
+        _initialzed = true;
+    }
+
+    if(info.mnemonic >= _registeredInstructions.size())
+        return nullptr;
+
+    auto& group = _registeredInstructions[info.mnemonic];
+    if(group.empty())
+        return nullptr;
+
+    for (X86Instruction *instr : group)
+    {
+        if (instr->Matches(info))
+            return instr;
+    }
+
+    return nullptr;
+}
 
 }
 }

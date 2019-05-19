@@ -15,7 +15,8 @@ namespace GleeBug
         createProcessInfo(createProcessInfo),
         thread(nullptr),
         systemBreakpoint(false),
-        permanentDep(false)
+        permanentDep(false),
+        emulator(this)
     {
         for (int i = 0; i < HWBP_COUNT; i++)
             hardwareBreakpoints[i].internal.hardware.enabled = false;

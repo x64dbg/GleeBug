@@ -25,25 +25,32 @@ namespace GleeBug
             return;
         }
 
+        bool allowEmulation = true;
+        bool inEmulation = false;
+
         while (!mBreakDebugger)
         {
             //wait for a debug event
             mIsRunning = true;
 
-            bool emulatedEvent = false;
-
             // We go over all active processes and see if any emulator has an active event
             // if thats the case process the emulated event first.
-            for (auto&& process : mProcesses)
+            if (inEmulation)
             {
-                if (process.second->emulator.WaitForEvent(mDebugEvent))
+                inEmulation = false;
+
+                for (auto&& process : mProcesses)
                 {
-                    emulatedEvent = true;
+                    if (process.second->emulator.WaitForEvent(mDebugEvent))
+                    {
+                        inEmulation = true;
+                        break;
+                    }
                 }
             }
 
             // Emulated events have priority over normal debug events.
-            if (!emulatedEvent)
+            if (!inEmulation)
             {
                 if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
                     break;
@@ -137,14 +144,13 @@ namespace GleeBug
 
             //continue the debug event
 
-            bool continueEmulated = false;
-            if (mThread->isInternalStepping)
+            if (allowEmulation && mThread != nullptr && mThread->isSingleStepping)
             {
                 auto& emulator = mProcess->emulator;
-                continueEmulated = emulator.Emulate(mThread);
+                inEmulation = emulator.Emulate(mThread);
             }
 
-            if (continueEmulated == false)
+            if (inEmulation == false)
             {
                 if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
                     break;

@@ -25,10 +25,14 @@
 #define X64DBG_MOD L"x32dbg.dll"
 #endif //_WIN64
 
-#define DPRINTF() \
-    static auto dprintf = (int(*)(const char* format, ...))GetProcAddress(GetModuleHandleW(X64DBG_MOD), "_plugin_logprintf"); \
-    if(!dprintf) \
-        dprintf = printf
+template<typename... Args>
+inline void dprintf(const char *fmt, Args... args)
+{
+    static auto fn = (int(*)(const char* format, ...))GetProcAddress(GetModuleHandleW(X64DBG_MOD), "_plugin_logprintf");
+    if (!fn)
+        fn = printf;
+    fn(fmt, args...);
+}
 
 #ifdef _WIN64
 #define GleeArchValue(x32value, x64value) x64value

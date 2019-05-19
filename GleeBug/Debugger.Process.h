@@ -32,7 +32,7 @@ namespace GleeBug
         BreakpointInfo hardwareBreakpoints[4];
         MemoryBreakpointSet memoryBreakpointRanges;
         MemoryBreakpointMap memoryBreakpointPages;
-        Emulator emulator;
+        X86Emulator emulator;
 
         /**
         \brief Constructor.

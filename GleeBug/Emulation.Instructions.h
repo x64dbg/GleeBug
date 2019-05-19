@@ -28,8 +28,9 @@ struct X86Context
 
 struct X86Instruction
 {
-    virtual bool Matches(const ZydisInstructionInfo& info) = 0;
-    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) = 0;
+    virtual uint16_t GetMnemonic() const = 0;
+    virtual bool Matches(const ZydisInstructionInfo& info) const = 0;
+    virtual bool Execute(const ZydisInstructionInfo& info, X86Context& ctx) const = 0;
 };
 
 const X86Instruction* LookupInstruction(const ZydisInstructionInfo& info);

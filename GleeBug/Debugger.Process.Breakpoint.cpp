@@ -225,7 +225,6 @@ namespace GleeBug
 
     bool Process::SetNewPageProtection(ptr page, MemoryBreakpointData & data, MemoryType type)
     {
-        DPRINTF();
         //TODO: handle PAGE_NOACCESS and such correctly (since it cannot be combined with PAGE_GUARD)
 
         auto found = memoryBreakpointPages.find(page);
@@ -268,7 +267,6 @@ namespace GleeBug
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, MemoryType type, bool singleshoot)
     {
-        DPRINTF();
         dprintf("SetMemoryBreakpoint(%p, %p, %d, %d)\n", address, size, type, singleshoot);
         //TODO: error reporting
 
