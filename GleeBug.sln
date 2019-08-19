@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TitanEngineEmulator", "Tita
 		{B65A3680-9B6B-44E6-A046-649F94DF9F56} = {B65A3680-9B6B-44E6-A046-649F94DF9F56}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StaticEngine", "StaticEngine\StaticEngine.vcxproj", "{8E0C7F46-89CC-4510-BC17-07513A31BC7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -47,8 +49,19 @@ Global
 		{2790D540-B51E-48F1-B8E9-F14F2EEAA676}.Release|Win32.Build.0 = Release|Win32
 		{2790D540-B51E-48F1-B8E9-F14F2EEAA676}.Release|x64.ActiveCfg = Release|x64
 		{2790D540-B51E-48F1-B8E9-F14F2EEAA676}.Release|x64.Build.0 = Release|x64
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Debug|Win32.Build.0 = Debug|Win32
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Debug|x64.ActiveCfg = Debug|x64
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Debug|x64.Build.0 = Debug|x64
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Release|Win32.ActiveCfg = Release|Win32
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Release|Win32.Build.0 = Release|Win32
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Release|x64.ActiveCfg = Release|x64
+		{8E0C7F46-89CC-4510-BC17-07513A31BC7E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0F087011-78BB-4D18-A1E5-69DD2B8BDEC3}
 	EndGlobalSection
 EndGlobal
