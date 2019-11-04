@@ -242,7 +242,19 @@ public:
         SIZE_T s;
         if(!lpNumberOfBytesRead)
             lpNumberOfBytesRead = &s;
-        return !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
+        auto x = !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
+        if (!x && nSize <= 0x1000)
+        {
+            NtSuspendProcess(hProcess);
+            DWORD oldProtect = 0;
+            if (VirtualProtectEx(hProcess, lpBaseAddress, 0x1000, PAGE_EXECUTE_READWRITE, &oldProtect))
+            {
+                x = !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
+                VirtualProtectEx(hProcess, lpBaseAddress, 0x1000, oldProtect, &oldProtect);
+            }
+            NtResumeProcess(hProcess);
+        }
+        return x;
     }
 
     bool MemoryWriteSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesWritten)
