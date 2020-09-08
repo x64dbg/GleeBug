@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "ntdll.h"
 #include "Emulator.h"
 
 Emulator emu;

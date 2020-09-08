@@ -3,9 +3,9 @@
 #include <GleeBug/Static.Bufferfile.h>
 #include <GleeBug/Debugger.Thread.Registers.h>
 #include "TitanEngine.h"
-#include "ntdll.h"
 #include "FileMap.h"
 #include "PEB.h"
+#include "NativeAttach.h"
 #include "Global.Engine.Context.h"
 #include "Hider.h"
 
@@ -67,7 +67,7 @@ public:
 
     bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
     {
-        if(!Attach(ProcessId))
+        if(!Attach(ProcessId, mSafeAttach ? DebugActiveProcess_ : DebugActiveProcess))
             return false;
         mCbATTACHBREAKPOINT = STEPCALLBACK(CallBack);
         mAttachProcessInfo = (PROCESS_INFORMATION*)DebugInfo;
@@ -182,8 +182,15 @@ public:
 
     void SetEngineVariable(DWORD VariableId, bool VariableSet)
     {
-        if (VariableId == UE_ENGINE_SET_DEBUG_PRIVILEGE)
+        switch (VariableId)
+        {
+        case UE_ENGINE_SET_DEBUG_PRIVILEGE:
             mSetDebugPrivilege = VariableSet;
+            break;
+        case UE_ENGINE_SAFE_ATTACH:
+            mSafeAttach = VariableSet;
+            break;
+        }
     }
 
     //Misc
@@ -1145,6 +1152,7 @@ private: //functions
 
 private: //variables
     bool mSetDebugPrivilege = false;
+    bool mSafeAttach = false;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;

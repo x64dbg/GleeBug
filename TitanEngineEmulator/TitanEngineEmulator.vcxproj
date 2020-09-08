@@ -158,6 +158,8 @@
     <ClInclude Include="FileMap.h" />
     <ClInclude Include="Global.Engine.Context.h" />
     <ClInclude Include="Hider.h" />
+    <ClInclude Include="NativeAttach.h" />
+    <ClInclude Include="ntdll.h" />
     <ClInclude Include="PEB.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="TitanEngine.h" />

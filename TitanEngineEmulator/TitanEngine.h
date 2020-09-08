@@ -56,31 +56,32 @@
 #define UE_ENGINE_RESET_CUSTOM_HANDLER 7
 #define UE_ENGINE_CALL_PLUGIN_DEBUG_CALLBACK 8
 #define UE_ENGINE_SET_DEBUG_PRIVILEGE 9
+#define UE_ENGINE_SAFE_ATTACH 10
 
 #define UE_OPTION_REMOVEALL 1
 #define UE_OPTION_DISABLEALL 2
 #define UE_OPTION_REMOVEALLDISABLED 3
 #define UE_OPTION_REMOVEALLENABLED 4
 
-#define UESTATIC_DECRYPTOR_XOR 1
-#define UESTATIC_DECRYPTOR_SUB 2
-#define UESTATIC_DECRYPTOR_ADD 3
+#define UE_STATIC_DECRYPTOR_XOR 1
+#define UE_STATIC_DECRYPTOR_SUB 2
+#define UE_STATIC_DECRYPTOR_ADD 3
 
-#define UESTATIC_DECRYPTOR_FOREWARD 1
-#define UESTATIC_DECRYPTOR_BACKWARD 2
+#define UE_STATIC_DECRYPTOR_FOREWARD 1
+#define UE_STATIC_DECRYPTOR_BACKWARD 2
 
-#define UESTATIC_KEY_SIZE_1 1
-#define UESTATIC_KEY_SIZE_2 2
-#define UESTATIC_KEY_SIZE_4 4
-#define UESTATIC_KEY_SIZE_8 8
+#define UE_STATIC_KEY_SIZE_1 1
+#define UE_STATIC_KEY_SIZE_2 2
+#define UE_STATIC_KEY_SIZE_4 4
+#define UE_STATIC_KEY_SIZE_8 8
 
-#define UESTATIC_APLIB 1
-#define UESTATIC_APLIB_DEPACK 2
-#define UESTATIC_LZMA 3
+#define UE_STATIC_APLIB 1
+#define UE_STATIC_APLIB_DEPACK 2
+#define UE_STATIC_LZMA 3
 
-#define UESTATIC_HASH_MD5 1
-#define UESTATIC_HASH_SHA1 2
-#define UESTATIC_HASH_CRC32 3
+#define UE_STATIC_HASH_MD5 1
+#define UE_STATIC_HASH_SHA1 2
+#define UE_STATIC_HASH_CRC32 3
 
 #define UE_RESOURCE_LANGUAGE_ANY -1
 
@@ -505,7 +506,7 @@ typedef struct HOOK_ENTRY
 #define UE_FIELD_OK 0
 #define UE_FIELD_BROKEN_NON_FIXABLE 1
 #define UE_FIELD_BROKEN_NON_CRITICAL 2
-#define UE_FIELD_BROKEN_FIXABLE_FORSTATIC_USE 3
+#define UE_FIELD_BROKEN_FIXABLE_FOR_STATIC_USE 3
 #define UE_FIELD_BROKEN_BUT_CAN_BE_EMULATED 4
 #define UE_FIELD_FIXABLE_NON_CRITICAL 5
 #define UE_FIELD_FIXABLE_CRITICAL 6
@@ -782,7 +783,7 @@ __declspec(dllexport) bool TITCALL RelocaterWipeRelocationTableW(const wchar_t* 
 __declspec(dllexport) ULONG_PTR TITCALL ResourcerLoadFileForResourceUse(const char* szFileName);
 __declspec(dllexport) ULONG_PTR TITCALL ResourcerLoadFileForResourceUseW(const wchar_t* szFileName);
 __declspec(dllexport) bool TITCALL ResourcerFreeLoadedFile(LPVOID LoadedFileBase);
-__declspec(dllexport) bool TITCALL ResourcerExtractResourceFromFileEx(ULONG_PTR FileMapVA, const char* szResourceType, const char* szResourceName, const char* szExtractedFileName);
+__declspec(dllexport) bool TITCALL ResourcerExtractResourceFromFileEx(HMODULE hFile, const char* szResourceType, const char* szResourceName, const char* szExtractedFileName);
 __declspec(dllexport) bool TITCALL ResourcerExtractResourceFromFile(const char* szFileName, const char* szResourceType, const char* szResourceName, const char* szExtractedFileName);
 __declspec(dllexport) bool TITCALL ResourcerExtractResourceFromFileW(const wchar_t* szFileName, char* szResourceType, const char* szResourceName, const char* szExtractedFileName);
 __declspec(dllexport) bool TITCALL ResourcerFindResource(const char* szFileName, const char* szResourceType, DWORD ResourceType, const char* szResourceName, DWORD ResourceName, DWORD ResourceLanguage, PULONG_PTR pResourceData, LPDWORD pResourceSize);
@@ -823,6 +824,8 @@ __declspec(dllexport) long TITCALL LengthDisassembleEx(HANDLE hProcess, LPVOID D
 __declspec(dllexport) long TITCALL LengthDisassemble(LPVOID DisassmAddress);
 __declspec(dllexport) void* TITCALL InitDebug(char* szFileName, char* szCommandLine, char* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder);
+__declspec(dllexport) void* TITCALL InitNativeDebug(char* szFileName, char* szCommandLine, char* szCurrentFolder);
+__declspec(dllexport) void* TITCALL InitNativeDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitDebugEx(const char* szFileName, const char* szCommandLine, const char* szCurrentFolder, LPVOID EntryCallBack);
 __declspec(dllexport) void* TITCALL InitDebugExW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack);
 __declspec(dllexport) void* TITCALL InitDLLDebug(const char* szFileName, bool ReserveModuleBase, const char* szCommandLine, const char* szCurrentFolder, LPVOID EntryCallBack);

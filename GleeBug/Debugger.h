@@ -47,7 +47,7 @@ namespace GleeBug
         \param processId Process to attach to.
         \return true if the debuggee was attached to successfully, false otherwise.
         */
-        bool Attach(DWORD processId);
+        bool Attach(DWORD processId, decltype(&DebugActiveProcess) = &DebugActiveProcess);
 
         /**
         \brief Stops the debuggee (terminate the process)

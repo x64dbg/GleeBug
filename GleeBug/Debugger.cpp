@@ -54,12 +54,12 @@ namespace GleeBug
         return result;
     }
 
-    bool Debugger::Attach(DWORD processId)
+    bool Debugger::Attach(DWORD processId, decltype(&DebugActiveProcess) debugActiveProcess)
     {
         //don't allow attaching when still debugging
         if(mIsDebugging)
             return false;
-        if(!DebugActiveProcess(processId))
+        if(!debugActiveProcess(processId))
             return false;
         mAttachedToProcess = true;
         memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
