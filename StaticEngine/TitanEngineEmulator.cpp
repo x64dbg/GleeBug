@@ -107,10 +107,43 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool
     return emu.TitanOpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
 }
 
+__declspec(dllexport) PROCESS_INFORMATION* TITCALL TitanGetProcessInformation()
+{
+    return emu.TitanGetProcessInformation();
+}
+
+__declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char* szDLLName, const char* szAPIName)
+{
+#ifdef _WIN64
+#define X64DBG_DLL L"x64dbg.dll"
+#else
+#define X64DBG_DLL L"x32dbg.dll"
+#endif // _WIN64
+    static auto hModule = GetModuleHandleW(X64DBG_DLL);
+#undef X64DBG_DLL
+
+    if (hModule)
+    {
+        static auto DbgValFromString = (ULONG_PTR(*)(const char*))GetProcAddress(hModule, "DbgValFromString");
+        if (DbgValFromString)
+        {
+            char expr[1024] = "";
+            _snprintf_s(expr, _TRUNCATE, "\"%s\":%s", szDLLName, szAPIName);
+            return DbgValFromString(expr);
+        }
+    }
+    return 0;
+}
+
 //Registers
 __declspec(dllexport) ULONG_PTR TITCALL GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
 {
     return emu.GetContextDataEx(hActiveThread, IndexOfRegister);
+}
+
+__declspec(dllexport) ULONG_PTR TITCALL GetContextData(DWORD IndexOfRegister)
+{
+    return GetContextDataEx(TitanGetProcessInformation()->hThread, IndexOfRegister);
 }
 
 __declspec(dllexport) bool TITCALL SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)

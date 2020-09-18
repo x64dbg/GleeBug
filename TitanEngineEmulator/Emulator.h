@@ -294,6 +294,11 @@ public:
         return hThread;
     }
 
+    PROCESS_INFORMATION* TitanGetProcessInformation()
+    {
+        return &mMainProcess;
+    }
+
     //Stepping
     void StepOver(LPVOID CallBack)
     {

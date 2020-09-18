@@ -407,6 +407,11 @@ public:
         return hThread;
     }
 
+    PROCESS_INFORMATION* TitanGetProcessInformation()
+    {
+        return &mProcessInfo;
+    }
+
     //Registers
     ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister) const
     {
