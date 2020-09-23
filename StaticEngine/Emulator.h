@@ -548,7 +548,7 @@ public:
         case UE_SECTIONNAME:
             return WhichSection < sections.size() ? ULONG_PTR(&sections.at(WhichSection).GetHeader().Name[0]) : 0;
         case UE_IMAGEBASE:
-            return headers->OptionalHeader.ImageBase;
+            return (ULONG_PTR)headers->OptionalHeader.ImageBase;
         case UE_SIZEOFIMAGE:
             return headers->OptionalHeader.SizeOfImage;
         case UE_RELOCATIONTABLEADDRESS:
@@ -559,6 +559,14 @@ public:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
         case UE_TLSTABLESIZE:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size;
+        case UE_TIMEDATESTAMP:
+            return headers->FileHeader.TimeDateStamp;
+        case UE_CHECKSUM:
+            return headers->OptionalHeader.CheckSum;
+        case UE_SUBSYSTEM:
+            return headers->OptionalHeader.Subsystem;
+        case UE_NUMBEROFRVAANDSIZES:
+            return headers->OptionalHeader.NumberOfRvaAndSizes;
         default:
             __debugbreak();
         }
