@@ -508,6 +508,11 @@ public:
         return found->second.pe->ConvertOffsetToRva(uint32(AddressToConvert));
     }
 
+    ULONG_PTR ConvertVAtoFileOffset(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
+    {
+        return ConvertVAtoFileOffsetEx(FileMapVA, 0, 0, AddressToConvert, false, ReturnType);
+    }
+
     ULONG_PTR ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
     {
         auto found = mappedFiles.find(FileMapVA);
