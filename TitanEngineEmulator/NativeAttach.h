@@ -188,4 +188,5 @@ BOOL WINAPI DebugActiveProcess_(IN DWORD dwProcessId)
     }
 
     /* Success */
+    return TRUE;
 }
