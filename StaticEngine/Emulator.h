@@ -515,7 +515,10 @@ public:
             __debugbreak(); //return 0;
         if (!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
-        return found->second.pe->ConvertRvaToOffset(uint32(AddressToConvert));
+        auto offset = found->second.pe->ConvertRvaToOffset(uint32(AddressToConvert));
+        if (offset == INVALID_VALUE)
+            return 0;
+        return ReturnType ? FileMapVA + offset : offset;
     }
 
     template<typename T>
