@@ -18,7 +18,7 @@
 
 using namespace GleeBug;
 
-class Emulator : public Debugger
+class TitanEngineEmulator : public Debugger
 {
 public:
     HINSTANCE engineHandle;

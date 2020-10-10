@@ -167,6 +167,8 @@
     <ClCompile Include="Debugger.Thread.HardwareBreakpoint.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.cpp" />
     <ClCompile Include="Debugger.Thread.Registers.GetSet.cpp" />
+    <ClCompile Include="Emulation.cpp" />
+    <ClCompile Include="Emulation.Instructions.cpp" />
     <ClCompile Include="Static.BufferFile.cpp" />
     <ClCompile Include="Static.File.cpp" />
     <ClCompile Include="Static.Pattern.cpp" />
@@ -194,6 +196,9 @@
     <ClInclude Include="Debugger.Thread.Registers.Flag.h" />
     <ClInclude Include="Debugger.Thread.Registers.h" />
     <ClInclude Include="Debugger.Thread.Registers.Register.h" />
+    <ClInclude Include="Emulation.h" />
+    <ClInclude Include="Emulation.Helpers.h" />
+    <ClInclude Include="Emulation.Instructions.h" />
     <ClInclude Include="GleeBug.h" />
     <ClInclude Include="oprintf.h" />
     <ClInclude Include="Static.BufferFile.h" />

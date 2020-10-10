@@ -1,5 +1,6 @@
 #include "Debugger.h"
 #include "Debugger.Thread.Registers.h"
+#include "Emulation.h"
 
 namespace GleeBug
 {
@@ -24,12 +25,37 @@ namespace GleeBug
             return;
         }
 
+        bool allowEmulation = true;
+        bool inEmulation = false;
+
         while (!mBreakDebugger)
         {
             //wait for a debug event
             mIsRunning = true;
-            if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
-                break;
+
+            // We go over all active processes and see if any emulator has an active event
+            // if thats the case process the emulated event first.
+            if (inEmulation)
+            {
+                inEmulation = false;
+
+                for (auto&& process : mProcesses)
+                {
+                    if (process.second->emulator.WaitForEvent(mDebugEvent))
+                    {
+                        inEmulation = true;
+                        break;
+                    }
+                }
+            }
+
+            // Emulated events have priority over normal debug events.
+            if (!inEmulation)
+            {
+                if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
+                    break;
+            }
+
             mIsRunning = false;
 
             //set default continue status
@@ -117,8 +143,18 @@ namespace GleeBug
             }
 
             //continue the debug event
-            if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
-                break;
+
+            if (allowEmulation && mThread != nullptr && mThread->isSingleStepping)
+            {
+                auto& emulator = mProcess->emulator;
+                inEmulation = emulator.Emulate(mThread);
+            }
+
+            if (inEmulation == false)
+            {
+                if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
+                    break;
+            }
 
             if (mDetach || mDetachAndBreak)
             {

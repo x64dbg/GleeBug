@@ -6,6 +6,7 @@
 #include "Debugger.Dll.h"
 #include "Debugger.Breakpoint.h"
 #include "Static.Pattern.h"
+#include "Emulation.h"
 
 namespace GleeBug
 {
@@ -31,6 +32,7 @@ namespace GleeBug
         BreakpointInfo hardwareBreakpoints[4];
         MemoryBreakpointSet memoryBreakpointRanges;
         MemoryBreakpointMap memoryBreakpointPages;
+        X86Emulator emulator;
 
         /**
         \brief Constructor.
