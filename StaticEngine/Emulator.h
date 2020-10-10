@@ -5,7 +5,8 @@
 #include "ntdll.h"
 #include "FileMap.h"
 #include <GleeBug/Static.Pe.h>
-#include <GleeBug/Static.Bufferfile.h>
+#include <GleeBug/Static.BufferFile.h>
+#include <GleeBug/stringutils.h>
 
 #pragma comment(lib, "psapi.lib")
 
@@ -467,6 +468,11 @@ public:
     std::unordered_map<ULONG_PTR, MappedPe> mappedFiles;
 
     //PE
+    bool StaticFileLoad(const char* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
+    {
+        return StaticFileLoadW(Utf8ToUtf16(szFileName).c_str(), DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
+    }
+
     bool StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
     {
         auto file = new ::FileMap<unsigned char>;
@@ -592,6 +598,11 @@ public:
         return found->second.pe->IsPe64()
             ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
             : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
+    }
+
+    ULONG_PTR GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
+    {
+        return GetPE32DataW(Utf8ToUtf16(szFileName).c_str(), WhichSection, WhichData);
     }
 
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)

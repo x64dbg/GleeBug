@@ -171,6 +171,7 @@
     <ClCompile Include="Static.File.cpp" />
     <ClCompile Include="Static.Pattern.cpp" />
     <ClCompile Include="Static.Pe.cpp" />
+    <ClCompile Include="stringutils.cpp" />
     <ClCompile Include="zyan-disassembler-engine\src\Decoder.c" />
     <ClCompile Include="zyan-disassembler-engine\src\Formatter.c">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -203,6 +204,7 @@
     <ClInclude Include="Static.Pe.h" />
     <ClInclude Include="Static.Pe.Section.h" />
     <ClInclude Include="Static.Region.h" />
+    <ClInclude Include="stringutils.h" />
     <ClInclude Include="zyan-disassembler-engine\include\Zydis\Decoder.h" />
     <ClInclude Include="zyan-disassembler-engine\include\Zydis\Defines.h" />
     <ClInclude Include="zyan-disassembler-engine\include\Zydis\Formatter.h" />
