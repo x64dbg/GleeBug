@@ -28,8 +28,31 @@ namespace GleeBug
         {
             //wait for a debug event
             mIsRunning = true;
-            if (!MyWaitForDebugEvent(&mDebugEvent, INFINITE))
-                break;
+            if (!MyWaitForDebugEvent(&mDebugEvent, 100))
+            {
+                if (mDetach)
+                {
+                    if (!UnsafeDetach())
+                        cbInternalError("Debugger::Detach failed!");
+                    break;
+                }
+#if 0
+                // Fix based on work by https://github.com/number201724
+                if (WaitForSingleObject(mMainProcess.hProcess, 0) == WAIT_OBJECT_0)
+                {
+                    mDebugEvent.dwDebugEventCode = EXIT_PROCESS_DEBUG_EVENT;
+                    mDebugEvent.dwProcessId = mMainProcess.dwProcessId;
+                    mDebugEvent.dwThreadId = mMainProcess.dwThreadId;
+                    if (!GetExitCodeProcess(mMainProcess.hProcess, &mDebugEvent.u.ExitProcess.dwExitCode))
+                        mDebugEvent.u.ExitProcess.dwExitCode = 0xFFFFFFFF;
+                }
+#endif
+                else
+                {
+                    // Regular timeout, wait again
+                    continue;
+                }
+            }
             mIsRunning = false;
 
             //set default continue status

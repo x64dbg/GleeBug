@@ -74,6 +74,7 @@ namespace GleeBug
 
     bool Debugger::UnsafeDetach()
     {
+        // TODO: remove from all threads?
         Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
         return !!DebugActiveProcessStop(mMainProcess.dwProcessId);
     }
