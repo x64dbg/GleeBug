@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <Windows.h>
 #include "Emulator.h"
 
 Emulator emu;
@@ -172,6 +172,11 @@ __declspec(dllexport) void TITCALL Getx87FPURegisters(x87FPURegister_t x87FPUReg
 }
 
 //PE
+__declspec(dllexport) bool TITCALL StaticFileLoad(const char* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
+{
+    return emu.StaticFileLoad(szFileName, DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
+}
+
 __declspec(dllexport) bool TITCALL StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
 {
     return emu.StaticFileLoadW(szFileName, DesiredAccess, SimulateLoad, FileHandle, LoadedSize, FileMap, FileMapVA);
@@ -200,6 +205,11 @@ __declspec(dllexport) ULONG_PTR TITCALL ConvertVAtoFileOffsetEx(ULONG_PTR FileMa
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
 {
     return emu.GetPE32DataFromMappedFile(FileMapVA, WhichSection, WhichData);
+}
+
+__declspec(dllexport) ULONG_PTR TITCALL GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
+{
+    return emu.GetPE32Data(szFileName, WhichSection, WhichData);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
