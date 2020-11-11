@@ -130,6 +130,9 @@ static NTSTATUS NTAPI DbgUiDebugActiveProcess_(IN HANDLE Process)
 {
     /* Tell the kernel to start debugging */
     NTSTATUS Status = NtDebugActiveProcess(Process, NtCurrentTeb()->DbgSsReserved[1]);
+    return Status;
+
+#if 0
     if (NT_SUCCESS(Status))
     {
         /* Now break-in the process */
@@ -140,6 +143,7 @@ static NTSTATUS NTAPI DbgUiDebugActiveProcess_(IN HANDLE Process)
             DbgUiStopDebugging(Process);
         }
     }
+#endif
 
     /* Return status */
     return Status;

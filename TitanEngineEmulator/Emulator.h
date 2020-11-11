@@ -68,7 +68,7 @@ public:
 
     bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
     {
-        if(!Attach(ProcessId, mSafeAttach ? DebugActiveProcess_ : DebugActiveProcess))
+        if(!Attach(ProcessId, DebugActiveProcess_))
             return false;
         mCbATTACHBREAKPOINT = STEPCALLBACK(CallBack);
         mAttachProcessInfo = (PROCESS_INFORMATION*)DebugInfo;
