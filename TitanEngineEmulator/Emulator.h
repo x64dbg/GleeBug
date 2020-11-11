@@ -567,30 +567,92 @@ public:
         mappedFiles.erase(found);
         return true;
     }
-
-    ULONG_PTR ConvertFileOffsetToVA(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
+    ////
+    ///
+    // ConvertFileOffsetToVA   -   converts FileOffset to a virtual addresses
+    //                              checks if PE file is valid and if memory is accessible
+    // Returns: converted VA
+    //          or NULL if conversion has failed.
+    //
+    ULONG_PTR ConvertFileOffsetToVA(
+        ULONG_PTR FileMapVA,        // [in] Pointer to the mapped file content. It's either StaticFileLoad function or Windows API for file mapping.
+        ULONG_PTR AddressToConvert, // [in] physical address/file offset
+        bool ReturnType             // [in] if true: add the FileMapVA to the return value
+    )
     {
         auto found = mappedFiles.find(FileMapVA);
         if(found == mappedFiles.end())
             __debugbreak(); //return 0;
+
         if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
-        return found->second.pe->ConvertOffsetToRva(uint32(AddressToConvert));
+
+        // convert:  FileOffset -> VA
+        auto offset =   found->second.pe->ConvertOffsetToRva(
+                            uint32( AddressToConvert )
+                        );
+
+        if (offset == INVALID_VALUE)
+            return 0
+        else
+            return ReturnType ? FileMapVA + offset : offset;
     }
 
-    ULONG_PTR ConvertVAtoFileOffset(ULONG_PTR FileMapVA, ULONG_PTR AddressToConvert, bool ReturnType)
+    ////
+    ///
+    // ConvertVAtoFileOffset    -   converts virtual addresses to its physical counterpart.
+    //
+    // Returns: converted physical address
+    //          or NULL if conversion has failed.
+    //
+    ULONG_PTR ConvertVAtoFileOffset(
+        ULONG_PTR FileMapVA,        // [in] Pointer to the mapped file content. It's either StaticFileLoad function or Windows API for file mapping.
+        ULONG_PTR AddressToConvert, // [in] Virtual address to convert to a physical address.
+        bool ReturnType             // [in] if true: add the FileMapVA to the return value
+    )
     {
-        return ConvertVAtoFileOffsetEx(FileMapVA, 0, 0, AddressToConvert, false, ReturnType);
+        return ConvertVAtoFileOffsetEx(
+                    FileMapVA ,0 ,0 ,
+                    AddressToConvert, false, ReturnType );
     }
 
-    ULONG_PTR ConvertVAtoFileOffsetEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool AddressIsRVA, bool ReturnType)
+    ////
+    ///
+    // ConvertVAtoFileOffsetEx  -   converts virtual addresses to its physical counterpart.
+    //                              checks if PE file is valid and if memory is accessible
+    // Returns: converted physical address
+    //          or NULL if conversion has failed.
+    //
+    ULONG_PTR ConvertVAtoFileOffsetEx(
+        ULONG_PTR FileMapVA,        // [in] Pointer to the mapped file content. It's either StaticFileLoad function or Windows API for file mapping.
+        DWORD FileSize,             // [in] Size of the mapped file.
+        ULONG_PTR ImageBase,        // [in] ImageBase of the mapped file
+        ULONG_PTR AddressToConvert, // [in] Virtual address to convert to a physical address.
+        bool AddressIsRVA,          // [in] true => AddressToConvert is relative virtual address
+        bool ReturnType             // [in] if true: add the FileMapVA to the return value
+    )
     {
         auto found = mappedFiles.find(FileMapVA);
         if(found == mappedFiles.end())
             __debugbreak(); //return 0;
+
         if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
-        return found->second.pe->ConvertRvaToOffset(uint32(AddressToConvert));
+
+        // Convert to RVA if needed
+        auto RVA_ToConvert = AddressIsRVA ?
+                        AddressToConvert :
+                        AddressToConvert - ImageBase;
+
+        // convert:  VA -> FileOffset
+        auto offset =   found->second.pe->ConvertRvaToOffset(
+                            uint32( RVA_ToConvert )
+                        );
+
+        if (offset == INVALID_VALUE)
+            return 0
+        else
+            return ReturnType ? FileMapVA + offset : offset;
     }
 
     template<typename T>
