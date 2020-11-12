@@ -135,6 +135,17 @@ __declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char
     return 0;
 }
 
+__declspec(dllexport) ULONG_PTR TITCALL GetDebuggedFileBaseAddress()
+{
+    return emu.GetDebuggedFileBaseAddress();
+}
+
+__declspec(dllexport) bool TITCALL DumpProcess(HANDLE hProcess, LPVOID ImageBase, const char* szDumpFileName, ULONG_PTR EntryPoint)
+{
+    // Just fails https://github.com/x64dbg/testplugin/blob/4ceae85ca8e8b63ff155495311c2c4b92febce99/test.cpp#L289, so not worth implementing
+    return false;
+}
+
 //Registers
 __declspec(dllexport) ULONG_PTR TITCALL GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
 {

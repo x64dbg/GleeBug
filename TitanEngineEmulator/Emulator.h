@@ -300,6 +300,14 @@ public:
         return &mMainProcess;
     }
 
+    ULONG_PTR GetDebuggedFileBaseAddress()
+    {
+        auto itr = mProcesses.find(mMainProcess.dwProcessId);
+        if (itr != mProcesses.end())
+            return (ULONG_PTR)itr->second->createProcessInfo.lpBaseOfImage;
+        return 0;
+    }
+
     //Stepping
     void StepOver(LPVOID CallBack)
     {
