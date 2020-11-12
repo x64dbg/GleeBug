@@ -9,7 +9,7 @@ namespace GleeBug
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Software, ptr(exceptionRecord.ExceptionAddress) });
         if(foundInfo == mProcess->breakpoints.end())
         {
-            if(!mProcess->systemBreakpoint) //handle system breakpoint
+            if(!this->mAttachedToProcess && !mProcess->systemBreakpoint) //handle system breakpoint
             {
                 //set internal state
                 mProcess->systemBreakpoint = true;

@@ -5,13 +5,14 @@ namespace GleeBug
     void Debugger::createProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess)
     {
         //initial attach housekeeping
+        bool attachBreakpoint = false;
         if(mAttachedToProcess && !mMainProcess.dwProcessId)
         {
             mMainProcess.hProcess = createProcess.hProcess;
             mMainProcess.hThread = createProcess.hThread;
             mMainProcess.dwProcessId = mDebugEvent.dwProcessId;
             mMainProcess.dwThreadId = mDebugEvent.dwThreadId;
-            cbAttachBreakpoint();
+            attachBreakpoint = true;
         }
 
         //process housekeeping
@@ -36,6 +37,10 @@ namespace GleeBug
         //close the file handle
         if(createProcess.hFile)
             CloseHandle(createProcess.hFile);
+
+        //call attach breakpoint after process creation
+        if (attachBreakpoint)
+            cbAttachBreakpoint();
     }
 
     void Debugger::exitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess)

@@ -529,7 +529,7 @@ public:
                         );
 
         if (offset == INVALID_VALUE)
-            return 0
+            return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
     }
@@ -586,7 +586,7 @@ public:
                         );
 
         if (offset == INVALID_VALUE)
-            return 0
+            return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
     }
