@@ -112,7 +112,7 @@ __declspec(dllexport) PROCESS_INFORMATION* TITCALL TitanGetProcessInformation()
     return emu.TitanGetProcessInformation();
 }
 
-__declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char* szDLLName, const char* szAPIName)
+static ULONG_PTR DbgValFromString(const char* expr)
 {
 #ifdef _WIN64
 #define X64DBG_DLL L"x64dbg.dll"
@@ -121,23 +121,25 @@ __declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char
 #endif // _WIN64
     static auto hModule = GetModuleHandleW(X64DBG_DLL);
 #undef X64DBG_DLL
+    static auto DbgValFromString = (ULONG_PTR(*)(const char*))GetProcAddress(hModule, "DbgValFromString");
+    return DbgValFromString ? DbgValFromString(expr) : 0;
+}
 
-    if (hModule)
-    {
-        static auto DbgValFromString = (ULONG_PTR(*)(const char*))GetProcAddress(hModule, "DbgValFromString");
-        if (DbgValFromString)
-        {
-            char expr[1024] = "";
-            _snprintf_s(expr, _TRUNCATE, "\"%s\":%s", szDLLName, szAPIName);
-            return DbgValFromString(expr);
-        }
-    }
-    return 0;
+__declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char* szDLLName, const char* szAPIName)
+{
+    char expr[1024] = "";
+    _snprintf_s(expr, _TRUNCATE, "\"%s\":%s", szDLLName, szAPIName);
+    return DbgValFromString(expr);
 }
 
 __declspec(dllexport) ULONG_PTR TITCALL GetDebuggedFileBaseAddress()
 {
     return emu.GetDebuggedFileBaseAddress();
+}
+
+__declspec(dllexport) ULONG_PTR TITCALL GetDebuggedDLLBaseAddress()
+{
+    return DbgValFromString("mod.main()");
 }
 
 __declspec(dllexport) bool TITCALL DumpProcess(HANDLE hProcess, LPVOID ImageBase, const char* szDumpFileName, ULONG_PTR EntryPoint)
