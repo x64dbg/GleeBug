@@ -523,9 +523,12 @@ public:
         if (!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
 
+        if (AddressToConvert < FileMapVA)
+            __debugbreak();
+
         // convert:  FileOffset -> VA
         auto offset =   found->second.pe->ConvertOffsetToRva(
-                            uint32( AddressToConvert )
+                            uint32( AddressToConvert - FileMapVA )
                         );
 
         if (offset == INVALID_VALUE)
