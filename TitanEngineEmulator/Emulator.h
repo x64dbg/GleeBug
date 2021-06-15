@@ -794,6 +794,12 @@ public:
         {
         case UE_PE_OFFSET:
             return headers.Offset();
+        case UE_SIZEOFIMAGE:
+            return headers->OptionalHeader.SizeOfImage;
+        case UE_SIZEOFHEADERS:
+            return headers->OptionalHeader.SizeOfHeaders;
+        case UE_SECTIONALIGNMENT:
+            return headers->OptionalHeader.SectionAlignment;
         case UE_IMPORTTABLEADDRESS:
             return headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress;
         case UE_IMPORTTABLESIZE:
