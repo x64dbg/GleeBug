@@ -123,6 +123,7 @@ namespace GleeBug
         info.internal.hardware.slot = slot;
         info.internal.hardware.type = type;
         info.internal.hardware.size = size;
+        info.internal.hardware.enabled = true;
 
         //insert in the breakpoint map
         breakpoints.insert({ { info.type, info.address }, info });
