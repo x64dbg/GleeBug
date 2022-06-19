@@ -21,7 +21,7 @@ namespace GleeBug
                     _In_  HANDLE  /*hProcess*/,
                     _Out_ LPDWORD /*lpFlags*/,
                     _Out_ PBOOL   /*lpPermanent*/
-                    );
+                );
                 static auto GPDP = GETPROCESSDEPPOLICY(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetProcessDEPPolicy"));
                 if(GPDP)
                 {
@@ -75,7 +75,7 @@ namespace GleeBug
 
     void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
-        if (mThread->isInternalStepping) //handle internal steps
+        if(mThread->isInternalStepping)  //handle internal steps
         {
             //set internal status
             mThread->isInternalStepping = false;
@@ -84,7 +84,7 @@ namespace GleeBug
             //call the internal step callback
             mThread->cbInternalStep();
         }
-        if (mThread->isSingleStepping) //handle single step
+        if(mThread->isSingleStepping)  //handle single step
         {
             //set internal status
             mThread->isSingleStepping = false;
@@ -96,7 +96,7 @@ namespace GleeBug
             //call the user callbacks
             auto cbStepCopy = mThread->stepCallbacks;
             mThread->stepCallbacks.clear();
-            for (auto cbStep : cbStepCopy)
+            for(auto cbStep : cbStepCopy)
                 cbStep();
         }
         else //handle hardware breakpoint single step exceptions
@@ -112,22 +112,22 @@ namespace GleeBug
         ptr dr6 = registers.Dr6();
         HardwareSlot breakpointSlot;
         ptr breakpointAddress;
-        if (exceptionAddress == registers.Dr0() || dr6 & 0x1)
+        if(exceptionAddress == registers.Dr0() || dr6 & 0x1)
         {
             breakpointAddress = registers.Dr0();
             breakpointSlot = HardwareSlot::Dr0;
         }
-        else if (exceptionAddress == registers.Dr1() || dr6 & 0x2)
+        else if(exceptionAddress == registers.Dr1() || dr6 & 0x2)
         {
             breakpointAddress = registers.Dr1();
             breakpointSlot = HardwareSlot::Dr1;
         }
-        else if (exceptionAddress == registers.Dr2() || dr6 & 0x4)
+        else if(exceptionAddress == registers.Dr2() || dr6 & 0x4)
         {
             breakpointAddress = registers.Dr2();
             breakpointSlot = HardwareSlot::Dr2;
         }
-        else if (exceptionAddress == registers.Dr3() || dr6 & 0x8)
+        else if(exceptionAddress == registers.Dr3() || dr6 & 0x8)
         {
             breakpointAddress = registers.Dr3();
             breakpointSlot = HardwareSlot::Dr3;
@@ -137,10 +137,10 @@ namespace GleeBug
 
         //find the breakpoint in the internal structures
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
-        if (foundInfo == mProcess->breakpoints.end())
+        if(foundInfo == mProcess->breakpoints.end())
             return; //not a valid hardware breakpoint
         const auto info = foundInfo->second;
-        if (info.internal.hardware.slot != breakpointSlot)
+        if(info.internal.hardware.slot != breakpointSlot)
             return; //not a valid hardware breakpoint
 
         //set continue status
@@ -151,7 +151,7 @@ namespace GleeBug
         mThread->StepInternal(std::bind([this, info]()
         {
             //only restore if the breakpoint still exists
-            if (mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) != mProcess->breakpoints.end())
+            if(mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) != mProcess->breakpoints.end())
                 mThread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
         }));
 
@@ -160,11 +160,11 @@ namespace GleeBug
 
         //call the user callback
         auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
-        if (foundCallback != mProcess->breakpointCallbacks.end())
+        if(foundCallback != mProcess->breakpointCallbacks.end())
             foundCallback->second(info);
 
         //delete the breakpoint if it is singleshoot
-        if (info.singleshoot)
+        if(info.singleshoot)
             mProcess->DeleteGenericBreakpoint(info);
     }
 
@@ -179,11 +179,11 @@ namespace GleeBug
 
         //check if the exception address is directly in the range of a memory breakpoint
         auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
-        if (foundRange == mProcess->memoryBreakpointRanges.end())
+        if(foundRange == mProcess->memoryBreakpointRanges.end())
         {
-            //if not in range, check if a memory breakpoint is in the accessed page 
+            //if not in range, check if a memory breakpoint is in the accessed page
             auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-            if (foundPage != mProcess->memoryBreakpointPages.end())
+            if(foundPage != mProcess->memoryBreakpointPages.end())
             {
                 //(this means that by our fault the program generated an exception, we should clean it)
                 mContinueStatus = DBG_CONTINUE;
@@ -192,7 +192,7 @@ namespace GleeBug
                 const auto pBaseAddr = foundPage->first;
 
                 //We restore the protection
-                if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
+                if(!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
                     sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
                     cbInternalError(error);
@@ -200,7 +200,7 @@ namespace GleeBug
 
                 //However the following situations may occur:
                 // The instruction we singlestep to is a software breakpoint, which may execute a callback, that can :
-                // -actually delete a memory breakpoint that takes this page into account 
+                // -actually delete a memory breakpoint that takes this page into account
                 // -add more memory breakpoints
                 //The solution: We just try to see if the page is mapped into memoryBreakpointPages. If the page is in deed being used by any memory breakpoint,
                 // then we ought to restore the protection.
@@ -208,7 +208,7 @@ namespace GleeBug
                 {
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
-                    if (found_page == mProcess->memoryBreakpointPages.end())
+                    if(found_page == mProcess->memoryBreakpointPages.end())
                     {
                         //no page being used by bpx? Then just return
                         return;
@@ -225,7 +225,7 @@ namespace GleeBug
         exceptionAddress is indeed inside a breakpoint range you have defined.
         */
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
-        if (foundInfo == mProcess->breakpoints.end())
+        if(foundInfo == mProcess->breakpoints.end())
         {
             sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
             cbInternalError(error);
@@ -238,12 +238,12 @@ namespace GleeBug
         const auto info = foundInfo->second;
 
         //TODO: check if the right type is accessed (ExceptionInformation[0])
-        //FIXED: 
+        //FIXED:
         auto bpxPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
         auto pageAddr = bpxPage->first;
         auto pageProperties = bpxPage->second;
 
-        if (bpxPage == mProcess->memoryBreakpointPages.end())
+        if(bpxPage == mProcess->memoryBreakpointPages.end())
         {
             sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
             cbInternalError(error);
@@ -253,34 +253,34 @@ namespace GleeBug
         //TODO: If I only have a page with Read bp and the exception was not on read, I don't execute the callback. Because since this was implemented with PAGE_GUARD, writtes or executes still trigger
         //This callback.
         //FIX: If the memoryBreakpointPages for this page does not have a access flag and has a read flag, but the exception was not on read. Then we resume the debuggee.
-        if ((exceptionRecord.ExceptionInformation[0] != 0))
+        if((exceptionRecord.ExceptionInformation[0] != 0))
         {
             //The bpx is solely on read.
-            if (((pageProperties.Type & 0x2) != 0) && ((pageProperties.Type & 0x1) == 0))
-               {
-                   mContinueStatus = DBG_CONTINUE;
-                    //We restore the protection
-                    if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
-                    {
-                        sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
-                        cbInternalError(error);
-                    }
-
-                    mThread->StepInternal(std::bind([this, pageAddr]()
-                    {
-                        //seek out the page address
-                        auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
-                        if (found_page == mProcess->memoryBreakpointPages.end())
-                        {
-                            //no page being used by bpx? Then just return
-                            return;
-                        }
-                        mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
-                        return;
-                    }));
-                    return;
+            if(((pageProperties.Type & 0x2) != 0) && ((pageProperties.Type & 0x1) == 0))
+            {
+                mContinueStatus = DBG_CONTINUE;
+                //We restore the protection
+                if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
+                {
+                    sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
+                    cbInternalError(error);
                 }
-            else if (((pageProperties.Type & 0x1) != 0))
+
+                mThread->StepInternal(std::bind([this, pageAddr]()
+                {
+                    //seek out the page address
+                    auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
+                    if(found_page == mProcess->memoryBreakpointPages.end())
+                    {
+                        //no page being used by bpx? Then just return
+                        return;
+                    }
+                    mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
+                    return;
+                }));
+                return;
+            }
+            else if(((pageProperties.Type & 0x1) != 0))
             {
                 //We are fine if the breakpoint is on Access and somethine other than a read occurred.
             }
@@ -296,12 +296,12 @@ namespace GleeBug
         {
             //The generated exception is on read.
             //If the page doesn't have a breakpoint on read or on access then something else must have gone wrong - we pass execution to debuggee.
-            if ((!(pageProperties.Type & 0x2)) && (!(pageProperties.Type & 0x1)))
+            if((!(pageProperties.Type & 0x2)) && (!(pageProperties.Type & 0x1)))
             {
                 return;
             }
         }
-        
+
 
         /*
         ASSUME:
@@ -314,7 +314,7 @@ namespace GleeBug
         //TODO: execute the user callback (if present)
         //FIXED:
         auto bpxCb = mProcess->breakpointCallbacks.find({ BreakpointType::Memory, info.address });
-        if (bpxCb != mProcess->breakpointCallbacks.end())
+        if(bpxCb != mProcess->breakpointCallbacks.end())
         {
             bpxCb->second(info);
         }
@@ -323,7 +323,7 @@ namespace GleeBug
         mContinueStatus = DBG_CONTINUE;
         //TODO: single step and restore page protection
         //FIXED:
-        if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
+        if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
             sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
             cbInternalError(error);
@@ -336,7 +336,7 @@ namespace GleeBug
             //-memoryBreakpointPages was in deed consistent with this memory address that generated the exception (The data structure wasn't corrupted somehow)
             //So our new technique basically checks if the page address is still inside memoryBreakpointRanges structure. If this is true, we simply apply the NewProtect.
             //Wide variety of possible scenarios:
-            //-Bpx on this page and bpx is not singleshot: In the case of PAGE_GUARD page protection (handled by this exception handler), if the page permission map persists, we simply 
+            //-Bpx on this page and bpx is not singleshot: In the case of PAGE_GUARD page protection (handled by this exception handler), if the page permission map persists, we simply
             // enforce the newProtect because this page belongs to a breakpoint somewhere.
             //-Bpx is singleshot: Then it was deleted by the end of this call. If the refcount is zero, then we dont find the page on the Memory map, so assume no more memory breakpoints happen there.
             // therefore, we do not enforce new protection.
@@ -345,14 +345,14 @@ namespace GleeBug
             //Check if the memory page is mapped
 
             auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
-            if (found_page != mProcess->memoryBreakpointPages.end())
+            if(found_page != mProcess->memoryBreakpointPages.end())
             {
                 mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
             }
             return;
         }));
 
-        if (info.singleshoot)
+        if(info.singleshoot)
         {
             mProcess->DeleteMemoryBreakpoint(exceptionAddress);
         }
@@ -371,11 +371,11 @@ namespace GleeBug
 
         //check if the exception address is directly in the range of a memory breakpoint
         auto foundRange = mProcess->memoryBreakpointRanges.find(Range(exceptionAddress, exceptionAddress));
-        if (foundRange == mProcess->memoryBreakpointRanges.end())
+        if(foundRange == mProcess->memoryBreakpointRanges.end())
         {
-            //if not in range, check if a memory breakpoint is in the accessed page 
+            //if not in range, check if a memory breakpoint is in the accessed page
             auto foundPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-            if (foundPage != mProcess->memoryBreakpointPages.end())
+            if(foundPage != mProcess->memoryBreakpointPages.end())
             {
                 //(this means that by our fault the program generated an exception, we should clean it)
                 mContinueStatus = DBG_CONTINUE;
@@ -384,7 +384,7 @@ namespace GleeBug
                 const auto pBaseAddr = foundPage->first;
 
                 //We restore the protection
-                if (!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
+                if(!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
                     sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
                     cbInternalError(error);
@@ -392,7 +392,7 @@ namespace GleeBug
 
                 //However the following situations may occur:
                 // The instruction we singlestep to is a software breakpoint, which may execute a callback, that can :
-                // -actually delete a memory breakpoint that takes this page into account 
+                // -actually delete a memory breakpoint that takes this page into account
                 // -add more memory breakpoints
                 //The solution: We just try to see if the page is mapped into memoryBreakpointPages. If the page is in deed being used by any memory breakpoint,
                 // then we ought to restore the protection.
@@ -400,7 +400,7 @@ namespace GleeBug
                 {
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
-                    if (found_page == mProcess->memoryBreakpointPages.end())
+                    if(found_page == mProcess->memoryBreakpointPages.end())
                     {
                         //no page being used by bpx? Then just return
                         return;
@@ -417,7 +417,7 @@ namespace GleeBug
         exceptionAddress is indeed inside a breakpoint range you have defined.
         */
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Memory, foundRange->first });
-        if (foundInfo == mProcess->breakpoints.end())
+        if(foundInfo == mProcess->breakpoints.end())
         {
             sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
             cbInternalError(error);
@@ -430,9 +430,9 @@ namespace GleeBug
         const auto info = foundInfo->second;
 
         //TODO: check if the right type is accessed (ExceptionInformation[0])
-        //FIXED: 
+        //FIXED:
         auto bpxPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-        if (bpxPage == mProcess->memoryBreakpointPages.end())
+        if(bpxPage == mProcess->memoryBreakpointPages.end())
         {
             sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
             cbInternalError(error);
@@ -449,13 +449,13 @@ namespace GleeBug
         */
         //ExceptionInformation[0] should be considered as 1 or 8, because these are for exceptions generated on write or execute.
         //Execute is only implemented with page guard if no Data-Execution-Prevention is implemented by the Kernel.
-        if ((exceptionRecord.ExceptionInformation[0] == 1) && (!(pageProperties.Type & 4)))
+        if((exceptionRecord.ExceptionInformation[0] == 1) && (!(pageProperties.Type & 4)))
         {
             //The exception was on Write but there was no page breakpoint in Write? Then the program changed the page permissions, or naturally overwritten protected data. We do not interfere.
             return;
         }
 
-        if ((exceptionRecord.ExceptionInformation[0] == 8) && (!(pageProperties.Type & 8)))
+        if((exceptionRecord.ExceptionInformation[0] == 8) && (!(pageProperties.Type & 8)))
         {
             //The exception was on Execution but there was no page breakpoint in Execute? Then the program changed the page permissions, or naturally executed protected code. We do not interfere.
             return;
@@ -470,7 +470,7 @@ namespace GleeBug
         //TODO: execute the user callback (if present)
         //FIXED:
         auto bpxCb = mProcess->breakpointCallbacks.find({ BreakpointType::Memory, info.address });
-        if (bpxCb != mProcess->breakpointCallbacks.end())
+        if(bpxCb != mProcess->breakpointCallbacks.end())
         {
             bpxCb->second(info);
         }
@@ -479,7 +479,7 @@ namespace GleeBug
         mContinueStatus = DBG_CONTINUE;
         //TODO: single step and restore page protection
         //FIXED:
-        if (!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
+        if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
             sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
             cbInternalError(error);
@@ -492,7 +492,7 @@ namespace GleeBug
             //-memoryBreakpointPages was in deed consistent with this memory address that generated the exception (The data structure wasn't corrupted somehow)
             //So our new technique basically checks if the page address is still inside memoryBreakpointRanges structure. If this is true, we simply apply the NewProtect.
             //Wide variety of possible scenarios:
-            //-Bpx on this page and bpx is not singleshot: In the case of PAGE_GUARD page protection (handled by this exception handler), if the page permission map persists, we simply 
+            //-Bpx on this page and bpx is not singleshot: In the case of PAGE_GUARD page protection (handled by this exception handler), if the page permission map persists, we simply
             // enforce the newProtect because this page belongs to a breakpoint somewhere.
             //-Bpx is singleshot: Then it was deleted by the end of this call. If the refcount is zero, then we dont find the page on the Memory map, so assume no more memory breakpoints happen there.
             // therefore, we do not enforce new protection.
@@ -501,14 +501,14 @@ namespace GleeBug
             //Check if the memory page is mapped
 
             auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
-            if (found_page != mProcess->memoryBreakpointPages.end())
+            if(found_page != mProcess->memoryBreakpointPages.end())
             {
                 mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
             }
             return;
         }));
 
-        if (info.singleshoot)
+        if(info.singleshoot)
         {
             mProcess->DeleteMemoryBreakpoint(exceptionAddress);
         }
@@ -526,7 +526,7 @@ namespace GleeBug
         cbExceptionEvent(exceptionInfo);
 
         //dispatch the exception (https://msdn.microsoft.com/en-us/library/windows/desktop/aa363082(v=vs.85).aspx)
-        switch (exceptionInfo.ExceptionRecord.ExceptionCode)
+        switch(exceptionInfo.ExceptionRecord.ExceptionCode)
         {
         case STATUS_BREAKPOINT:
             exceptionBreakpoint(exceptionRecord, firstChance);
@@ -543,7 +543,7 @@ namespace GleeBug
         }
 
         //call the unhandled exception callback
-        if (mContinueStatus == DBG_EXCEPTION_NOT_HANDLED)
+        if(mContinueStatus == DBG_EXCEPTION_NOT_HANDLED)
             cbUnhandledException(exceptionRecord, firstChance);
     }
 };

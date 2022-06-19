@@ -37,10 +37,10 @@ namespace GleeBug
         \return true if the debuggee was started correctly, false otherwise.
         */
         bool Init(const wchar_t* szFilePath,
-            const wchar_t* szCommandLine,
-            const wchar_t* szCurrentDirectory,
-            bool newConsole = true,
-            bool startSuspended = false);
+                  const wchar_t* szCommandLine,
+                  const wchar_t* szCurrentDirectory,
+                  bool newConsole = true,
+                  bool startSuspended = false);
 
         /**
         \brief Attach to a debuggee.
@@ -287,7 +287,7 @@ namespace GleeBug
         bool mBreakDebugger = false;
         DEBUG_EVENT mDebugEvent;
         ProcessMap mProcesses;
-        bool mIsRunning = false; //TODO: needs a dedicated critical section to prevent ContinueDebugEvent and change of registers to race 
+        bool mIsRunning = false; //TODO: needs a dedicated critical section to prevent ContinueDebugEvent and change of registers to race
         bool mIsDebugging = false;
         bool mDetach = false;
         bool mDetachAndBreak = false;

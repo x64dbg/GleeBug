@@ -6,10 +6,11 @@ namespace GleeBug
     {
         //thread housekeeping
         mProcess->threads.insert({ mDebugEvent.dwThreadId,
-            std::make_unique<Thread>(createThread.hThread,
-            mDebugEvent.dwThreadId,
-            createThread.lpThreadLocalBase,
-            createThread.lpStartAddress) });
+                                   std::make_unique<Thread>(createThread.hThread,
+                                           mDebugEvent.dwThreadId,
+                                           createThread.lpThreadLocalBase,
+                                           createThread.lpStartAddress)
+                                 });
 
         //set the current thread
         mThread = mProcess->thread = mProcess->threads.find(mDebugEvent.dwThreadId)->second.get();

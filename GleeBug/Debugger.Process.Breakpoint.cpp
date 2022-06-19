@@ -5,8 +5,8 @@ namespace GleeBug
     bool Process::SetBreakpoint(ptr address, bool singleshoot, SoftwareType type)
     {
         //check the address
-        if (!MemIsValidPtr(address) ||
-            breakpoints.find({ BreakpointType::Software, address }) != breakpoints.end())
+        if(!MemIsValidPtr(address) ||
+                breakpoints.find({ BreakpointType::Software, address }) != breakpoints.end())
             return false;
 
         //setup the breakpoint information struct
@@ -16,7 +16,7 @@ namespace GleeBug
         info.type = BreakpointType::Software;
 
         //determine breakpoint byte and size from the type
-        switch (type)
+        switch(type)
         {
         case SoftwareType::ShortInt3:
             info.internal.software.newbytes[0] = 0xCC;
@@ -28,10 +28,10 @@ namespace GleeBug
         }
 
         //read/write the breakpoint
-        if (!MemReadUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
+        if(!MemReadUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
             return false;
 
-        if (!MemWriteUnsafe(address, info.internal.software.newbytes, info.internal.software.size))
+        if(!MemWriteUnsafe(address, info.internal.software.newbytes, info.internal.software.size))
             return false;
         FlushInstructionCache(hProcess, nullptr, 0);
 
@@ -45,10 +45,10 @@ namespace GleeBug
     bool Process::SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot, SoftwareType type)
     {
         //check if a callback on this address was already found
-        if (breakpointCallbacks.find({ BreakpointType::Software, address }) != breakpointCallbacks.end())
+        if(breakpointCallbacks.find({ BreakpointType::Software, address }) != breakpointCallbacks.end())
             return false;
         //set the breakpoint
-        if (!SetBreakpoint(address, singleshoot, type))
+        if(!SetBreakpoint(address, singleshoot, type))
             return false;
         //insert the callback
         breakpointCallbacks.insert({ { BreakpointType::Software, address }, cbBreakpoint });
@@ -59,12 +59,12 @@ namespace GleeBug
     {
         //find the breakpoint
         auto found = breakpoints.find({ BreakpointType::Software, address });
-        if (found == breakpoints.end())
+        if(found == breakpoints.end())
             return false;
         const auto & info = found->second;
 
         //restore the breakpoint bytes
-        if (!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
+        if(!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
             return false;
         FlushInstructionCache(hProcess, nullptr, 0);
 
@@ -78,9 +78,9 @@ namespace GleeBug
     bool Process::GetFreeHardwareBreakpointSlot(HardwareSlot & slot) const
     {
         //find a free hardware breakpoint slot
-        for (int i = 0; i < HWBP_COUNT; i++)
+        for(int i = 0; i < HWBP_COUNT; i++)
         {
-            if (!hardwareBreakpoints[i].internal.hardware.enabled)
+            if(!hardwareBreakpoints[i].internal.hardware.enabled)
             {
                 slot = HardwareSlot(i);
                 return true;
@@ -92,15 +92,15 @@ namespace GleeBug
     bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size, bool singleshoot)
     {
         //check the address
-        if (!MemIsValidPtr(address) ||
-            breakpoints.find({ BreakpointType::Hardware, address }) != breakpoints.end())
+        if(!MemIsValidPtr(address) ||
+                breakpoints.find({ BreakpointType::Hardware, address }) != breakpoints.end())
             return false;
 
         //attempt to set the hardware breakpoint in every thread
         bool success = true;
-        for (auto & thread : threads)
+        for(auto & thread : threads)
         {
-            if (!thread.second->SetHardwareBreakpoint(address, slot, type, size))
+            if(!thread.second->SetHardwareBreakpoint(address, slot, type, size))
             {
                 success = false;
                 break;
@@ -108,9 +108,9 @@ namespace GleeBug
         }
 
         //if setting failed, unset all
-        if (!success)
+        if(!success)
         {
-            for (auto & thread : threads)
+            for(auto & thread : threads)
                 thread.second->DeleteHardwareBreakpoint(slot);
             return false;
         }
@@ -137,10 +137,10 @@ namespace GleeBug
     bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, const BreakpointCallback & cbBreakpoint, HardwareType type, HardwareSize size, bool singleshoot)
     {
         //check if a callback on this address was already found
-        if (breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
+        if(breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
             return false;
         //set the hardware breakpoint
-        if (!SetHardwareBreakpoint(address, slot, type, size, singleshoot))
+        if(!SetHardwareBreakpoint(address, slot, type, size, singleshoot))
             return false;
         //insert the callback
         breakpointCallbacks.insert({ { BreakpointType::Hardware, address }, cbBreakpoint });
@@ -151,7 +151,7 @@ namespace GleeBug
     {
         //find the hardware breakpoint
         auto found = breakpoints.find({ BreakpointType::Hardware, address });
-        if (found == breakpoints.end())
+        if(found == breakpoints.end())
             return false;
         const auto & info = found->second;
 
@@ -160,9 +160,9 @@ namespace GleeBug
 
         //delete the hardware breakpoint from the registers
         bool success = true;
-        for (auto & thread : threads)
+        for(auto & thread : threads)
         {
-            if (!thread.second->DeleteHardwareBreakpoint(info.internal.hardware.slot))
+            if(!thread.second->DeleteHardwareBreakpoint(info.internal.hardware.slot))
                 success = false;
         }
 
@@ -198,7 +198,7 @@ namespace GleeBug
         //These settings can trigger access violation.
         DWORD dwBase = dwAccess & 0xFF;
         DWORD dwHigh = dwAccess & 0xFFFFFF00;
-        switch (dwBase)
+        switch(dwBase)
         {
         case PAGE_EXECUTE:
             return dwHigh | PAGE_READONLY;
@@ -214,7 +214,7 @@ namespace GleeBug
     static DWORD RemoveWriteAccess(DWORD dwAccess)
     {
         DWORD dwBase = dwAccess & 0xFF;
-        switch (dwBase)
+        switch(dwBase)
         {
         case PAGE_READWRITE:
         case PAGE_EXECUTE_READWRITE:
@@ -230,10 +230,10 @@ namespace GleeBug
         //TODO: handle PAGE_NOACCESS and such correctly (since it cannot be combined with PAGE_GUARD)
 
         auto found = memoryBreakpointPages.find(page);
-        if (found == memoryBreakpointPages.end())
+        if(found == memoryBreakpointPages.end())
         {
             data.Refcount = 1;
-            switch (type)
+            switch(type)
             {
             case MemoryType::Access:
             case MemoryType::Read:
@@ -253,13 +253,13 @@ namespace GleeBug
             data.Type = oldData.Type | uint32(type); //combines new protection
             data.OldProtect = oldData.OldProtect; // old protection remains the same
             data.Refcount = oldData.Refcount + 1; //increment reference count
-            if (oldData.Type == uint32(type)) // Edge case for when you need to set a mem bpx on a same page with the same type, you just leave newProtect = OldProtect.
+            if(oldData.Type == uint32(type))  // Edge case for when you need to set a mem bpx on a same page with the same type, you just leave newProtect = OldProtect.
             {
-                data.NewProtect = data.OldProtect;   
+                data.NewProtect = data.OldProtect;
             }
-            else if (data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read)) // Access/Read always becomes PAGE_GUARD ; This page cannot access or Read?
+            else if(data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read))  // Access/Read always becomes PAGE_GUARD ; This page cannot access or Read?
                 data.NewProtect = data.OldProtect | PAGE_GUARD; //as before
-            else if (data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute))) // Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
+            else if(data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute)))  // Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
                 data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;
         }
 
@@ -274,12 +274,12 @@ namespace GleeBug
         //TODO: error reporting
 
         //basic checks
-        if (!MemIsValidPtr(address) || !size)
+        if(!MemIsValidPtr(address) || !size)
             return false;
 
         //check if the range is unused for any previous memory breakpoints
         auto range = Range(address, address + size - 1);
-        if (memoryBreakpointRanges.find(range) != memoryBreakpointRanges.end())
+        if(memoryBreakpointRanges.find(range) != memoryBreakpointRanges.end())
             return false;
 
         //change page protections
@@ -297,17 +297,17 @@ namespace GleeBug
             MemoryBreakpointData data;
             data.Type = uint32(type);
             auto alignedAddress = PAGE_ALIGN(address);
-            for (auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(size); page += PAGE_SIZE)
+            for(auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(size); page += PAGE_SIZE)
             {
                 MEMORY_BASIC_INFORMATION mbi;
-                if (!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)))
+                if(!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)))
                 {
                     success = false;
                     dprintf("!VirtualQueryEx\n");
                     break;
                 }
                 data.OldProtect = mbi.Protect;
-                if (!SetNewPageProtection(page, data, type))
+                if(!SetNewPageProtection(page, data, type))
                 {
                     success = false;
                     dprintf("!SetNewPageProtection\n");
@@ -321,15 +321,15 @@ namespace GleeBug
         }
 
         //if changing the page protections failed, attempt to revert all protection changes
-        if (!success)
+        if(!success)
         {
-            for (const auto & page : breakpointData)
+            for(const auto & page : breakpointData)
                 MemProtect(page.addr, PAGE_SIZE, page.OldProtect);
             return false;
         }
 
         //set the page data
-        for (const auto & page : breakpointData)
+        for(const auto & page : breakpointData)
             memoryBreakpointPages[page.addr] = page.data;
 
         //setup the breakpoint information struct
@@ -350,10 +350,10 @@ namespace GleeBug
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type, bool singleshoot)
     {
         //check if a callback on this address was already found
-        if (breakpointCallbacks.find({ BreakpointType::Memory, address }) != breakpointCallbacks.end())
+        if(breakpointCallbacks.find({ BreakpointType::Memory, address }) != breakpointCallbacks.end())
             return false;
         //set the memory breakpoint
-        if (!SetMemoryBreakpoint(address, size, type, singleshoot))
+        if(!SetMemoryBreakpoint(address, size, type, singleshoot))
             return false;
         //insert the callback
         breakpointCallbacks.insert({ { BreakpointType::Memory, address }, cbBreakpoint });
@@ -369,35 +369,35 @@ namespace GleeBug
 
         //find the memory breakpoint
         auto found = breakpoints.find({ BreakpointType::Memory, range->first });
-        if (found == breakpoints.end())
+        if(found == breakpoints.end())
             return false;
         const auto & info = found->second;
 
         //delete the memory breakpoint from the pages
         bool success = true;
         auto alignedAddress = PAGE_ALIGN(info.address);
-        for (auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(info.internal.memory.size); page += PAGE_SIZE)
+        for(auto page = alignedAddress; page < alignedAddress + ROUND_TO_PAGES(info.internal.memory.size); page += PAGE_SIZE)
         {
             auto foundData = memoryBreakpointPages.find(page);
-            if (foundData == memoryBreakpointPages.end())
+            if(foundData == memoryBreakpointPages.end())
                 continue; //TODO: error reporting
             auto & data = foundData->second;
             DWORD Protect;
             data.Refcount--;
-            if (data.Refcount)
+            if(data.Refcount)
             {
                 //TODO: properly determine the new protection flag
                 //Are there any other protections left?
                 //If so add the guard
-                if (data.Type & ~uint32(info.internal.memory.type))
+                if(data.Type & ~uint32(info.internal.memory.type))
                     data.NewProtect = data.OldProtect | PAGE_GUARD;
                 Protect = data.NewProtect;
             }
             else
                 Protect = data.OldProtect;
-            if (!MemProtect(page, PAGE_SIZE, Protect))
+            if(!MemProtect(page, PAGE_SIZE, Protect))
                 success = false;
-            if (!data.Refcount)
+            if(!data.Refcount)
                 memoryBreakpointPages.erase(foundData);
         }
 
@@ -410,7 +410,7 @@ namespace GleeBug
 
     bool Process::DeleteGenericBreakpoint(const BreakpointInfo & info)
     {
-        switch (info.type)
+        switch(info.type)
         {
         case BreakpointType::Software:
             return DeleteBreakpoint(info.address);

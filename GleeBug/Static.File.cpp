@@ -4,8 +4,8 @@ namespace GleeBug
 {
     File::File(const wchar_t* szFileName, File::Mode mode)
         : mFileName(szFileName ? szFileName : L""),
-        mMode(mode),
-        mhFile(INVALID_HANDLE_VALUE)
+          mMode(mode),
+          mhFile(INVALID_HANDLE_VALUE)
     {
     }
 
@@ -31,7 +31,7 @@ namespace GleeBug
 
     void File::Close()
     {
-        if (IsOpen())
+        if(IsOpen())
         {
             CloseHandle(mhFile);
             mhFile = INVALID_HANDLE_VALUE;
@@ -45,30 +45,30 @@ namespace GleeBug
 
     bool File::Read(uint32 offset, void* data, uint32 size, uint32* bytesRead) const
     {
-        if (!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if(!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
-            if (bytesRead)
+            if(bytesRead)
                 *bytesRead = 0;
             return false;
         }
         DWORD NumberOfBytesRead = 0;
         auto result = !!ReadFile(mhFile, data, size, &NumberOfBytesRead, nullptr);
-        if (bytesRead)
+        if(bytesRead)
             *bytesRead = uint32(NumberOfBytesRead);
         return result;
     }
 
     bool File::Write(uint32 offset, const void* data, uint32 size, uint32* bytesWritten)
     {
-        if (!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
+        if(!IsOpen() || SetFilePointer(mhFile, offset, nullptr, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
         {
-            if (bytesWritten)
+            if(bytesWritten)
                 *bytesWritten = 0;
             return false;
         }
         DWORD NumberOfBytesWritten = 0;
         auto result = !!WriteFile(mhFile, data, size, &NumberOfBytesWritten, nullptr);
-        if (bytesWritten)
+        if(bytesWritten)
             *bytesWritten = uint32(NumberOfBytesWritten);
         return result;
     }
@@ -77,7 +77,7 @@ namespace GleeBug
     {
         //get the access and sharemode flags
         DWORD access, sharemode;
-        switch (mMode)
+        switch(mMode)
         {
         case ReadOnly:
             access = GENERIC_READ;

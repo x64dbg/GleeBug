@@ -23,12 +23,12 @@ static HANDLE WINAPI ProcessIdToHandle(IN DWORD dwProcessId)
     ClientId.UniqueProcess = UlongToHandle(dwProcessId);
     InitializeObjectAttributes(&ObjectAttributes, NULL, 0, NULL, NULL);
     Status = NtOpenProcess(&Handle,
-        PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION |
-        PROCESS_VM_WRITE | PROCESS_VM_READ |
-        PROCESS_SUSPEND_RESUME | PROCESS_QUERY_INFORMATION,
-        &ObjectAttributes,
-        &ClientId);
-    if (!NT_SUCCESS(Status))
+                           PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION |
+                           PROCESS_VM_WRITE | PROCESS_VM_READ |
+                           PROCESS_SUSPEND_RESUME | PROCESS_QUERY_INFORMATION,
+                           &ObjectAttributes,
+                           &ClientId);
+    if(!NT_SUCCESS(Status))
     {
         /* Fail */
         BaseSetLastNTError(Status);
@@ -51,7 +51,7 @@ static NTSTATUS CreateThreadSkipAttach(IN HANDLE ProcessHandle, IN PUSER_THREAD_
     NTSTATUS Status;
     HANDLE hThread;
 
-    typedef NTSTATUS(NTAPI *t_NtCreateThreadEx)(
+    typedef NTSTATUS(NTAPI * t_NtCreateThreadEx)(
         PHANDLE /* ThreadHandle */,
         ACCESS_MASK /* DesiredAccess */,
         POBJECT_ATTRIBUTES /* ObjectAttributes */,
@@ -63,40 +63,40 @@ static NTSTATUS CreateThreadSkipAttach(IN HANDLE ProcessHandle, IN PUSER_THREAD_
         SIZE_T /* StackSize */,
         SIZE_T /* MaximumStackSize */,
         PPS_ATTRIBUTE_LIST /* AttributeList */
-        );
+    );
 
     auto p_NtCreateThreadEx = (t_NtCreateThreadEx)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtCreateThreadEx");
-    if (p_NtCreateThreadEx)
+    if(p_NtCreateThreadEx)
     {
         // Based on: https://chromium-review.googlesource.com/c/crashpad/crashpad/+/339263/16/client/crashpad_client_win.cc#697
         Status = p_NtCreateThreadEx(&hThread,
-            STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL,
-            nullptr,
-            ProcessHandle,
-            StartRoutine,
-            Argument,
-            THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH,
-            0,
-            0x4000 /* PAGE_SIZE * 4 */,
-            0x4000,
-            nullptr);
+                                    STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL,
+                                    nullptr,
+                                    ProcessHandle,
+                                    StartRoutine,
+                                    Argument,
+                                    THREAD_CREATE_FLAGS_SKIP_THREAD_ATTACH,
+                                    0,
+                                    0x4000 /* PAGE_SIZE * 4 */,
+                                    0x4000,
+                                    nullptr);
     }
     else
     {
         CLIENT_ID ClientId;
         Status = RtlCreateUserThread(ProcessHandle,
-            NULL,
-            FALSE,
-            0,
-            0x4000,
-            0x4000 /* PAGE_SIZE * 4 */,
-            StartRoutine,
-            Argument,
-            &hThread,
-            &ClientId);
+                                     NULL,
+                                     FALSE,
+                                     0,
+                                     0x4000,
+                                     0x4000 /* PAGE_SIZE * 4 */,
+                                     StartRoutine,
+                                     Argument,
+                                     &hThread,
+                                     &ClientId);
     }
 
-    if (NT_SUCCESS(Status))
+    if(NT_SUCCESS(Status))
     {
         NtClose(hThread);
     }
@@ -108,11 +108,11 @@ static NTSTATUS NTAPI DbgUiIssueRemoteBreakin_(IN HANDLE Process)
 {
     PUSER_THREAD_START_ROUTINE RemoteBreakFunction = (PUSER_THREAD_START_ROUTINE)DbgUiRemoteBreakin;
     LPVOID RemoteMemory = VirtualAllocEx(Process, 0, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READ);
-    if (RemoteMemory)
+    if(RemoteMemory)
     {
         SIZE_T written = 0;
         unsigned char payload[] = { 0xCC, 0xC3 };
-        if (WriteProcessMemory(Process, RemoteMemory, payload, sizeof(payload), &written))
+        if(WriteProcessMemory(Process, RemoteMemory, payload, sizeof(payload), &written))
         {
             RemoteBreakFunction = (PUSER_THREAD_START_ROUTINE)RemoteMemory;
         }
@@ -133,11 +133,11 @@ static NTSTATUS NTAPI DbgUiDebugActiveProcess_(IN HANDLE Process)
     return Status;
 
 #if 0
-    if (NT_SUCCESS(Status))
+    if(NT_SUCCESS(Status))
     {
         /* Now break-in the process */
         Status = DbgUiIssueRemoteBreakin_(Process);
-        if (!NT_SUCCESS(Status))
+        if(!NT_SUCCESS(Status))
         {
             /* We couldn't break-in, cancel debugging */
             DbgUiStopDebugging(Process);
@@ -151,7 +151,7 @@ static NTSTATUS NTAPI DbgUiDebugActiveProcess_(IN HANDLE Process)
 
 static NTSTATUS NTAPI DbgUiConnectToDbg_()
 {
-    if (NtCurrentTeb()->DbgSsReserved[1] != NULL)
+    if(NtCurrentTeb()->DbgSsReserved[1] != NULL)
         return STATUS_SUCCESS;
 
     OBJECT_ATTRIBUTES ObjectAttributes;
@@ -164,7 +164,7 @@ BOOL WINAPI DebugActiveProcess_(IN DWORD dwProcessId)
 {
     /* Connect to the debugger */
     NTSTATUS Status = DbgUiConnectToDbg_();
-    if (!NT_SUCCESS(Status))
+    if(!NT_SUCCESS(Status))
     {
         BaseSetLastNTError(Status);
         return FALSE;
@@ -172,7 +172,7 @@ BOOL WINAPI DebugActiveProcess_(IN DWORD dwProcessId)
 
     /* Get the process handle */
     HANDLE Handle = ProcessIdToHandle(dwProcessId);
-    if (!Handle)
+    if(!Handle)
     {
         return FALSE;
     }
@@ -184,7 +184,7 @@ BOOL WINAPI DebugActiveProcess_(IN DWORD dwProcessId)
     NtClose(Handle);
 
     /* Check if debugging worked */
-    if (!NT_SUCCESS(Status))
+    if(!NT_SUCCESS(Status))
     {
         /* Fail */
         BaseSetLastNTError(Status);

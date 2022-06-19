@@ -17,7 +17,7 @@ namespace GleeBug
         systemBreakpoint(false),
         permanentDep(false)
     {
-        for (int i = 0; i < HWBP_COUNT; i++)
+        for(int i = 0; i < HWBP_COUNT; i++)
             hardwareBreakpoints[i].internal.hardware.enabled = false;
     }
 
@@ -25,7 +25,7 @@ namespace GleeBug
     {
         auto gip = Registers(thread->hThread, CONTEXT_CONTROL).Gip();
         unsigned char data[16];
-        if (MemReadSafe(gip, data, sizeof(data)))
+        if(MemReadSafe(gip, data, sizeof(data)))
         {
             ZydisInstructionInfo info;
             memset(&info, 0, sizeof(info));
@@ -47,7 +47,7 @@ namespace GleeBug
                     stepOver = (info.attributes & repAttributes) != 0;
                 }
             }
-            if (stepOver)
+            if(stepOver)
             {
                 SetBreakpoint(gip + info.length, [cbStep](const BreakpointInfo & info)
                 {

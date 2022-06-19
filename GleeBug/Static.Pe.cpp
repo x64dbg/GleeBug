@@ -49,24 +49,24 @@ namespace GleeBug
 
         //read the DOS header
         mDosHeader = readRegion<IMAGE_DOS_HEADER>();
-        if (!mDosHeader)
+        if(!mDosHeader)
             return ErrorDosHeaderRead;
 
         //verify the DOS header
-        if (mDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
+        if(mDosHeader->e_magic != IMAGE_DOS_SIGNATURE)
             return ErrorDosHeaderMagic;
 
         //get the NT headers offset
         auto newOffset = mDosHeader->e_lfanew;
 
         //verify the new offset
-        if (newOffset < 0 || uint32(newOffset) >= mFile.GetSize())
+        if(newOffset < 0 || uint32(newOffset) >= mFile.GetSize())
             return ErrorDosHeaderNtHeaderOffset;
 
         //special case where DOS and PE header overlap (tinygui.exe)
-        if (uint32(newOffset) < mOffset)
+        if(uint32(newOffset) < mOffset)
         {
-            if (!allowOverlap)
+            if(!allowOverlap)
                 return ErrorDosHeaderNtHeaderOffsetOverlap;
 
             mDosNtOverlap = true;
@@ -80,38 +80,38 @@ namespace GleeBug
             mAfterDosData = readRegion<uint8>(afterDosCount);
         }
 
-        if (!mAfterDosData)
+        if(!mAfterDosData)
             return ErrorAfterDosHeaderData;
 
         //read & verify the signature
         auto signature = readRegion<DWORD>();
-        if (!signature)
+        if(!signature)
             return ErrorNtSignatureRead;
-        if (*signature() != IMAGE_NT_SIGNATURE)
+        if(*signature() != IMAGE_NT_SIGNATURE)
             return ErrorNtSignatureMagic;
 
         //read the file header
         auto ifh = readRegion<IMAGE_FILE_HEADER>();
-        if (!ifh)
+        if(!ifh)
             return ErrorNtFileHeaderRead;
 
         //read the optional header
         uint32 realSizeOfIoh;
-        switch (ifh->Machine)
+        switch(ifh->Machine)
         {
         case IMAGE_FILE_MACHINE_I386:
         {
             //read & verify the optional header
             realSizeOfIoh = uint32(sizeof(IMAGE_OPTIONAL_HEADER32));
             auto ioh = readRegion<IMAGE_OPTIONAL_HEADER32>();
-            if (!ioh) //TODO: support truncated optional header (tinyXP.exe)
+            if(!ioh)  //TODO: support truncated optional header (tinyXP.exe)
                 return ErrorNtOptionalHeaderRead;
-            if (ioh->Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            if(ioh->Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
                 return ErrorNtOptionalHeaderMagic;
 
             //construct & verify the NT headers region
             mNtHeaders32 = Region<IMAGE_NT_HEADERS32>(&mData, signature.Offset());
-            if (!mNtHeaders32)
+            if(!mNtHeaders32)
                 return ErrorNtHeadersRegionSize;
         }
         break;
@@ -123,14 +123,14 @@ namespace GleeBug
             //read & verify the optional header
             realSizeOfIoh = uint32(sizeof(IMAGE_OPTIONAL_HEADER64));
             auto ioh = readRegion<IMAGE_OPTIONAL_HEADER64>();
-            if (!ioh)
+            if(!ioh)
                 return ErrorNtOptionalHeaderRead;
-            if (ioh->Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            if(ioh->Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                 return ErrorNtOptionalHeaderMagic;
 
             //construct & verify the NT headers region
             mNtHeaders64 = Region<IMAGE_NT_HEADERS64>(&mData, signature.Offset());
-            if (!mNtHeaders64)
+            if(!mNtHeaders64)
                 return ErrorNtHeadersRegionSize;
         }
         break;
@@ -139,11 +139,11 @@ namespace GleeBug
         {
             //try the best possible effort (corkami's d_resource.dll)
             auto ioh = readRegion<uint8>(ifh->SizeOfOptionalHeader);
-            if (!ioh)
+            if(!ioh)
                 return ErrorNtFileHeaderUnsupportedMachineOptionalHeaderRead;
 
             mNtHeaders32 = Region<IMAGE_NT_HEADERS32>(&mData, signature.Offset());
-            if (!mNtHeaders32)
+            if(!mNtHeaders32)
                 return ErrorNtFileHeaderUnsupportedMachineNtHeadersRegionSize;
 
             return ErrorNtFileHeaderUnsupportedMachine;
@@ -154,23 +154,23 @@ namespace GleeBug
 
         //check the SizeOfOptionalHeader field
         auto sizeOfIoh = ifh->SizeOfOptionalHeader;
-        if (numberOfSections && sizeOfIoh < realSizeOfIoh) //TODO: this can be valid in certain circumstances (nullSOH-XP)
+        if(numberOfSections && sizeOfIoh < realSizeOfIoh)  //TODO: this can be valid in certain circumstances (nullSOH-XP)
             return ErrorNtFileHeaderSizeOfOptionalHeaderOverlap;
 
         //read data after the optional header (TODO: check if this is even possible)
         uint32 afterOptionalSize = realSizeOfIoh < sizeOfIoh ? sizeOfIoh - realSizeOfIoh : 0;
         mAfterOptionalData = readRegion<uint8>(afterOptionalSize);
-        if (!mAfterOptionalData)
+        if(!mAfterOptionalData)
             return ErrorAfterOptionalHeaderDataRead;
 
         //read the section headers
         mSectionHeaders = readRegion<IMAGE_SECTION_HEADER>(numberOfSections);
-        if (!mSectionHeaders)
+        if(!mSectionHeaders)
             return ErrorSectionHeadersRead;
 
         //parse the sections
         auto sectionsError = parseSections(numberOfSections);
-        if (sectionsError != ErrorOk)
+        if(sectionsError != ErrorOk)
             return sectionsError;
 
         //TODO: parse data directories
@@ -179,13 +179,13 @@ namespace GleeBug
 
     uint32 Pe::ConvertOffsetToRva(uint32 offset)
     {
-        if (!mOffsetSectionMap.size()) //TODO: verify this (no sections means direct mapping)
+        if(!mOffsetSectionMap.size())  //TODO: verify this (no sections means direct mapping)
             return offset;
         const auto found = mOffsetSectionMap.find(Range(offset, offset));
-        if (found == mOffsetSectionMap.end())
+        if(found == mOffsetSectionMap.end())
             return INVALID_VALUE;
         auto index = found->second;
-        if (index == HeaderSection)
+        if(index == HeaderSection)
             return offset;
         const auto & section = mSections[index];
         offset -= uint32(found->first.first); //adjust the offset to be relative to the offset range in the map
@@ -194,13 +194,13 @@ namespace GleeBug
 
     uint32 Pe::ConvertRvaToOffset(uint32 rva)
     {
-        if (!mRvaSectionMap.size()) //TODO: verify this (no sections means direct mapping)
+        if(!mRvaSectionMap.size())  //TODO: verify this (no sections means direct mapping)
             return rva;
         const auto found = mRvaSectionMap.find(Range(rva, rva));
-        if (found == mRvaSectionMap.end())
+        if(found == mRvaSectionMap.end())
             return INVALID_VALUE;
         auto index = found->second;
-        if (index == HeaderSection)
+        if(index == HeaderSection)
             return rva;
         const auto & section = mSections[index];
         rva -= uint32(found->first.first); //adjust the rva to be relative to the rva range in the map
@@ -209,7 +209,7 @@ namespace GleeBug
 
     Pe::Error Pe::parseSections(uint16 count, uint32 alignment)
     {
-        if (!count)
+        if(!count)
             return ErrorOk;
 
         auto sectionHeaders = GetSectionHeaders();
@@ -225,7 +225,7 @@ namespace GleeBug
         //sort sections on raw address to prevent read errors and have a contiguous buffer
         std::vector<SectionInfo> sortedHeaders;
         sortedHeaders.reserve(count);
-        for (uint16 i = 0; i < count; i++)
+        for(uint16 i = 0; i < count; i++)
             sortedHeaders.push_back(SectionInfo{ i, sectionHeaders[i] });
 
         std::sort(sortedHeaders.begin(), sortedHeaders.end(), [](const SectionInfo & a, const SectionInfo & b)
@@ -270,14 +270,14 @@ namespace GleeBug
 
         //add the sections to the mSections vector
         mSections.reserve(count);
-        for (uint16 i = 0; i < count; i++)
+        for(uint16 i = 0; i < count; i++)
         {
             const auto & section = sortedHeaders[i];
             mSections.push_back(Section(i, alignment, mSectionHeaders, section.beforeData, section.data));
         }
 
         //create rva/offset -> section maps
-        if (count) //insert pe header offset/rva (file start -> first section is the PE header)
+        if(count)  //insert pe header offset/rva (file start -> first section is the PE header)
         {
             const auto & section = mSections[0];
             mOffsetSectionMap.insert({ Range(0, section.GetHeader().PointerToRawData - 1), HeaderSection });
@@ -287,7 +287,7 @@ namespace GleeBug
         else //TODO: handle file without sections
         {
         }
-        for (const auto & section : mSections)
+        for(const auto & section : mSections)
         {
             //offset -> section index
             auto offset = section.GetHeader().PointerToRawData;
@@ -308,11 +308,11 @@ namespace GleeBug
 
     uint32 Pe::readData(uint32 size)
     {
-        if (!size)
+        if(!size)
             return mOffset;
         std::vector<uint8> temp(size);
 
-        if (!mFile.Read(mOffset, temp.data(), size))
+        if(!mFile.Read(mOffset, temp.data(), size))
             return INVALID_VALUE;
 
         auto result = mOffset;

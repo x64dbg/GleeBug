@@ -145,43 +145,43 @@ SETXSTATEFEATURESMASK _SetXStateFeaturesMask = NULL;
 
 static bool SetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    if (InitXState() == false)
+    if(InitXState() == false)
         return false;
 
     DWORD64 FeatureMask = _GetEnabledXStateFeatures();
-    if ((FeatureMask & XSTATE_MASK_AVX) == 0)
+    if((FeatureMask & XSTATE_MASK_AVX) == 0)
         return false;
 
     DWORD ContextSize = 0;
     BOOL Success = _InitializeContext(NULL,
-        CONTEXT_ALL | CONTEXT_XSTATE,
-        NULL,
-        &ContextSize);
+                                      CONTEXT_ALL | CONTEXT_XSTATE,
+                                      NULL,
+                                      &ContextSize);
 
-    if ((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
+    if((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
         return false;
 
     std::vector<unsigned char> dataBuffer;
     dataBuffer.resize(ContextSize);
     PVOID Buffer = dataBuffer.data();
-    if (Buffer == NULL)
+    if(Buffer == NULL)
         return false;
 
     PCONTEXT Context;
     Success = _InitializeContext(Buffer,
-        CONTEXT_ALL | CONTEXT_XSTATE,
-        &Context,
-        &ContextSize);
-    if (Success == FALSE)
+                                 CONTEXT_ALL | CONTEXT_XSTATE,
+                                 &Context,
+                                 &ContextSize);
+    if(Success == FALSE)
         return false;
 
-    if (_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX) == FALSE)
+    if(_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX) == FALSE)
         return false;
 
-    if (GetThreadContext(hActiveThread, Context) == FALSE)
+    if(GetThreadContext(hActiveThread, Context) == FALSE)
         return false;
 
-    if (_GetXStateFeaturesMask(Context, &FeatureMask) == FALSE)
+    if(_GetXStateFeaturesMask(Context, &FeatureMask) == FALSE)
         return false;
 
     DWORD FeatureLength;
@@ -189,15 +189,15 @@ static bool SetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titconte
     XmmRegister_t* Avx = (XmmRegister_t*)_LocateXStateFeature(Context, XSTATE_AVX, NULL);
     int NumberOfRegisters = FeatureLength / sizeof(Sse[0]);
 
-    if (Sse != NULL) //If the feature is unsupported by the processor it will return NULL
+    if(Sse != NULL)  //If the feature is unsupported by the processor it will return NULL
     {
-        for (int i = 0; i < NumberOfRegisters; i++)
+        for(int i = 0; i < NumberOfRegisters; i++)
             Sse[i] = titcontext->YmmRegisters[i].Low;
     }
 
-    if (Avx != NULL) //If the feature is unsupported by the processor it will return NULL
+    if(Avx != NULL)  //If the feature is unsupported by the processor it will return NULL
     {
-        for (int i = 0; i < NumberOfRegisters; i++)
+        for(int i = 0; i < NumberOfRegisters; i++)
             Avx[i] = titcontext->YmmRegisters[i].High;
     }
 
@@ -206,43 +206,43 @@ static bool SetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titconte
 
 static bool GetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
 {
-    if (InitXState() == false)
+    if(InitXState() == false)
         return false;
 
     DWORD64 FeatureMask = _GetEnabledXStateFeatures();
-    if ((FeatureMask & XSTATE_MASK_AVX) == 0)
+    if((FeatureMask & XSTATE_MASK_AVX) == 0)
         return false;
 
     DWORD ContextSize = 0;
     BOOL Success = _InitializeContext(NULL,
-        CONTEXT_ALL | CONTEXT_XSTATE,
-        NULL,
-        &ContextSize);
+                                      CONTEXT_ALL | CONTEXT_XSTATE,
+                                      NULL,
+                                      &ContextSize);
 
-    if ((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
+    if((Success == TRUE) || (GetLastError() != ERROR_INSUFFICIENT_BUFFER))
         return false;
 
     std::vector<unsigned char> dataBuffer;
     dataBuffer.resize(ContextSize);
     PVOID Buffer = dataBuffer.data();
-    if (Buffer == NULL)
+    if(Buffer == NULL)
         return false;
 
     PCONTEXT Context;
     Success = _InitializeContext(Buffer,
-        CONTEXT_ALL | CONTEXT_XSTATE,
-        &Context,
-        &ContextSize);
-    if (Success == FALSE)
+                                 CONTEXT_ALL | CONTEXT_XSTATE,
+                                 &Context,
+                                 &ContextSize);
+    if(Success == FALSE)
         return false;
 
-    if (_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX) == FALSE)
+    if(_SetXStateFeaturesMask(Context, XSTATE_MASK_AVX) == FALSE)
         return false;
 
-    if (GetThreadContext(hActiveThread, Context) == FALSE)
+    if(GetThreadContext(hActiveThread, Context) == FALSE)
         return false;
 
-    if (_GetXStateFeaturesMask(Context, &FeatureMask) == FALSE)
+    if(_GetXStateFeaturesMask(Context, &FeatureMask) == FALSE)
         return false;
 
     DWORD FeatureLength;
@@ -250,15 +250,15 @@ static bool GetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titconte
     XmmRegister_t* Avx = (XmmRegister_t*)_LocateXStateFeature(Context, XSTATE_AVX, NULL);
     int NumberOfRegisters = FeatureLength / sizeof(Sse[0]);
 
-    if (Sse != NULL) //If the feature is unsupported by the processor it will return NULL
+    if(Sse != NULL)  //If the feature is unsupported by the processor it will return NULL
     {
-        for (int i = 0; i < NumberOfRegisters; i++)
+        for(int i = 0; i < NumberOfRegisters; i++)
             titcontext->YmmRegisters[i].Low = Sse[i];
     }
 
-    if (Avx != NULL) //If the feature is unsupported by the processor it will return NULL
+    if(Avx != NULL)  //If the feature is unsupported by the processor it will return NULL
     {
-        for (int i = 0; i < NumberOfRegisters; i++)
+        for(int i = 0; i < NumberOfRegisters; i++)
             titcontext->YmmRegisters[i].High = Avx[i];
     }
 
@@ -272,7 +272,7 @@ bool _SetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcont
 
     DBGContext.ContextFlags = CONTEXT_ALL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
 
-    if (!GetThreadContext(hActiveThread, &DBGContext))
+    if(!GetThreadContext(hActiveThread, &DBGContext))
         return false;
 
     DBGContext.EFlags = (DWORD)titcontext->eflags;
@@ -356,7 +356,7 @@ bool _SetFullContextDataEx(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcont
 
     bool returnf = !!SetThreadContext(hActiveThread, &DBGContext);
 
-    if (AVX_PRIORITY)
+    if(AVX_PRIORITY)
         SetAVXContext(hActiveThread, titcontext);
 
     return returnf;

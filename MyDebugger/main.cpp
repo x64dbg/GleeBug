@@ -14,7 +14,7 @@ static void testDebugger()
     wchar_t szCommandLine[256] = L"";
     wchar_t szCurrentDir[256] = L"c:\\";
     MyDebugger dbg;
-    if (dbg.Init(szFilePath, szCommandLine, szCurrentDir))
+    if(dbg.Init(szFilePath, szCommandLine, szCurrentDir))
     {
         puts("Debugger::Init success!");
         dbg.Start();
@@ -30,12 +30,12 @@ template<typename T>
 static void printRegion(const char* str, Region<T> region, bool newline = true)
 {
     printf("\n%s (offset: 0x%X, size: 0x%X, v: %s, e: %s)",
-        str,
-        region.Offset(),
-        region.Size(),
-        region.Valid() ? "true" : "false",
-        region.Empty() ? "true" : "false");
-    if (newline)
+           str,
+           region.Offset(),
+           region.Size(),
+           region.Valid() ? "true" : "false",
+           region.Empty() ? "true" : "false");
+    if(newline)
         puts("");
 }
 
@@ -65,19 +65,19 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
     using namespace GleeBug;
     auto result = false;
     File diskFile(szFileName, File::ReadOnly);
-    if (diskFile.Open())
+    if(diskFile.Open())
     {
         auto diskSize = diskFile.GetSize();
         std::vector<uint8> diskData(diskSize);
-        if (diskFile.Read(0, diskData.data(), diskSize))
+        if(diskFile.Read(0, diskData.data(), diskSize))
         {
             BufferFile file(diskData.data(), diskSize);
             Pe pe(file);
             auto parseError = pe.Parse(true);
-            if (parseError == Pe::ErrorOk)
+            if(parseError == Pe::ErrorOk)
             {
                 result = true;
-                if (!dumpData)
+                if(!dumpData)
                     return result;
                 auto idh = pe.GetDosHeader();
                 printRegion("DOS Header:", idh);
@@ -87,7 +87,7 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                 auto afterDosData = pe.GetAfterDosData();
                 printRegion("After DOS Data", afterDosData);
 
-                if (pe.IsPe64())
+                if(pe.IsPe64())
                     printNtHeaders(pe.GetNtHeaders64());
                 else
                     printNtHeaders(pe.GetNtHeaders32());
@@ -100,9 +100,9 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                 auto afterSectionHeadersData = pe.GetAfterSectionHeadersData();
                 printRegion("After Section Headers Data", afterSectionHeadersData);
                 auto sections = pe.GetSections();
-                for (const auto & section : sections)
+                for(const auto & section : sections)
                 {
-                    if (section.GetIndex())
+                    if(section.GetIndex())
                         puts("");
                     printf("  Section %d:\n", section.GetIndex());
                     auto cur = section.GetHeader();
@@ -118,13 +118,13 @@ static bool testPeFile(const wchar_t* szFileName, bool dumpData = true)
                 }
 
                 printf("\nOffset -> Section:\n");
-                for (auto range : pe.GetOffsetSectionMap())
+                for(auto range : pe.GetOffsetSectionMap())
                 {
                     printf("  %08llX:%08llX -> %d\n", range.first.first, range.first.second, range.second);
                 }
 
                 printf("\nRva -> Section:\n");
-                for (auto range : pe.GetRvaSectionMap())
+                for(auto range : pe.GetRvaSectionMap())
                 {
                     printf("  %08llX:%08llX -> %d\n", range.first.first, range.first.second, range.second);
                 }
@@ -145,11 +145,11 @@ static void testCorkami()
 #include "PeTests.h"
     wchar_t szBasePath[MAX_PATH] = L"c:\\!exclude\\pe\\bin\\";
     int okCount = 0;
-    for (auto i = 0; i < _countof(peTestFiles); i++)
+    for(auto i = 0; i < _countof(peTestFiles); i++)
     {
         std::wstring fileName(szBasePath);
         fileName += peTestFiles[i];
-        if (testPeFile(fileName.c_str(), false))
+        if(testPeFile(fileName.c_str(), false))
             okCount++;
         else
         {

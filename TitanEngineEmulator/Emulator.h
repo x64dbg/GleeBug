@@ -28,7 +28,7 @@ public:
     PROCESS_INFORMATION* InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder)
     {
         mCbATTACHBREAKPOINT = nullptr;
-        if (!Init(szFileName, szCommandLine, szCurrentFolder))
+        if(!Init(szFileName, szCommandLine, szCurrentFolder))
             return nullptr;
         return &mMainProcess;
     }
@@ -36,20 +36,20 @@ public:
     PROCESS_INFORMATION* InitDLLDebugW(const wchar_t* szFileName, bool /* ReserveModuleBase = false */, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID /*EntryCallBack = 0 */)
     {
         wcscpy_s(szDebuggeeName, szFileName);
-        if (TryExtractDllLoader())
+        if(TryExtractDllLoader())
         {
             mCbATTACHBREAKPOINT = nullptr;
-            if (!Init(szDebuggeeName, szCommandLine, szCurrentFolder, true, true))
+            if(!Init(szDebuggeeName, szCommandLine, szCurrentFolder, true, true))
                 return nullptr;
             wchar_t szName[256] = L"";
             swprintf(szName, 256, L"Local\\szLibraryName%X", mMainProcess.dwProcessId);
             //TODO: close this once we actually see the DLL is loaded in the process
             HANDLE DebugDLLFileMapping = CreateFileMappingW(INVALID_HANDLE_VALUE, 0, PAGE_READWRITE, 0, 512 * sizeof(wchar_t), szName);
-            if (DebugDLLFileMapping)
+            if(DebugDLLFileMapping)
             {
                 const size_t filemapSize = 512;
                 wchar_t* szLibraryPathMapping = (wchar_t*)MapViewOfFile(DebugDLLFileMapping, FILE_MAP_ALL_ACCESS, 0, 0, filemapSize * sizeof(wchar_t));
-                if (szLibraryPathMapping)
+                if(szLibraryPathMapping)
                 {
                     wcscpy_s(szLibraryPathMapping, filemapSize, szFileName);
                     UnmapViewOfFile(szLibraryPathMapping);
@@ -98,7 +98,7 @@ public:
     bool MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead)
     {
         auto process = processFromHandle(hProcess);
-        if (!process)
+        if(!process)
             return false;
         return process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesRead);
     }
@@ -106,7 +106,7 @@ public:
     bool MemoryWriteSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesWritten)
     {
         auto process = processFromHandle(hProcess);
-        if (!process)
+        if(!process)
             return false;
         return process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
@@ -114,11 +114,11 @@ public:
     bool Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
     {
         //TODO: this is fucking inefficient
-        if (!mProcess)
+        if(!mProcess)
             return false;
-        for (DWORD i = 0; i < MemorySize; i++)
+        for(DWORD i = 0; i < MemorySize; i++)
         {
-            if (!mProcess->MemWriteSafe(ptr(MemoryStart) + i, FillByte, 1))
+            if(!mProcess->MemWriteSafe(ptr(MemoryStart) + i, FillByte, 1))
                 return false;
         }
         return true;
@@ -127,7 +127,7 @@ public:
     //Engine
     bool EngineCheckStructAlignment(DWORD StructureType, ULONG_PTR StructureSize) const
     {
-        if (StructureType == UE_STRUCT_TITAN_ENGINE_CONTEXT)
+        if(StructureType == UE_STRUCT_TITAN_ENGINE_CONTEXT)
             return StructureSize == sizeof(TITAN_ENGINE_CONTEXT_t);
         return false;
     }
@@ -144,7 +144,7 @@ public:
 
     void SetCustomHandler(DWORD ExceptionId, PVOID CallBack)
     {
-        switch (ExceptionId)
+        switch(ExceptionId)
         {
         case UE_CH_CREATEPROCESS:
             mCbCREATEPROCESS = CUSTOMHANDLER(CallBack);
@@ -183,7 +183,7 @@ public:
 
     void SetEngineVariable(DWORD VariableId, bool VariableSet)
     {
-        switch (VariableId)
+        switch(VariableId)
         {
         case UE_ENGINE_SET_DEBUG_PRIVILEGE:
             mSetDebugPrivilege = VariableSet;
@@ -303,7 +303,7 @@ public:
     ULONG_PTR GetDebuggedFileBaseAddress()
     {
         auto itr = mProcesses.find(mMainProcess.dwProcessId);
-        if (itr != mProcesses.end())
+        if(itr != mProcesses.end())
             return (ULONG_PTR)itr->second->createProcessInfo.lpBaseOfImage;
         return 0;
     }
@@ -311,14 +311,14 @@ public:
     //Stepping
     void StepOver(LPVOID CallBack)
     {
-        if (!mProcess || !CallBack)
+        if(!mProcess || !CallBack)
             return;
         mProcess->StepOver(STEPCALLBACK(CallBack));
     }
 
     void StepInto(LPVOID CallBack)
     {
-        if (!mThread || !CallBack)
+        if(!mThread || !CallBack)
             return;
         mThread->StepInto(STEPCALLBACK(CallBack));
     }
@@ -328,7 +328,7 @@ public:
         ThreadSuspender(HANDLE hThread, bool running)
             : hThread(running ? hThread : nullptr)
         {
-            if (this->hThread)
+            if(this->hThread)
                 SuspendThread(this->hThread);
         }
 
@@ -337,7 +337,7 @@ public:
 
         ~ThreadSuspender()
         {
-            if (this->hThread)
+            if(this->hThread)
                 ResumeThread(this->hThread);
         }
 
@@ -347,36 +347,36 @@ public:
     //Registers
     ULONG_PTR GetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister)
     {
-        if (!hActiveThread)
+        if(!hActiveThread)
             return 0;
 
         ThreadSuspender suspender(hActiveThread, mIsRunning);
         auto r = registerFromDword(IndexOfRegister);
-        if (r == Registers::R::Invalid)
+        if(r == Registers::R::Invalid)
             __debugbreak();
         return Registers(hActiveThread).Get(r);
     }
 
     bool SetContextDataEx(HANDLE hActiveThread, DWORD IndexOfRegister, ULONG_PTR NewRegisterValue)
     {
-        if (!hActiveThread)
+        if(!hActiveThread)
             return 0;
 
         ThreadSuspender suspender(hActiveThread, mIsRunning);
 
         auto r = registerFromDword(IndexOfRegister);
-        if (r != Registers::R::Invalid)
+        if(r != Registers::R::Invalid)
         {
             Registers(hActiveThread).Set(r, NewRegisterValue);
             return true;
         }
 
         TITAN_ENGINE_CONTEXT_t titcontext;
-        if (!_GetFullContextDataEx(hActiveThread, &titcontext, IndexOfRegister >= UE_MXCSR))
+        if(!_GetFullContextDataEx(hActiveThread, &titcontext, IndexOfRegister >= UE_MXCSR))
             return false;
 
         bool avx_priority = false;
-        switch (IndexOfRegister)
+        switch(IndexOfRegister)
         {
         case UE_X87_STATUSWORD:
         {
@@ -481,7 +481,8 @@ public:
             break;
         }
 
-        default: __debugbreak();
+        default:
+            __debugbreak();
         }
 
         return _SetFullContextDataEx(hActiveThread, &titcontext, avx_priority);
@@ -505,7 +506,7 @@ public:
         DWORD x87r0_position = Getx87r0PositionInRegisterArea(STInTopStack);
         int i;
 
-        for (i = 0; i < 8; i++)
+        for(i = 0; i < 8; i++)
             mmx[i] = *((uint64_t*)GetRegisterAreaOf87register(titcontext->RegisterArea, x87r0_position, i));
     }
 
@@ -522,7 +523,7 @@ public:
         int STInTopStack = GetSTInTOPStackFromStatusWord(titcontext->x87fpu.StatusWord);
         DWORD x87r0_position = Getx87r0PositionInRegisterArea(STInTopStack);
 
-        for (int i = 0; i < 8; i++)
+        for(int i = 0; i < 8; i++)
         {
             memcpy(x87FPURegisters[i].data, GetRegisterAreaOf87register(titcontext->RegisterArea, x87r0_position, i), 10);
             x87FPURegisters[i].st_value = GetSTValueFromIndex(x87r0_position, i);
@@ -595,15 +596,15 @@ public:
         if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
 
-        if (AddressToConvert < FileMapVA)
+        if(AddressToConvert < FileMapVA)
             __debugbreak();
 
         // convert:  FileOffset -> VA
         auto offset =   found->second.pe->ConvertOffsetToRva(
-                            uint32( AddressToConvert - FileMapVA )
+                            uint32(AddressToConvert - FileMapVA)
                         );
 
-        if (offset == INVALID_VALUE)
+        if(offset == INVALID_VALUE)
             return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
@@ -623,8 +624,8 @@ public:
     )
     {
         return ConvertVAtoFileOffsetEx(
-                    FileMapVA ,0 ,0 ,
-                    AddressToConvert, false, ReturnType );
+                   FileMapVA, 0, 0,
+                   AddressToConvert, false, ReturnType);
     }
 
     ////
@@ -652,15 +653,15 @@ public:
 
         // Convert to RVA if needed
         auto RVA_ToConvert = AddressIsRVA ?
-                        AddressToConvert :
-                        AddressToConvert - ImageBase;
+                             AddressToConvert :
+                             AddressToConvert - ImageBase;
 
         // convert:  VA -> FileOffset
         auto offset =   found->second.pe->ConvertRvaToOffset(
-                            uint32( RVA_ToConvert )
+                            uint32(RVA_ToConvert)
                         );
 
-        if (offset == INVALID_VALUE)
+        if(offset == INVALID_VALUE)
             return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
@@ -730,8 +731,8 @@ public:
             __debugbreak(); //return 0;
         auto sections = found->second.pe->GetSections();
         return found->second.pe->IsPe64()
-            ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
-            : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
+               ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
+               : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
     }
 
     ULONG_PTR GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
@@ -752,8 +753,8 @@ public:
             __debugbreak(); //return 0;
         auto sections = pe.GetSections();
         return pe.IsPe64()
-            ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
-            : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
+               ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
+               : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
     }
 
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
@@ -764,7 +765,7 @@ public:
     //Software Breakpoints
     bool SetBPX(ULONG_PTR bpxAddress, DWORD bpxType, LPVOID bpxCallBack)
     {
-        if (!mProcess)
+        if(!mProcess)
             return false;
         return mProcess->SetBreakpoint(bpxAddress, [bpxCallBack](const BreakpointInfo &)
         {
@@ -774,7 +775,7 @@ public:
 
     bool DeleteBPX(ULONG_PTR bpxAddress)
     {
-        if (!mProcess)
+        if(!mProcess)
             return false;
         return mProcess->DeleteBreakpoint(bpxAddress);
     }
@@ -782,7 +783,7 @@ public:
     bool IsBPXEnabled(ULONG_PTR bpxAddress)
     {
         return (mProcess->MemIsValidPtr(bpxAddress) &&
-            mProcess->breakpoints.find({ BreakpointType::Software, bpxAddress }) != mProcess->breakpoints.end());
+                mProcess->breakpoints.find({ BreakpointType::Software, bpxAddress }) != mProcess->breakpoints.end());
     }
 
     void SetBPXOptions(long DefaultBreakPointType)
@@ -792,7 +793,7 @@ public:
     //Memory Breakpoints
     bool SetMemoryBPXEx(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory, DWORD BreakPointType, bool RestoreOnHit, LPVOID bpxCallBack)
     {
-        if (!mProcess)
+        if(!mProcess)
             return false;
         return mProcess->SetMemoryBreakpoint(ptr(MemoryStart), ptr(SizeOfMemory), [bpxCallBack](const BreakpointInfo & info)
         {
@@ -802,7 +803,7 @@ public:
 
     bool RemoveMemoryBPX(ULONG_PTR MemoryStart, SIZE_T SizeOfMemory)
     {
-        if (!mProcess)
+        if(!mProcess)
             return false;
         return mProcess->DeleteMemoryBreakpoint(ptr(MemoryStart));
     }
@@ -810,7 +811,7 @@ public:
     //Hardware Breakpoints
     bool SetHardwareBreakPoint(ULONG_PTR bpxAddress, DWORD IndexOfRegister, DWORD bpxType, DWORD bpxSize, LPVOID bpxCallBack)
     {
-        if (!mProcess)
+        if(!mProcess)
             return false;
         auto running = mIsRunning;
         if(running)
@@ -819,11 +820,11 @@ public:
                 thread.second->Suspend();
         }
         if(!mProcess->SetHardwareBreakpoint(bpxAddress,
-            (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
-        {
-            (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
+                                            (HardwareSlot)IndexOfRegister, [bpxCallBack](const BreakpointInfo & info)
+    {
+        (HWBPCALLBACK(bpxCallBack))((const void*)info.address);
         }, hwtypeFromTitan(bpxType), hwsizeFromTitan(bpxSize)))
-            return false;
+        return false;
         if(running)
         {
             for(auto & thread : mProcess->threads)
@@ -834,7 +835,7 @@ public:
 
     bool DeleteHardwareBreakPoint(DWORD IndexOfRegister)
     {
-        if (!mProcess || IndexOfRegister > 3)
+        if(!mProcess || IndexOfRegister > 3)
             return false;
         auto address = mProcess->hardwareBreakpoints[IndexOfRegister].address;
         return mProcess->DeleteHardwareBreakpoint(address);
@@ -842,11 +843,11 @@ public:
 
     bool GetUnusedHardwareBreakPointRegister(LPDWORD RegisterIndex)
     {
-        if (!mProcess || !RegisterIndex)
+        if(!mProcess || !RegisterIndex)
             return false;
         HardwareSlot slot;
         bool result = mProcess->GetFreeHardwareBreakpointSlot(slot);
-        if (result)
+        if(result)
             *RegisterIndex = (DWORD)slot;
         return result;
     }
@@ -866,55 +867,55 @@ public:
 protected:
     void cbCreateProcessEvent(const CREATE_PROCESS_DEBUG_INFO & createProcess, const Process & process) override
     {
-        if (mCbCREATEPROCESS)
+        if(mCbCREATEPROCESS)
             mCbCREATEPROCESS(&createProcess);
     }
 
     void cbExitProcessEvent(const EXIT_PROCESS_DEBUG_INFO & exitProcess, const Process & process) override
     {
-        if (mCbEXITPROCESS)
+        if(mCbEXITPROCESS)
             mCbEXITPROCESS(&exitProcess);
     }
 
     void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const Thread & thread) override
     {
-        if (mCbCREATETHREAD)
+        if(mCbCREATETHREAD)
             mCbCREATETHREAD(&createThread);
     }
 
     void cbExitThreadEvent(const EXIT_THREAD_DEBUG_INFO & exitThread, const Thread & thread) override
     {
-        if (mCbEXITTHREAD)
+        if(mCbEXITTHREAD)
             mCbEXITTHREAD(&exitThread);
     }
 
     void cbLoadDllEvent(const LOAD_DLL_DEBUG_INFO & loadDll) override
     {
-        if (mCbLOADDLL)
+        if(mCbLOADDLL)
             mCbLOADDLL(&loadDll);
     }
 
     void cbUnloadDllEvent(const UNLOAD_DLL_DEBUG_INFO & unloadDll) override
     {
-        if (mCbUNLOADDLL)
+        if(mCbUNLOADDLL)
             mCbUNLOADDLL(&unloadDll);
     }
 
     void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) override
     {
-        if (mCbUNHANDLEDEXCEPTION)
+        if(mCbUNHANDLEDEXCEPTION)
             mCbUNHANDLEDEXCEPTION(&mDebugEvent.u.Exception);
     }
 
     void cbDebugStringEvent(const OUTPUT_DEBUG_STRING_INFO & debugString) override
     {
-        if (mCbOUTPUTDEBUGSTRING)
+        if(mCbOUTPUTDEBUGSTRING)
             mCbOUTPUTDEBUGSTRING(&debugString);
     }
 
     void cbPreDebugEvent(const DEBUG_EVENT & debugEvent) override
     {
-        if (mCbDEBUGEVENT)
+        if(mCbDEBUGEVENT)
             mCbDEBUGEVENT(&debugEvent);
     }
 
@@ -930,60 +931,103 @@ protected:
 
     void cbSystemBreakpoint() override
     {
-        if (mCbSYSTEMBREAKPOINT)
+        if(mCbSYSTEMBREAKPOINT)
             mCbSYSTEMBREAKPOINT(&mDebugEvent.u.Exception);
     }
 
 private: //functions
     inline Registers::R registerFromDword(DWORD IndexOfRegister)
     {
-        switch (IndexOfRegister)
+        switch(IndexOfRegister)
         {
-        case UE_EAX: return Registers::R::EAX;
-        case UE_EBX: return Registers::R::EBX;
-        case UE_ECX: return Registers::R::ECX;
-        case UE_EDX: return Registers::R::EDX;
-        case UE_EDI: return Registers::R::EDI;
-        case UE_ESI: return Registers::R::ESI;
-        case UE_EBP: return Registers::R::EBP;
-        case UE_ESP: return Registers::R::ESP;
-        case UE_EIP: return Registers::R::EIP;
-        case UE_EFLAGS: return Registers::R::EFlags;
-        case UE_DR0: return Registers::R::DR0;
-        case UE_DR1: return Registers::R::DR1;
-        case UE_DR2: return Registers::R::DR2;
-        case UE_DR3: return Registers::R::DR3;
-        case UE_DR6: return Registers::R::DR6;
-        case UE_DR7: return Registers::R::DR7;
+        case UE_EAX:
+            return Registers::R::EAX;
+        case UE_EBX:
+            return Registers::R::EBX;
+        case UE_ECX:
+            return Registers::R::ECX;
+        case UE_EDX:
+            return Registers::R::EDX;
+        case UE_EDI:
+            return Registers::R::EDI;
+        case UE_ESI:
+            return Registers::R::ESI;
+        case UE_EBP:
+            return Registers::R::EBP;
+        case UE_ESP:
+            return Registers::R::ESP;
+        case UE_EIP:
+            return Registers::R::EIP;
+        case UE_EFLAGS:
+            return Registers::R::EFlags;
+        case UE_DR0:
+            return Registers::R::DR0;
+        case UE_DR1:
+            return Registers::R::DR1;
+        case UE_DR2:
+            return Registers::R::DR2;
+        case UE_DR3:
+            return Registers::R::DR3;
+        case UE_DR6:
+            return Registers::R::DR6;
+        case UE_DR7:
+            return Registers::R::DR7;
 #ifdef _WIN64
-        case UE_RAX: return Registers::R::RAX;
-        case UE_RBX: return Registers::R::RBX;
-        case UE_RCX: return Registers::R::RCX;
-        case UE_RDX: return Registers::R::RDX;
-        case UE_RDI: return Registers::R::RDI;
-        case UE_RSI: return Registers::R::RSI;
-        case UE_RBP: return Registers::R::RBP;
-        case UE_RSP: return Registers::R::RSP;
-        case UE_RIP: return Registers::R::RIP;
-        case UE_RFLAGS: return Registers::R::EFlags;
-        case UE_R8: return Registers::R::R8;
-        case UE_R9: return Registers::R::R9;
-        case UE_R10: return Registers::R::R10;
-        case UE_R11: return Registers::R::R11;
-        case UE_R12: return Registers::R::R12;
-        case UE_R13: return Registers::R::R13;
-        case UE_R14: return Registers::R::R14;
-        case UE_R15: return Registers::R::R15;
+        case UE_RAX:
+            return Registers::R::RAX;
+        case UE_RBX:
+            return Registers::R::RBX;
+        case UE_RCX:
+            return Registers::R::RCX;
+        case UE_RDX:
+            return Registers::R::RDX;
+        case UE_RDI:
+            return Registers::R::RDI;
+        case UE_RSI:
+            return Registers::R::RSI;
+        case UE_RBP:
+            return Registers::R::RBP;
+        case UE_RSP:
+            return Registers::R::RSP;
+        case UE_RIP:
+            return Registers::R::RIP;
+        case UE_RFLAGS:
+            return Registers::R::EFlags;
+        case UE_R8:
+            return Registers::R::R8;
+        case UE_R9:
+            return Registers::R::R9;
+        case UE_R10:
+            return Registers::R::R10;
+        case UE_R11:
+            return Registers::R::R11;
+        case UE_R12:
+            return Registers::R::R12;
+        case UE_R13:
+            return Registers::R::R13;
+        case UE_R14:
+            return Registers::R::R14;
+        case UE_R15:
+            return Registers::R::R15;
 #endif //_WIN64
-        case UE_CIP: return Registers::R::GIP;
-        case UE_CSP: return Registers::R::GSP;
-        case UE_SEG_GS: return Registers::R::GS;
-        case UE_SEG_FS: return Registers::R::FS;
-        case UE_SEG_ES: return Registers::R::ES;
-        case UE_SEG_DS: return Registers::R::DS;
-        case UE_SEG_CS: return Registers::R::CS;
-        case UE_SEG_SS: return Registers::R::SS;
-        default: return Registers::R::Invalid;
+        case UE_CIP:
+            return Registers::R::GIP;
+        case UE_CSP:
+            return Registers::R::GSP;
+        case UE_SEG_GS:
+            return Registers::R::GS;
+        case UE_SEG_FS:
+            return Registers::R::FS;
+        case UE_SEG_ES:
+            return Registers::R::ES;
+        case UE_SEG_DS:
+            return Registers::R::DS;
+        case UE_SEG_CS:
+            return Registers::R::CS;
+        case UE_SEG_SS:
+            return Registers::R::SS;
+        default:
+            return Registers::R::Invalid;
         }
     }
 
@@ -1037,7 +1081,7 @@ private: //functions
 
     static HardwareType hwtypeFromTitan(DWORD type)
     {
-        switch (type)
+        switch(type)
         {
         case UE_HARDWARE_EXECUTE:
             return HardwareType::Execute;
@@ -1052,7 +1096,7 @@ private: //functions
 
     static HardwareSize hwsizeFromTitan(DWORD size)
     {
-        switch (size)
+        switch(size)
         {
         case UE_HARDWARE_SIZE_1:
             return HardwareSize::SizeByte;
@@ -1071,7 +1115,7 @@ private: //functions
 
     static MemoryType memtypeFromTitan(DWORD type)
     {
-        switch (type)
+        switch(type)
         {
         case UE_MEMORY:
             return MemoryType::Access;
@@ -1209,18 +1253,18 @@ private: //functions
     {
         bool result = false;
         HRSRC hResource = FindResourceA(engineHandle, (LPCSTR)szResourceName, "BINARY");
-        if (hResource != NULL)
+        if(hResource != NULL)
         {
             HGLOBAL hResourceGlobal = LoadResource(engineHandle, hResource);
-            if (hResourceGlobal != NULL)
+            if(hResourceGlobal != NULL)
             {
                 DWORD ResourceSize = SizeofResource(engineHandle, hResource);
                 LPVOID ResourceData = LockResource(hResourceGlobal);
                 HANDLE hFile = CreateFileW(szExtractedFileName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (hFile != INVALID_HANDLE_VALUE)
+                if(hFile != INVALID_HANDLE_VALUE)
                 {
                     DWORD NumberOfBytesWritten;
-                    if (WriteFile(hFile, ResourceData, ResourceSize, &NumberOfBytesWritten, NULL))
+                    if(WriteFile(hFile, ResourceData, ResourceSize, &NumberOfBytesWritten, NULL))
                         result = true;
                     CloseHandle(hFile);
                 }
@@ -1232,7 +1276,7 @@ private: //functions
     bool TryExtractDllLoader(bool failedBefore = false)
     {
         wchar_t* szPath = wcsrchr(szDebuggeeName, L'\\');
-        if (szPath)
+        if(szPath)
             szPath[1] = '\0';
         wchar_t DLLLoaderName[64] = L"";
 #ifdef _WIN64
@@ -1242,14 +1286,14 @@ private: //functions
 #endif //_WIN64
         wcscat_s(szDebuggeeName, DLLLoaderName);
 #ifdef _WIN64
-        if (EngineExtractResource("LOADERX64", szDebuggeeName))
+        if(EngineExtractResource("LOADERX64", szDebuggeeName))
 #else
-        if (EngineExtractResource("LOADERX86", szDebuggeeName))
+        if(EngineExtractResource("LOADERX86", szDebuggeeName))
 #endif //_WIN64
             return true;
         return !failedBefore &&
-            GetModuleFileNameW(engineHandle, szDebuggeeName, _countof(szDebuggeeName)) &&
-            TryExtractDllLoader(true);
+               GetModuleFileNameW(engineHandle, szDebuggeeName, _countof(szDebuggeeName)) &&
+               TryExtractDllLoader(true);
     }
 
 private: //variables

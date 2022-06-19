@@ -13,17 +13,17 @@ namespace GleeBug
     }
 
     bool Debugger::Init(const wchar_t* szFilePath,
-        const wchar_t* szCommandLine,
-        const wchar_t* szCurrentDirectory,
-        bool newConsole,
-        bool startSuspended)
+                        const wchar_t* szCommandLine,
+                        const wchar_t* szCurrentDirectory,
+                        bool newConsole,
+                        bool startSuspended)
     {
         memset(&mMainStartupInfo, 0, sizeof(mMainStartupInfo));
         memset(&mMainProcess, 0, sizeof(mMainProcess));
         const wchar_t* szFileNameCreateProcess;
         wchar_t* szCommandLineCreateProcess;
         wchar_t* szCreateWithCmdLine = nullptr;
-        if (szCommandLine == nullptr || !wcslen(szCommandLine))
+        if(szCommandLine == nullptr || !wcslen(szCommandLine))
         {
             szCommandLineCreateProcess = nullptr;
             szFileNameCreateProcess = szFilePath;
@@ -38,15 +38,15 @@ namespace GleeBug
         }
 
         bool result = !!CreateProcessW(szFileNameCreateProcess,
-            szCommandLineCreateProcess,
-            nullptr,
-            nullptr,
-            FALSE,
-            DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | (newConsole ? CREATE_NEW_CONSOLE : 0) | (startSuspended ? CREATE_SUSPENDED : 0),
-            nullptr,
-            szCurrentDirectory,
-            &mMainStartupInfo,
-            &mMainProcess);
+                                       szCommandLineCreateProcess,
+                                       nullptr,
+                                       nullptr,
+                                       FALSE,
+                                       DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS | (newConsole ? CREATE_NEW_CONSOLE : 0) | (startSuspended ? CREATE_SUSPENDED : 0),
+                                       nullptr,
+                                       szCurrentDirectory,
+                                       &mMainStartupInfo,
+                                       &mMainProcess);
 
         delete[] szCreateWithCmdLine;
         mAttachedToProcess = false;
@@ -87,7 +87,7 @@ namespace GleeBug
 
     bool Debugger::UnsafeDetachAndBreak()
     {
-        if (!mProcess || !mThread) //fail when there is no process or thread currently specified
+        if(!mProcess || !mThread)  //fail when there is no process or thread currently specified
             return false;
 
         //trigger an EXCEPTION_SINGLE_STEP in the debuggee

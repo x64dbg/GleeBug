@@ -12,38 +12,38 @@ namespace GleeBug
         mDetachAndBreak = false;
 
         //use correct WaitForDebugEvent function
-        typedef BOOL(WINAPI *MYWAITFORDEBUGEVENT)(
+        typedef BOOL(WINAPI * MYWAITFORDEBUGEVENT)(
             _Out_ LPDEBUG_EVENT lpDebugEvent,
             _In_  DWORD         dwMilliseconds
-            );
+        );
         static auto WFDEX = MYWAITFORDEBUGEVENT(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEventEx"));
         static auto MyWaitForDebugEvent = WFDEX ? WFDEX : MYWAITFORDEBUGEVENT(GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "WaitForDebugEvent"));
-        if (!MyWaitForDebugEvent)
+        if(!MyWaitForDebugEvent)
         {
             cbInternalError("MyWaitForDebugEvent not set!");
             return;
         }
 
-        while (!mBreakDebugger)
+        while(!mBreakDebugger)
         {
             //wait for a debug event
             mIsRunning = true;
-            if (!MyWaitForDebugEvent(&mDebugEvent, 100))
+            if(!MyWaitForDebugEvent(&mDebugEvent, 100))
             {
-                if (mDetach)
+                if(mDetach)
                 {
-                    if (!UnsafeDetach())
+                    if(!UnsafeDetach())
                         cbInternalError("Debugger::Detach failed!");
                     break;
                 }
 #if 0
                 // Fix based on work by https://github.com/number201724
-                if (WaitForSingleObject(mMainProcess.hProcess, 0) == WAIT_OBJECT_0)
+                if(WaitForSingleObject(mMainProcess.hProcess, 0) == WAIT_OBJECT_0)
                 {
                     mDebugEvent.dwDebugEventCode = EXIT_PROCESS_DEBUG_EVENT;
                     mDebugEvent.dwProcessId = mMainProcess.dwProcessId;
                     mDebugEvent.dwThreadId = mMainProcess.dwThreadId;
-                    if (!GetExitCodeProcess(mMainProcess.hProcess, &mDebugEvent.u.ExitProcess.dwExitCode))
+                    if(!GetExitCodeProcess(mMainProcess.hProcess, &mDebugEvent.u.ExitProcess.dwExitCode))
                         mDebugEvent.u.ExitProcess.dwExitCode = 0xFFFFFFFF;
                 }
 #endif
@@ -60,11 +60,11 @@ namespace GleeBug
 
             //set the current process and thread
             auto processFound = mProcesses.find(mDebugEvent.dwProcessId);
-            if (processFound != mProcesses.end())
+            if(processFound != mProcesses.end())
             {
                 mProcess = processFound->second.get();
                 auto threadFound = mProcess->threads.find(mDebugEvent.dwThreadId);
-                if (threadFound != mProcess->threads.end())
+                if(threadFound != mProcess->threads.end())
                 {
                     mThread = mProcess->thread = threadFound->second.get();
                 }
@@ -76,7 +76,7 @@ namespace GleeBug
             else
             {
                 mThread = nullptr;
-                if (mProcess)
+                if(mProcess)
                 {
                     mProcess->thread = nullptr;
                     mProcess = nullptr;
@@ -87,7 +87,7 @@ namespace GleeBug
             cbPreDebugEvent(mDebugEvent);
 
             //dispatch the debug event (documented here: https://msdn.microsoft.com/en-us/library/windows/desktop/ms679302(v=vs.85).aspx)
-            switch (mDebugEvent.dwDebugEventCode)
+            switch(mDebugEvent.dwDebugEventCode)
             {
             case CREATE_PROCESS_DEBUG_EVENT:
                 createProcessEvent(mDebugEvent.u.CreateProcessInfo);
@@ -125,27 +125,27 @@ namespace GleeBug
             cbPostDebugEvent(mDebugEvent);
 
             //execute the delayed-detach
-            if (mDetachAndBreak)
+            if(mDetachAndBreak)
             {
-                if (!UnsafeDetachAndBreak())
+                if(!UnsafeDetachAndBreak())
                     cbInternalError("Debugger::DetachAndBreak failed!");
                 break;
             }
 
             //clear trap flag when set by GleeBug (to prevent an EXCEPTION_SINGLE_STEP after detach)
-            if (mDetach && mThread)
+            if(mDetach && mThread)
             {
-                if (mThread->isInternalStepping || mThread->isSingleStepping)
+                if(mThread->isInternalStepping || mThread->isSingleStepping)
                     Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
             }
 
             //continue the debug event
-            if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
+            if(!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
                 break;
 
-            if (mDetach || mDetachAndBreak)
+            if(mDetach || mDetachAndBreak)
             {
-                if (!UnsafeDetach())
+                if(!UnsafeDetach())
                     cbInternalError("Debugger::Detach failed!");
                 break;
             }
