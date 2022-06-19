@@ -432,15 +432,14 @@ namespace GleeBug
         //TODO: check if the right type is accessed (ExceptionInformation[0])
         //FIXED: 
         auto bpxPage = mProcess->memoryBreakpointPages.find(exceptionAddress & ~(PAGE_SIZE - 1));
-        auto pageAddr = bpxPage->first;
-        auto pageProperties = bpxPage->second;
-
         if (bpxPage == mProcess->memoryBreakpointPages.end())
         {
             sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
             cbInternalError(error);
             return;
         }
+        auto pageAddr = bpxPage->first;
+        auto pageProperties = bpxPage->second;
 
         /*
         Access = 1,
