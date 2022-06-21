@@ -403,7 +403,7 @@ namespace GleeBug
 
         //delete the breakpoint from the maps
         breakpoints.erase(found);
-        breakpointCallbacks.erase({ BreakpointType::Hardware, address });
+        breakpointCallbacks.erase({ BreakpointType::Memory, address });
         memoryBreakpointRanges.erase(Range(address, address));
         return success;
     }
