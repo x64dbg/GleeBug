@@ -41,53 +41,53 @@ namespace GleeBug
     static ptr dr7_ptr(const DR7 & dr7)
     {
         ptr result = 0;
-        if (BITGET(dr7.DR7_MODE[0], 0))
+        if(BITGET(dr7.DR7_MODE[0], 0))
             BITSET(result, 0);
-        if (BITGET(dr7.DR7_MODE[0], 1))
+        if(BITGET(dr7.DR7_MODE[0], 1))
             BITSET(result, 1);
-        if (BITGET(dr7.DR7_MODE[1], 0))
+        if(BITGET(dr7.DR7_MODE[1], 0))
             BITSET(result, 2);
-        if (BITGET(dr7.DR7_MODE[1], 1))
+        if(BITGET(dr7.DR7_MODE[1], 1))
             BITSET(result, 3);
-        if (BITGET(dr7.DR7_MODE[2], 0))
+        if(BITGET(dr7.DR7_MODE[2], 0))
             BITSET(result, 4);
-        if (BITGET(dr7.DR7_MODE[2], 1))
+        if(BITGET(dr7.DR7_MODE[2], 1))
             BITSET(result, 5);
-        if (BITGET(dr7.DR7_MODE[3], 0))
+        if(BITGET(dr7.DR7_MODE[3], 0))
             BITSET(result, 6);
-        if (BITGET(dr7.DR7_MODE[3], 1))
+        if(BITGET(dr7.DR7_MODE[3], 1))
             BITSET(result, 7);
-        if (BITGET(dr7.DR7_TYPE[0], 0))
+        if(BITGET(dr7.DR7_TYPE[0], 0))
             BITSET(result, 16);
-        if (BITGET(dr7.DR7_TYPE[0], 1))
+        if(BITGET(dr7.DR7_TYPE[0], 1))
             BITSET(result, 17);
-        if (BITGET(dr7.DR7_SIZE[0], 0))
+        if(BITGET(dr7.DR7_SIZE[0], 0))
             BITSET(result, 18);
-        if (BITGET(dr7.DR7_SIZE[0], 1))
+        if(BITGET(dr7.DR7_SIZE[0], 1))
             BITSET(result, 19);
-        if (BITGET(dr7.DR7_TYPE[1], 0))
+        if(BITGET(dr7.DR7_TYPE[1], 0))
             BITSET(result, 20);
-        if (BITGET(dr7.DR7_TYPE[1], 1))
+        if(BITGET(dr7.DR7_TYPE[1], 1))
             BITSET(result, 21);
-        if (BITGET(dr7.DR7_SIZE[1], 0))
+        if(BITGET(dr7.DR7_SIZE[1], 0))
             BITSET(result, 22);
-        if (BITGET(dr7.DR7_SIZE[1], 1))
+        if(BITGET(dr7.DR7_SIZE[1], 1))
             BITSET(result, 23);
-        if (BITGET(dr7.DR7_TYPE[2], 0))
+        if(BITGET(dr7.DR7_TYPE[2], 0))
             BITSET(result, 24);
-        if (BITGET(dr7.DR7_TYPE[2], 1))
+        if(BITGET(dr7.DR7_TYPE[2], 1))
             BITSET(result, 25);
-        if (BITGET(dr7.DR7_SIZE[2], 0))
+        if(BITGET(dr7.DR7_SIZE[2], 0))
             BITSET(result, 26);
-        if (BITGET(dr7.DR7_SIZE[2], 1))
+        if(BITGET(dr7.DR7_SIZE[2], 1))
             BITSET(result, 27);
-        if (BITGET(dr7.DR7_TYPE[3], 0))
+        if(BITGET(dr7.DR7_TYPE[3], 0))
             BITSET(result, 28);
-        if (BITGET(dr7.DR7_TYPE[3], 1))
+        if(BITGET(dr7.DR7_TYPE[3], 1))
             BITSET(result, 29);
-        if (BITGET(dr7.DR7_SIZE[3], 0))
+        if(BITGET(dr7.DR7_SIZE[3], 0))
             BITSET(result, 30);
-        if (BITGET(dr7.DR7_SIZE[3], 1))
+        if(BITGET(dr7.DR7_SIZE[3], 1))
             BITSET(result, 31);
         return result;
     }
@@ -96,60 +96,60 @@ namespace GleeBug
     {
         DR7 result;
         memset(&result, 0, sizeof(DR7));
-        if (BITGET(dr7, 0))
+        if(BITGET(dr7, 0))
             BITSET(result.DR7_MODE[0], 0);
-        if (BITGET(dr7, 1))
+        if(BITGET(dr7, 1))
             BITSET(result.DR7_MODE[0], 1);
-        if (BITGET(dr7, 2))
+        if(BITGET(dr7, 2))
             BITSET(result.DR7_MODE[1], 0);
-        if (BITGET(dr7, 3))
+        if(BITGET(dr7, 3))
             BITSET(result.DR7_MODE[1], 1);
-        if (BITGET(dr7, 4))
+        if(BITGET(dr7, 4))
             BITSET(result.DR7_MODE[2], 0);
-        if (BITGET(dr7, 5))
+        if(BITGET(dr7, 5))
             BITSET(result.DR7_MODE[2], 1);
-        if (BITGET(dr7, 6))
+        if(BITGET(dr7, 6))
             BITSET(result.DR7_MODE[3], 0);
-        if (BITGET(dr7, 7))
+        if(BITGET(dr7, 7))
             BITSET(result.DR7_MODE[3], 1);
-        if (BITGET(dr7, 16))
+        if(BITGET(dr7, 16))
             BITSET(result.DR7_TYPE[0], 0);
-        if (BITGET(dr7, 17))
+        if(BITGET(dr7, 17))
             BITSET(result.DR7_TYPE[0], 1);
-        if (BITGET(dr7, 18))
+        if(BITGET(dr7, 18))
             BITSET(result.DR7_SIZE[0], 0);
-        if (BITGET(dr7, 19))
+        if(BITGET(dr7, 19))
             BITSET(result.DR7_SIZE[0], 1);
-        if (BITGET(dr7, 20))
+        if(BITGET(dr7, 20))
             BITSET(result.DR7_TYPE[1], 0);
-        if (BITGET(dr7, 21))
+        if(BITGET(dr7, 21))
             BITSET(result.DR7_TYPE[1], 1);
-        if (BITGET(dr7, 22))
+        if(BITGET(dr7, 22))
             BITSET(result.DR7_SIZE[1], 0);
-        if (BITGET(dr7, 23))
+        if(BITGET(dr7, 23))
             BITSET(result.DR7_SIZE[1], 1);
-        if (BITGET(dr7, 24))
+        if(BITGET(dr7, 24))
             BITSET(result.DR7_TYPE[2], 0);
-        if (BITGET(dr7, 25))
+        if(BITGET(dr7, 25))
             BITSET(result.DR7_TYPE[2], 1);
-        if (BITGET(dr7, 26))
+        if(BITGET(dr7, 26))
             BITSET(result.DR7_SIZE[2], 0);
-        if (BITGET(dr7, 27))
+        if(BITGET(dr7, 27))
             BITSET(result.DR7_SIZE[2], 1);
-        if (BITGET(dr7, 28))
+        if(BITGET(dr7, 28))
             BITSET(result.DR7_TYPE[3], 0);
-        if (BITGET(dr7, 29))
+        if(BITGET(dr7, 29))
             BITSET(result.DR7_TYPE[3], 1);
-        if (BITGET(dr7, 30))
+        if(BITGET(dr7, 30))
             BITSET(result.DR7_SIZE[3], 0);
-        if (BITGET(dr7, 31))
+        if(BITGET(dr7, 31))
             BITSET(result.DR7_SIZE[3], 1);
         return result;
     }
 
     static DR7_SIZE size_dr7(HardwareSize size)
     {
-        switch (size)
+        switch(size)
         {
         case HardwareSize::SizeByte:
             return SIZE_1;
@@ -168,7 +168,7 @@ namespace GleeBug
 
     static DR7_TYPE type_dr7(HardwareType type)
     {
-        switch (type)
+        switch(type)
         {
         case HardwareType::Access:
             return TYPE_READWRITE;
@@ -184,13 +184,13 @@ namespace GleeBug
     bool Thread::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size)
     {
         //check if the alignment is correct
-        if ((address % int(size) != 0))
+        if((address % int(size) != 0))
             return false;
 
         Registers registers(hThread, CONTEXT_DEBUG_REGISTERS);
 
         //set the address register
-        switch (slot)
+        switch(slot)
         {
         case HardwareSlot::Dr0:
             registers.Dr0 = address;
@@ -224,7 +224,7 @@ namespace GleeBug
         Registers registers(hThread, CONTEXT_DEBUG_REGISTERS);
 
         //zero the address register
-        switch (slot)
+        switch(slot)
         {
         case HardwareSlot::Dr0:
             registers.Dr0 = 0;

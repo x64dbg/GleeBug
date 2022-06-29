@@ -10,10 +10,10 @@ namespace GleeBug
     public:
         explicit Section(uint16 index, uint32 alignment, Region<IMAGE_SECTION_HEADER> & headers, Region<uint8> beforeData, Region<uint8> data)
             : mIndex(index),
-            mAlignment(alignment),
-            mHeaders(headers),
-            mBeforeData(beforeData),
-            mData(data)
+              mAlignment(alignment),
+              mHeaders(headers),
+              mBeforeData(beforeData),
+              mData(data)
         {
         }
 

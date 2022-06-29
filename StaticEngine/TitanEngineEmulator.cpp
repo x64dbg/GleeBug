@@ -122,10 +122,10 @@ __declspec(dllexport) ULONG_PTR TITCALL ImporterGetRemoteAPIAddressEx(const char
     static auto hModule = GetModuleHandleW(X64DBG_DLL);
 #undef X64DBG_DLL
 
-    if (hModule)
+    if(hModule)
     {
         static auto DbgValFromString = (ULONG_PTR(*)(const char*))GetProcAddress(hModule, "DbgValFromString");
-        if (DbgValFromString)
+        if(DbgValFromString)
         {
             char expr[1024] = "";
             _snprintf_s(expr, _TRUNCATE, "\"%s\":%s", szDLLName, szAPIName);
@@ -293,7 +293,7 @@ BOOL WINAPI DllMain(
     _In_ LPVOID    lpvReserved
 )
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    if(fdwReason == DLL_PROCESS_ATTACH)
         emu.engineHandle = hinstDLL;
     return TRUE;
 }

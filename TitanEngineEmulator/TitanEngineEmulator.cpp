@@ -306,7 +306,7 @@ BOOL WINAPI DllMain(
     _In_ LPVOID    lpvReserved
 )
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    if(fdwReason == DLL_PROCESS_ATTACH)
         emu.engineHandle = hinstDLL;
     return TRUE;
 }

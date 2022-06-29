@@ -108,7 +108,8 @@ public:
                             dwMainThreadId = te.th32ThreadID;
                     }
                     te.dwSize = sizeof(te);
-                } while(Thread32Next(h, &te));
+                }
+                while(Thread32Next(h, &te));
             }
             CloseHandle(h);
         }
@@ -151,7 +152,7 @@ public:
         mProcessInfo.dwThreadId = dwMainThreadId;
         mProcessInfo.hThread = mThreadList[dwMainThreadId];
         *mAttachProcessInfo = mProcessInfo;
-        
+
         //create process
         CREATE_PROCESS_DEBUG_INFO createProcess;
         memset(&createProcess, 0, sizeof(CREATE_PROCESS_DEBUG_INFO));
@@ -190,7 +191,7 @@ public:
             if(!dllName.empty())
                 CloseHandle(loadDll.hFile);
         }
-        
+
         //create threads
         for(auto it : mThreadList)
         {
@@ -211,7 +212,7 @@ public:
 
         //attach breakpoint
         mCbATTACHBREAKPOINT();
-        
+
         //system breakpoint
         mCbSYSTEMBREAKPOINT(nullptr);
 
@@ -244,11 +245,11 @@ public:
         if(!lpNumberOfBytesRead)
             lpNumberOfBytesRead = &s;
         auto x = !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
-        if (!x && nSize <= 0x1000)
+        if(!x && nSize <= 0x1000)
         {
             NtSuspendProcess(hProcess);
             DWORD oldProtect = 0;
-            if (VirtualProtectEx(hProcess, lpBaseAddress, 0x1000, PAGE_EXECUTE_READWRITE, &oldProtect))
+            if(VirtualProtectEx(hProcess, lpBaseAddress, 0x1000, PAGE_EXECUTE_READWRITE, &oldProtect))
             {
                 x = !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
                 VirtualProtectEx(hProcess, lpBaseAddress, 0x1000, oldProtect, &oldProtect);
@@ -275,7 +276,7 @@ public:
     //Engine
     bool EngineCheckStructAlignment(DWORD StructureType, ULONG_PTR StructureSize) const
     {
-        if (StructureType == UE_STRUCT_TITAN_ENGINE_CONTEXT)
+        if(StructureType == UE_STRUCT_TITAN_ENGINE_CONTEXT)
             return StructureSize == sizeof(TITAN_ENGINE_CONTEXT_t);
         return false;
     }
@@ -292,7 +293,7 @@ public:
 
     void SetCustomHandler(DWORD ExceptionId, PVOID CallBack)
     {
-        switch (ExceptionId)
+        switch(ExceptionId)
         {
         case UE_CH_CREATEPROCESS:
             mCbCREATEPROCESS = CUSTOMHANDLER(CallBack);
@@ -386,11 +387,11 @@ public:
 
     HANDLE TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId)
     {
-        if (mSetDebugPrivilege)
+        if(mSetDebugPrivilege)
             setDebugPrivilege(GetCurrentProcess(), true);
         HANDLE hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
         DWORD dwLastError = GetLastError();
-        if (mSetDebugPrivilege)
+        if(mSetDebugPrivilege)
             setDebugPrivilege(GetCurrentProcess(), false);
         SetLastError(dwLastError);
         return hProcess;
@@ -398,11 +399,11 @@ public:
 
     HANDLE TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
     {
-        if (mSetDebugPrivilege)
+        if(mSetDebugPrivilege)
             setDebugPrivilege(GetCurrentProcess(), true);
         HANDLE hThread = OpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
         DWORD dwLastError = GetLastError();
-        if (mSetDebugPrivilege)
+        if(mSetDebugPrivilege)
             setDebugPrivilege(GetCurrentProcess(), false);
         SetLastError(dwLastError);
         return hThread;
@@ -476,7 +477,7 @@ public:
     bool StaticFileLoadW(const wchar_t* szFileName, DWORD DesiredAccess, bool SimulateLoad, LPHANDLE FileHandle, LPDWORD LoadedSize, LPHANDLE FileMap, PULONG_PTR FileMapVA)
     {
         auto file = new ::FileMap<unsigned char>;
-        if (!file->Map(szFileName, DesiredAccess == UE_ACCESS_ALL))
+        if(!file->Map(szFileName, DesiredAccess == UE_ACCESS_ALL))
             __debugbreak(); //return false;
         *FileHandle = file->hFile;
         *LoadedSize = file->size;
@@ -486,7 +487,7 @@ public:
         mappedPe.file = std::move(file);
         mappedPe.buffer = new BufferFile(mappedPe.file->data, mappedPe.file->size);
         mappedPe.pe = new Pe(*mappedPe.buffer);
-        if (mappedPe.pe->Parse(true) != Pe::ErrorOk)
+        if(mappedPe.pe->Parse(true) != Pe::ErrorOk)
             __debugbreak();
         mappedFiles.insert({ *FileMapVA, mappedPe });
         return true;
@@ -495,7 +496,7 @@ public:
     bool StaticFileUnloadW(const wchar_t* szFileName, bool CommitChanges, HANDLE FileHandle, DWORD LoadedSize, HANDLE FileMap, ULONG_PTR FileMapVA)
     {
         auto found = mappedFiles.find(FileMapVA);
-        if (found == mappedFiles.end())
+        if(found == mappedFiles.end())
             __debugbreak(); //return false;
         delete found->second.pe;
         delete found->second.buffer;
@@ -517,21 +518,21 @@ public:
     )
     {
         auto found = mappedFiles.find(FileMapVA);
-        if (found == mappedFiles.end())
+        if(found == mappedFiles.end())
             __debugbreak(); //return 0;
 
-        if (!found->second.pe->IsValidPe())
+        if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
 
-        if (AddressToConvert < FileMapVA)
+        if(AddressToConvert < FileMapVA)
             __debugbreak();
 
         // convert:  FileOffset -> VA
         auto offset =   found->second.pe->ConvertOffsetToRva(
-                            uint32( AddressToConvert - FileMapVA )
+                            uint32(AddressToConvert - FileMapVA)
                         );
 
-        if (offset == INVALID_VALUE)
+        if(offset == INVALID_VALUE)
             return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
@@ -551,8 +552,8 @@ public:
     )
     {
         return ConvertVAtoFileOffsetEx(
-                    FileMapVA ,0 ,0 ,
-                    AddressToConvert, false, ReturnType );
+                   FileMapVA, 0, 0,
+                   AddressToConvert, false, ReturnType);
     }
 
     ////
@@ -572,23 +573,23 @@ public:
     )
     {
         auto found = mappedFiles.find(FileMapVA);
-        if (found == mappedFiles.end())
+        if(found == mappedFiles.end())
             __debugbreak(); //return 0;
 
-        if (!found->second.pe->IsValidPe())
+        if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
 
         // Convert to RVA if needed
         auto RVA_ToConvert = AddressIsRVA ?
-                        AddressToConvert :
-                        AddressToConvert - ImageBase;
+                             AddressToConvert :
+                             AddressToConvert - ImageBase;
 
         // convert:  VA -> FileOffset
         auto offset =   found->second.pe->ConvertRvaToOffset(
-                            uint32( RVA_ToConvert )
+                            uint32(RVA_ToConvert)
                         );
 
-        if (offset == INVALID_VALUE)
+        if(offset == INVALID_VALUE)
             return 0;
         else
             return ReturnType ? FileMapVA + offset : offset;
@@ -597,7 +598,7 @@ public:
     template<typename T>
     ULONG_PTR GetPE32DataW_impl(const Region<T> & headers, DWORD WhichSection, DWORD WhichData, const std::vector<Section> & sections)
     {
-        switch (WhichData)
+        switch(WhichData)
         {
         case UE_PE_OFFSET:
             return headers.Offset();
@@ -652,14 +653,14 @@ public:
     ULONG_PTR GetPE32DataFromMappedFile(ULONG_PTR FileMapVA, DWORD WhichSection, DWORD WhichData)
     {
         auto found = mappedFiles.find(FileMapVA);
-        if (found == mappedFiles.end())
+        if(found == mappedFiles.end())
             __debugbreak(); //return 0;
-        if (!found->second.pe->IsValidPe())
+        if(!found->second.pe->IsValidPe())
             __debugbreak(); //return 0;
         auto sections = found->second.pe->GetSections();
         return found->second.pe->IsPe64()
-            ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
-            : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
+               ? GetPE32DataW_impl(found->second.pe->GetNtHeaders64(), WhichSection, WhichData, sections)
+               : GetPE32DataW_impl(found->second.pe->GetNtHeaders32(), WhichSection, WhichData, sections);
     }
 
     ULONG_PTR GetPE32Data(const char* szFileName, DWORD WhichSection, DWORD WhichData)
@@ -670,18 +671,18 @@ public:
     ULONG_PTR GetPE32DataW(const wchar_t* szFileName, DWORD WhichSection, DWORD WhichData)
     {
         FileMap<unsigned char> file;
-        if (!file.Map(szFileName))
+        if(!file.Map(szFileName))
             __debugbreak(); //return 0;
         BufferFile buf(file.data, file.size);
         Pe pe(buf);
-        if (pe.Parse(true) != Pe::ErrorOk)
+        if(pe.Parse(true) != Pe::ErrorOk)
             __debugbreak(); //return 0;
-        if (!pe.IsValidPe())
+        if(!pe.IsValidPe())
             __debugbreak(); //return 0;
         auto sections = pe.GetSections();
         return pe.IsPe64()
-            ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
-            : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
+               ? GetPE32DataW_impl(pe.GetNtHeaders64(), WhichSection, WhichData, sections)
+               : GetPE32DataW_impl(pe.GetNtHeaders32(), WhichSection, WhichData, sections);
     }
 
     bool IsFileDLLW(const wchar_t* szFileName, ULONG_PTR FileMapVA)
@@ -767,17 +768,17 @@ private: //functions
     {
         DWORD dwLastError;
         HANDLE hToken = 0;
-        if (!OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+        if(!OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
         {
             dwLastError = GetLastError();
-            if (hToken)
+            if(hToken)
                 CloseHandle(hToken);
             return dwLastError;
         }
         TOKEN_PRIVILEGES tokenPrivileges;
         memset(&tokenPrivileges, 0, sizeof(TOKEN_PRIVILEGES));
         LUID luid;
-        if (!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid))
+        if(!LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid))
         {
             dwLastError = GetLastError();
             CloseHandle(hToken);
@@ -785,7 +786,7 @@ private: //functions
         }
         tokenPrivileges.PrivilegeCount = 1;
         tokenPrivileges.Privileges[0].Luid = luid;
-        if (bEnablePrivilege)
+        if(bEnablePrivilege)
             tokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
         else
             tokenPrivileges.Privileges[0].Attributes = 0;

@@ -108,7 +108,7 @@ namespace GleeBug
     {
         memset(&mContext, 0, sizeof(CONTEXT));
         mContext.ContextFlags = ContextFlags;
-        if (!!GetThreadContext(hThread, &mContext))
+        if(!!GetThreadContext(hThread, &mContext))
         {
             this->hThread = hThread;
             memcpy(&mOldContext, &mContext, sizeof(CONTEXT));
@@ -121,7 +121,7 @@ namespace GleeBug
 
     Registers::~Registers()
     {
-        if (hThread && memcmp(&mContext, &mOldContext, sizeof(CONTEXT)) != 0)
+        if(hThread && memcmp(&mContext, &mOldContext, sizeof(CONTEXT)) != 0)
             SetThreadContext(hThread, &mContext);
     }
 

@@ -137,7 +137,7 @@ public:
     Type Get() const
     {
         auto ptr = (Type*)mRegisters->getPtr(RegisterIndex);
-        if (ptr)
+        if(ptr)
             return *ptr;
         return Type();
     }
@@ -149,7 +149,7 @@ public:
     void Set(Type value)
     {
         auto ptr = (Type*)mRegisters->getPtr(RegisterIndex);
-        if (ptr)
+        if(ptr)
             *ptr = value;
     }
 

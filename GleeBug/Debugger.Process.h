@@ -57,7 +57,7 @@ namespace GleeBug
         */
         bool MemRead(ptr address, void* buffer, ptr size, ptr* bytesRead = nullptr, bool safe = true) const
         {
-            if (safe)
+            if(safe)
                 return MemReadSafe(address, buffer, size, bytesRead);
             return MemRead(address, buffer, size, bytesRead);
         }
@@ -93,7 +93,7 @@ namespace GleeBug
         */
         bool MemWrite(ptr address, const void* buffer, ptr size, ptr* bytesWritten = nullptr, bool safe = true)
         {
-            if (safe)
+            if(safe)
                 return MemWriteSafe(address, buffer, size, bytesWritten);
             return MemWriteUnsafe(address, buffer, size, bytesWritten);
         }

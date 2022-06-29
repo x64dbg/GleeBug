@@ -29,8 +29,8 @@ namespace GleeBug
         */
         explicit Region(std::vector<uint8>* data, uint32 offset, uint32 count = 1)
             : mData(data),
-            mOffset(offset),
-            mCount(count)
+              mOffset(offset),
+              mCount(count)
         {
         }
 
@@ -48,7 +48,7 @@ namespace GleeBug
         */
         T* Data() const
         {
-            if (!Valid())
+            if(!Valid())
                 return nullptr;
             return (T*)(mData->data() + mOffset);
         }
@@ -83,9 +83,9 @@ namespace GleeBug
         bool Valid() const
         {
             return mOffset != INVALID_VALUE &&
-                mCount != INVALID_VALUE &&
-                mData && mData->data() &&
-                mOffset + mCount * sizeof(T) <= mData->size();
+                   mCount != INVALID_VALUE &&
+                   mData && mData->data() &&
+                   mOffset + mCount * sizeof(T) <= mData->size();
         }
 
         /**
@@ -107,7 +107,7 @@ namespace GleeBug
         /**
         \brief Returns Data().
         */
-        T* operator ()() const
+        T* operator()() const
         {
             return Data();
         }

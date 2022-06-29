@@ -56,7 +56,7 @@ namespace GleeBug
 {
     ptr Registers::Get(R reg)
     {
-        switch (reg)
+        switch(reg)
         {
         case R::DR0:
             return ptr(mContext.Dr0);
@@ -258,7 +258,7 @@ namespace GleeBug
 
     void Registers::Set(R reg, ptr value)
     {
-        switch (reg)
+        switch(reg)
         {
         case R::DR0:
             mContext.Dr0 = value;
@@ -556,7 +556,7 @@ namespace GleeBug
 
     void Registers::SetFlag(F flag, bool set)
     {
-        if (set)
+        if(set)
             mContext.EFlags |= ptr(flag);
         else
             mContext.EFlags &= ~ptr(flag);
@@ -564,7 +564,7 @@ namespace GleeBug
 
     void* Registers::getPtr(R reg)
     {
-        switch (reg)
+        switch(reg)
         {
         case R::DR0:
             return REGPTR(mContext.Dr0);
