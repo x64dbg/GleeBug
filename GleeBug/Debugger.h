@@ -306,7 +306,7 @@ namespace GleeBug
         Thread* mThread = nullptr;
 
     private:
-        bool HollowProcessWithoutASLR(const wchar_t* szFileName, PROCESS_INFORMATION& pi);
+        bool HollowProcessWithoutASLR(const wchar_t* szFileName, PROCESS_INFORMATION & pi);
         ULONG_PTR mDebugModuleImageBase = 0;
     };
 };

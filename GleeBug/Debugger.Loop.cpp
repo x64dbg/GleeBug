@@ -35,7 +35,7 @@ namespace GleeBug
         // Check if DBG_REPLY_LATER is supported based on Windows version (Windows 10, version 1507 or above)
         // https://www.gaijin.at/en/infos/windows-version-numbers
         const uint32_t NtBuildNumber = *(uint32_t*)(0x7FFE0000 + 0x260);
-        if (NtBuildNumber != 0 && NtBuildNumber >= 10240)
+        if(NtBuildNumber != 0 && NtBuildNumber >= 10240)
         {
             IsDbgReplyLaterSupported = mSafeStep;
         }
@@ -71,27 +71,27 @@ namespace GleeBug
             }
 
             // Handle safe stepping
-            if (IsDbgReplyLaterSupported)
+            if(IsDbgReplyLaterSupported)
             {
-                if (mDebugEvent.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+                if(mDebugEvent.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
                 {
                     // Check if there is a thread processing a single step
-                    if (ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId != ThreadBeingProcessed)
+                    if(ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId != ThreadBeingProcessed)
                     {
                         // Reply to the event later
-                        if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, DBG_REPLY_LATER))
+                        if(!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, DBG_REPLY_LATER))
                             break;
 
                         // Wait for the next event
                         continue;
                     }
                 }
-                else if (mDebugEvent.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+                else if(mDebugEvent.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
                 {
-                    if (ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId == ThreadBeingProcessed)
+                    if(ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId == ThreadBeingProcessed)
                     {
                         // Resume the other threads since the thread being processed is exiting
-                        for (auto& itr : SuspendedThreads)
+                        for(auto & itr : SuspendedThreads)
                             ResumeThread(itr.second);
 
                         SuspendedThreads.clear();
@@ -139,10 +139,10 @@ namespace GleeBug
             {
             case CREATE_PROCESS_DEBUG_EVENT:
                 // HACK: when hollowing the process the debug event still delivers the original image base
-                if (mDisableAslr && mDebugModuleImageBase != 0)
+                if(mDisableAslr && mDebugModuleImageBase != 0)
                 {
                     auto startAddress = ULONG_PTR(mDebugEvent.u.CreateProcessInfo.lpStartAddress);
-                    if (startAddress)
+                    if(startAddress)
                     {
                         startAddress -= ULONG_PTR(mDebugEvent.u.CreateProcessInfo.lpBaseOfImage);
                         startAddress += mDebugModuleImageBase;
@@ -168,10 +168,10 @@ namespace GleeBug
                 unloadDllEvent(mDebugEvent.u.UnloadDll);
                 break;
             case EXCEPTION_DEBUG_EVENT:
-                if (IsDbgReplyLaterSupported && mDebugEvent.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
+                if(IsDbgReplyLaterSupported && mDebugEvent.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
                 {
                     // Resume the other threads since we are done processing the single step
-                    for (auto& itr : SuspendedThreads)
+                    for(auto & itr : SuspendedThreads)
                         ResumeThread(itr.second);
 
                     SuspendedThreads.clear();
@@ -209,27 +209,27 @@ namespace GleeBug
             }
 
             // Handle safe stepping
-            if (IsDbgReplyLaterSupported && mDebugEvent.dwDebugEventCode != EXIT_THREAD_DEBUG_EVENT)
+            if(IsDbgReplyLaterSupported && mDebugEvent.dwDebugEventCode != EXIT_THREAD_DEBUG_EVENT)
             {
                 // If TF is set (single step), then suspend all the other threads
-                if (mThread && mThread->isInternalStepping)
+                if(mThread && mThread->isInternalStepping)
                 {
                     ThreadBeingProcessed = mDebugEvent.dwThreadId;
 
-                    for (auto& Thread : mProcess->threads)
+                    for(auto & Thread : mProcess->threads)
                     {
                         auto dwThreadId = Thread.first;
                         auto hThread = Thread.second->hThread;
 
                         // Do not suspend the current thread
-                        if (ThreadBeingProcessed == dwThreadId)
+                        if(ThreadBeingProcessed == dwThreadId)
                             continue;
 
                         // Check if the thread is already suspended
-                        if (SuspendedThreads.count(dwThreadId) != 0)
+                        if(SuspendedThreads.count(dwThreadId) != 0)
                             continue;
 
-                        if (SuspendThread(hThread) != -1)
+                        if(SuspendThread(hThread) != -1)
                             SuspendedThreads.emplace(dwThreadId, hThread);
                     }
                 }
