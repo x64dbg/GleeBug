@@ -191,6 +191,9 @@ public:
         case UE_ENGINE_SAFE_ATTACH:
             mSafeAttach = VariableSet;
             break;
+        case UE_ENGINE_SAFE_STEP:
+            mSafeStep = VariableSet;
+            break;
         }
     }
 

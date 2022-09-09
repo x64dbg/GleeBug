@@ -292,6 +292,7 @@ namespace GleeBug
         bool mDetach = false;
         bool mDetachAndBreak = false;
         bool mAttachedToProcess = false;
+        bool mSafeStep = true;
 
         /**
         \brief The current process (can be null in some cases).

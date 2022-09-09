@@ -1,6 +1,10 @@
 #include "Debugger.h"
 #include "Debugger.Thread.Registers.h"
 
+#ifndef DBG_REPLY_LATER
+#define DBG_REPLY_LATER ((NTSTATUS)0x40010001L)
+#endif // DBG_REPLY_LATER
+
 namespace GleeBug
 {
     void Debugger::Start()
@@ -22,6 +26,18 @@ namespace GleeBug
         {
             cbInternalError("MyWaitForDebugEvent not set!");
             return;
+        }
+
+        DWORD ThreadBeingProcessed = 0;
+        std::unordered_map<DWORD, HANDLE> SuspendedThreads;
+        bool IsDbgReplyLaterSupported = false;
+
+        // Check if DBG_REPLY_LATER is supported based on Windows version (Windows 10, version 1507 or above)
+        // https://www.gaijin.at/en/infos/windows-version-numbers
+        const uint32_t NtBuildNumber = *(uint32_t*)(0x7FFE0000 + 0x260);
+        if (NtBuildNumber != 0 && NtBuildNumber >= 10240)
+        {
+            IsDbgReplyLaterSupported = mSafeStep;
         }
 
         while(!mBreakDebugger)
@@ -53,6 +69,38 @@ namespace GleeBug
                     continue;
                 }
             }
+
+            // Handle safe stepping
+            if (IsDbgReplyLaterSupported)
+            {
+                if (mDebugEvent.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+                {
+                    // Check if there is a thread processing a single step
+                    if (ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId != ThreadBeingProcessed)
+                    {
+                        // Reply to the event later
+                        if (!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, DBG_REPLY_LATER))
+                            break;
+
+                        // Wait for the next event
+                        continue;
+                    }
+                }
+                else if (mDebugEvent.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+                {
+                    if (ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId == ThreadBeingProcessed)
+                    {
+                        // Resume the other threads since the thread being processed is exiting
+                        for (auto& itr : SuspendedThreads)
+                            ResumeThread(itr.second);
+
+                        SuspendedThreads.clear();
+                        ThreadBeingProcessed = 0;
+                    }
+                }
+            }
+
+            // Signal we are currently paused
             mIsRunning = false;
 
             //set default continue status
@@ -108,6 +156,15 @@ namespace GleeBug
                 unloadDllEvent(mDebugEvent.u.UnloadDll);
                 break;
             case EXCEPTION_DEBUG_EVENT:
+                if (IsDbgReplyLaterSupported && mDebugEvent.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
+                {
+                    // Resume the other threads since we are done processing the single step
+                    for (auto& itr : SuspendedThreads)
+                        ResumeThread(itr.second);
+
+                    SuspendedThreads.clear();
+                    ThreadBeingProcessed = 0;
+                }
                 exceptionEvent(mDebugEvent.u.Exception);
                 break;
             case OUTPUT_DEBUG_STRING_EVENT:
@@ -137,6 +194,33 @@ namespace GleeBug
             {
                 if(mThread->isInternalStepping || mThread->isSingleStepping)
                     Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
+            }
+
+            // Handle safe stepping
+            if (IsDbgReplyLaterSupported && mDebugEvent.dwDebugEventCode != EXIT_THREAD_DEBUG_EVENT)
+            {
+                // If TF is set (single step), then suspend all the other threads
+                if (mThread && mThread->isInternalStepping)
+                {
+                    ThreadBeingProcessed = mDebugEvent.dwThreadId;
+
+                    for (auto& Thread : mProcess->threads)
+                    {
+                        auto dwThreadId = Thread.first;
+                        auto hThread = Thread.second->hThread;
+
+                        // Do not suspend the current thread
+                        if (ThreadBeingProcessed == dwThreadId)
+                            continue;
+
+                        // Check if the thread is already suspended
+                        if (SuspendedThreads.count(dwThreadId) != 0)
+                            continue;
+
+                        if (SuspendThread(hThread) != -1)
+                            SuspendedThreads.emplace(dwThreadId, hThread);
+                    }
+                }
             }
 
             //continue the debug event
