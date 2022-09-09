@@ -6,7 +6,6 @@
 #include "TitanEngine.h"
 #include "FileMap.h"
 #include "PEB.h"
-#include "NativeAttach.h"
 #include "Global.Engine.Context.h"
 #include "Hider.h"
 
@@ -68,7 +67,7 @@ public:
 
     bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
     {
-        if(!Attach(ProcessId, DebugActiveProcess_))
+        if(!Attach(ProcessId))
             return false;
         mCbATTACHBREAKPOINT = STEPCALLBACK(CallBack);
         mAttachProcessInfo = (PROCESS_INFORMATION*)DebugInfo;
@@ -188,11 +187,11 @@ public:
         case UE_ENGINE_SET_DEBUG_PRIVILEGE:
             mSetDebugPrivilege = VariableSet;
             break;
-        case UE_ENGINE_SAFE_ATTACH:
-            mSafeAttach = VariableSet;
-            break;
         case UE_ENGINE_SAFE_STEP:
             mSafeStep = VariableSet;
+            break;
+        case UE_ENGINE_DISABLE_ASLR:
+            mDisableAslr = VariableSet;
             break;
         }
     }
@@ -1301,7 +1300,6 @@ private: //functions
 
 private: //variables
     bool mSetDebugPrivilege = false;
-    bool mSafeAttach = false;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;

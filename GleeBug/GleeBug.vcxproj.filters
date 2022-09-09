@@ -199,6 +199,12 @@
     <ClInclude Include="stringutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Debugger.NativeAttach.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ntdll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="zyan-disassembler-engine\include\Zydis\Internal\GeneratedTypes.inc">

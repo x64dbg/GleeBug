@@ -188,6 +188,7 @@
   <ItemGroup>
     <ClInclude Include="Debugger.Breakpoint.h" />
     <ClInclude Include="Debugger.Dll.h" />
+    <ClInclude Include="Debugger.NativeAttach.h" />
     <ClInclude Include="Debugger.Process.h" />
     <ClInclude Include="Debugger.h" />
     <ClInclude Include="Debugger.Thread.h" />
@@ -196,6 +197,7 @@
     <ClInclude Include="Debugger.Thread.Registers.h" />
     <ClInclude Include="Debugger.Thread.Registers.Register.h" />
     <ClInclude Include="GleeBug.h" />
+    <ClInclude Include="ntdll.h" />
     <ClInclude Include="oprintf.h" />
     <ClInclude Include="Static.BufferFile.h" />
     <ClInclude Include="Static.File.h" />

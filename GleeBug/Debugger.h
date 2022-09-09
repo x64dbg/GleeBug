@@ -47,7 +47,7 @@ namespace GleeBug
         \param processId Process to attach to.
         \return true if the debuggee was attached to successfully, false otherwise.
         */
-        bool Attach(DWORD processId, decltype(&DebugActiveProcess) = &DebugActiveProcess);
+        bool Attach(DWORD processId);
 
         /**
         \brief Stops the debuggee (terminate the process)
@@ -293,6 +293,7 @@ namespace GleeBug
         bool mDetachAndBreak = false;
         bool mAttachedToProcess = false;
         bool mSafeStep = true;
+        bool mDisableAslr = false;
 
         /**
         \brief The current process (can be null in some cases).
@@ -303,6 +304,10 @@ namespace GleeBug
         \brief The current thread (can be null in some cases). Should be a copy of mProcess->thread.
         */
         Thread* mThread = nullptr;
+
+    private:
+        bool HollowProcessWithoutASLR(const wchar_t* szFileName, PROCESS_INFORMATION& pi);
+        ULONG_PTR mDebugModuleImageBase = 0;
     };
 };
 

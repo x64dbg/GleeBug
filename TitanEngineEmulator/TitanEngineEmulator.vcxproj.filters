@@ -43,9 +43,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NativeAttach.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ntdll.h">
       <Filter>Header Files</Filter>
     </ClInclude>

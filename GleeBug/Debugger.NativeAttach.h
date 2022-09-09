@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ntdll.h"
+
 static DWORD BaseSetLastNTError(IN NTSTATUS Status)
 {
     DWORD dwErrCode;

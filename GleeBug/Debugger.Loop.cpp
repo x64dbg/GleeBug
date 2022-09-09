@@ -138,6 +138,18 @@ namespace GleeBug
             switch(mDebugEvent.dwDebugEventCode)
             {
             case CREATE_PROCESS_DEBUG_EVENT:
+                // HACK: when hollowing the process the debug event still delivers the original image base
+                if (mDisableAslr && mDebugModuleImageBase != 0)
+                {
+                    auto startAddress = ULONG_PTR(mDebugEvent.u.CreateProcessInfo.lpStartAddress);
+                    if (startAddress)
+                    {
+                        startAddress -= ULONG_PTR(mDebugEvent.u.CreateProcessInfo.lpBaseOfImage);
+                        startAddress += mDebugModuleImageBase;
+                        mDebugEvent.u.CreateProcessInfo.lpStartAddress = LPTHREAD_START_ROUTINE(startAddress);
+                    }
+                    mDebugEvent.u.CreateProcessInfo.lpBaseOfImage = LPVOID(mDebugModuleImageBase);
+                }
                 createProcessEvent(mDebugEvent.u.CreateProcessInfo);
                 break;
             case EXIT_PROCESS_DEBUG_EVENT:
