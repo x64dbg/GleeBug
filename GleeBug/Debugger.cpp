@@ -193,6 +193,115 @@ retry_no_aslr:
     }
 #endif
 
+    static bool ProcessRelocations(char* imageCopy, ULONG_PTR imageSize, ULONG_PTR newImageBase, ULONG_PTR & oldImageBase)
+    {
+        auto pnth = RtlImageNtHeader(imageCopy);
+        if(pnth == nullptr)
+            return false;
+
+        // Put the new base in the header
+        oldImageBase = pnth->OptionalHeader.ImageBase;
+        pnth->OptionalHeader.ImageBase = newImageBase;
+
+        // Nothing to do if relocations are stripped
+        if(pnth->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
+            return true;
+
+        // Nothing to do if there are no relocations
+        const auto & relocDir = pnth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+        if(relocDir.Size == 0 || relocDir.VirtualAddress == 0)
+            return true;
+
+        // Process the relocations
+        auto delta = newImageBase - oldImageBase;
+        auto relocationItr = (PIMAGE_BASE_RELOCATION)((ULONG_PTR)imageCopy + relocDir.VirtualAddress);
+        auto relocationEnd = (PIMAGE_BASE_RELOCATION)((ULONG_PTR)relocationItr + relocDir.Size);
+
+        while(relocationItr < relocationEnd && relocationItr->SizeOfBlock > 0)
+        {
+            auto count = (relocationItr->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(USHORT);
+            auto address = (ULONG_PTR)imageCopy + relocationItr->VirtualAddress;
+            auto typeOffset = (PUSHORT)(relocationItr + 1);
+
+            relocationItr = LdrProcessRelocationBlock(address, (ULONG)count, typeOffset, delta);
+            if(relocationItr == nullptr)
+                return false;
+        }
+        return true;
+    }
+
+    static bool RelocateImage(HANDLE hProcess, PVOID imageBase, SIZE_T imageSize)
+    {
+        constexpr auto pageSize = 0x1000;
+        std::vector<bool> writeback(imageSize / pageSize);
+        // allocate a local copy of the mapped image
+        auto imageCopy = (char*)VirtualAlloc(0, imageSize, MEM_COMMIT, PAGE_READWRITE);
+        if(imageCopy == nullptr)
+            return false;
+
+        // read all the pages
+        for(size_t i = 0; i < writeback.size(); i++)
+        {
+            auto offset = i * pageSize;
+            SIZE_T read = 0;
+            if(NT_SUCCESS(NtReadVirtualMemory(hProcess, (char*)imageBase + offset, imageCopy + offset, pageSize, &read)))
+                writeback[i] = true;
+        }
+
+        // perform the actual relocations
+        ULONG_PTR oldImageBase = 0;
+        auto success = ProcessRelocations(imageCopy, imageSize, (ULONG_PTR)imageBase, oldImageBase);
+
+        // write back the pages
+        auto memWrite = [hProcess](PVOID ptr, LPCVOID data, SIZE_T size)
+        {
+            // Make the page writable
+            ULONG oldProtect = 0;
+            if(NT_SUCCESS(NtProtectVirtualMemory(hProcess, &ptr, &size, PAGE_READWRITE, &oldProtect)))
+            {
+                // Write the memory
+                SIZE_T written = 0;
+                if(NT_SUCCESS(NtWriteVirtualMemory(hProcess, ptr, data, size, &written)))
+                {
+                    // Restore the old protection
+                    return NT_SUCCESS(NtProtectVirtualMemory(hProcess, &ptr, &size, oldProtect, &oldProtect));
+                }
+            }
+            return false;
+        };
+        for(size_t i = 0; i < writeback.size(); i++)
+        {
+            if(writeback[i])
+            {
+                auto offset = pageSize * i;
+                if(!memWrite((char*)imageBase + offset, imageCopy + offset, pageSize))
+                    success = false;
+            }
+        }
+
+        // Create a copy of the header at the original image base
+        // The kernel uses it in ZwCreateThread to get the stack size for example
+        if(success)
+        {
+            success = false;
+            auto oldPage = (LPVOID)oldImageBase;
+            if(VirtualAllocEx(hProcess, oldPage, pageSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE))
+            {
+                if(memWrite(oldPage, imageCopy, pageSize))
+                {
+                    DWORD oldProtect = 0;
+                    if(VirtualProtectEx(hProcess, oldPage, pageSize, PAGE_READONLY, &oldProtect))
+                        success = true;
+                }
+            }
+        }
+
+        // Free the copy of the image
+        VirtualFree(imageCopy, imageSize, MEM_DECOMMIT);
+
+        return success;
+    }
+
     bool Debugger::HollowProcessWithoutASLR(const wchar_t* szFileName, PROCESS_INFORMATION & pi)
     {
         bool success = false;
@@ -244,7 +353,9 @@ retry_no_aslr:
                                     }
                                     if(status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE)
                                     {
-                                        if(WriteProcessMemory(pi.hProcess, (char*)pebRegister + offsetof(PEB, ImageBaseAddress), &imageBase, sizeof(PVOID), nullptr))
+                                        auto pebOk = WriteProcessMemory(pi.hProcess, (char*)pebRegister + offsetof(PEB, ImageBaseAddress), &imageBase, sizeof(PVOID), nullptr);
+                                        auto relocatedOk = RelocateImage(pi.hProcess, imageBase, viewSize);
+                                        if(pebOk && relocatedOk)
                                         {
                                             auto expectedBase = mDebugModuleImageBase == ULONG_PTR(imageBase);
                                             mDebugModuleImageBase = ULONG_PTR(imageBase);

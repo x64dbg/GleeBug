@@ -8,14 +8,13 @@ static inline void oprintf(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    static char dprintf_msg[66000];
-    *dprintf_msg = 0;
+    char dprintf_msg[2048];
     vsnprintf_s(dprintf_msg, sizeof(dprintf_msg), format, args);
     if(GetConsoleWindow() == NULL)
         AllocConsole();
     auto hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD w;
-    WriteFile(hOut, dprintf_msg, strlen(dprintf_msg), &w, nullptr);
+    WriteFile(hOut, dprintf_msg, (DWORD)strlen(dprintf_msg), &w, nullptr);
 }
 
 static inline void oputs(const char* text)
