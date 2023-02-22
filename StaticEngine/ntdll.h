@@ -244,7 +244,7 @@ typedef struct __PUBLIC_OBJECT_TYPE_INFORMATION
 
 typedef struct _PROCESS_BASIC_INFORMATION
 {
-    PVOID Reserved1;
+    NTSTATUS ExitStatus;
     PVOID PebBaseAddress;
     PVOID Reserved2[2];
     ULONG_PTR UniqueProcessId;

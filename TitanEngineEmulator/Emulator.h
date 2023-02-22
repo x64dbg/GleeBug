@@ -98,7 +98,10 @@ public:
     {
         auto process = processFromHandle(hProcess);
         if(!process)
-            return false;
+        {
+            // This happens when reading from a process not being debugged
+            return !!ReadProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesRead);
+        }
         return process->MemReadSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesRead);
     }
 
@@ -106,7 +109,10 @@ public:
     {
         auto process = processFromHandle(hProcess);
         if(!process)
-            return false;
+        {
+            // This happens when writing to a process not being debugged
+            return !!WriteProcessMemory(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesWritten);
+        }
         return process->MemWriteSafe(ptr(lpBaseAddress), lpBuffer, nSize, (ptr*)lpNumberOfBytesWritten);
     }
 
