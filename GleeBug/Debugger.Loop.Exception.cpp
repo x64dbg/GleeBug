@@ -29,15 +29,6 @@ namespace GleeBug
         //set back the instruction pointer
         Registers(mThread->hThread, CONTEXT_CONTROL).Gip = info.address;
 
-        //restore the original breakpoint byte and do an internal step
-        mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
-        mThread->StepInternal(std::bind([this, info]()
-        {
-            //only restore the bytes if the breakpoint still exists
-            if(mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
-                mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
-        }));
-
         //call the generic callback
         cbBreakpoint(info);
 
@@ -49,6 +40,33 @@ namespace GleeBug
         //delete the breakpoint if it is singleshoot
         if(info.singleshoot)
             mProcess->DeleteGenericBreakpoint(info);
+        else
+        {
+            auto Gip = Registers(mThread->hThread, CONTEXT_CONTROL).Gip.Get();
+            //Only restore the breakpoint if we need to resume from there. (make "bpgoto" MT-safe)
+            if(Gip >= info.address && Gip < info.address + info.internal.software.size)
+            {
+                //Deal with the NOP instruction (90 / 66 90). It doesn't need to be restored. (make the NOP breakpoint MT-safe)
+                if(((info.internal.software.oldbytes[0] == 0x90 && info.internal.software.size == 1) ||
+                    (info.internal.software.oldbytes[0] == 0x66 && info.internal.software.oldbytes[1] == 0x90 && info.internal.software.size == 2)) &&
+                    //We cannot use such shortcut if we need to produce a single step debug event this time.
+                    !(mThread->isInternalStepping || mThread->isSingleStepping)) {
+                    //Increment the instruction pointer without executing the original breakpoint instruction
+                    Registers(mThread->hThread, CONTEXT_CONTROL).Gip = info.address + info.internal.software.size;
+                }
+                else
+                {
+                    //restore the original breakpoint byte and do an internal step
+                    mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
+                    mThread->StepInternal(std::bind([this, info]()
+                    {
+                        //only restore the bytes if the breakpoint still exists
+                        if(mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
+                            mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
+                    }));
+                }
+            }
+        }
     }
 
     void Debugger::exceptionSingleStep(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
