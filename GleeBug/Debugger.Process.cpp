@@ -21,6 +21,26 @@ namespace GleeBug
             hardwareBreakpoints[i].internal.hardware.enabled = false;
     }
 
+    static bool IsRepeated(const ZydisInstructionInfo & info)
+    {
+        // https://www.felixcloutier.com/x86/rep:repe:repz:repne:repnz
+        // TODO: allow extracting the affected range
+        switch(info.mnemonic)
+        {
+        case ZYDIS_MNEMONIC_INS:
+        case ZYDIS_MNEMONIC_OUTS:
+        case ZYDIS_MNEMONIC_MOVS:
+        case ZYDIS_MNEMONIC_MOVSD:
+        case ZYDIS_MNEMONIC_LODS:
+        case ZYDIS_MNEMONIC_STOS:
+        case ZYDIS_MNEMONIC_CMPS:
+        case ZYDIS_MNEMONIC_CMPSD:
+        case ZYDIS_MNEMONIC_SCAS:
+            return (info.attributes & (ZYDIS_ATTRIB_HAS_REP | ZYDIS_ATTRIB_HAS_REPZ | ZYDIS_ATTRIB_HAS_REPNZ)) != 0;
+        }
+        return false;
+    }
+
     void Process::StepOver(const StepCallback & cbStep)
     {
         auto gip = Registers(thread->hThread, CONTEXT_CONTROL).Gip();
@@ -43,8 +63,8 @@ namespace GleeBug
                     stepOver = true;
                     break;
                 default:
-                    auto repAttributes = ZYDIS_ATTRIB_HAS_REP | ZYDIS_ATTRIB_HAS_REPE | ZYDIS_ATTRIB_HAS_REPZ | ZYDIS_ATTRIB_HAS_REPNE | ZYDIS_ATTRIB_HAS_REPNZ;
-                    stepOver = (info.attributes & repAttributes) != 0;
+                    stepOver = IsRepeated(info);
+                    break;
                 }
             }
             if(stepOver)
