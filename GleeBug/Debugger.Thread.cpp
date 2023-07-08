@@ -36,13 +36,6 @@ namespace GleeBug
         stepCallbacks.push_back(cbStep);
     }
 
-    void Thread::StepInternal(const StepCallback & cbStep)
-    {
-        Registers(hThread).TrapFlag.Set();
-        isInternalStepping = true;
-        cbInternalStep = cbStep;
-    }
-
     bool Thread::Suspend()
     {
         return SuspendThread(hThread) != -1;

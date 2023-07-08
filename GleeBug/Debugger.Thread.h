@@ -61,25 +61,6 @@ namespace GleeBug
         }
 
         /**
-        \brief Perform an internal step (not reported to the outside)
-        \param cbStep Step callback. Can be written using BIND(this, MyDebugger::cb).
-        */
-        void StepInternal(const StepCallback & cbStep);
-
-        /**
-        \brief Perform an internal step (not reported to the outside)
-        \tparam T Generic type parameter. Must be a subclass of Debugger.
-        \param debugger This pointer to a subclass of Debugger.
-        \param callback Pointer to the callback. Written like: &MyDebugger::cb
-        */
-        template<typename T>
-        void StepInternal(T* debugger, void(T::*callback)())
-        {
-            static_cast<void>(static_cast<Debugger*>(debugger));
-            StepInternal(std::bind(callback, debugger));
-        }
-
-        /**
         \brief Sets a hardware breakpoint.
         \param address The address to set the hardware breakpoint on.
         \param slot The hardware breakpoint register slot. Use Process::GetFreeHardwareBreakpointSlot.

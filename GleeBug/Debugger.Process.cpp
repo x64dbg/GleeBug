@@ -101,14 +101,62 @@ namespace GleeBug
         }
         thread->StepInto(cbStep);
     }
+
+    void Process::StepInternal(const StepCallback & cbStep)
+    {
+        Registers registers(thread->hThread, CONTEXT_CONTROL);
+        registers.TrapFlag.Set();
+        thread->isInternalStepping = true;
+
+        // Check if we're currently stepping on a pushf instruction
+        auto isPushf = false;
+        {
+            auto gip = registers.Gip();
+            unsigned char data[16];
+            if(MemReadSafe(gip, data, sizeof(data)))
             {
-                SetBreakpoint(gip + info.length, [cbStep](const BreakpointInfo & info)
+                ZydisDisassembledInstruction instruction;
+                if(ZYAN_SUCCESS(ZydisDisassembleIntel(
+                                    GleeArchValue(ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_MACHINE_MODE_LONG_COMPAT_32),
+                                    gip,
+                                    data,
+                                    sizeof(data),
+                                    &instruction
+                                )))
                 {
-                    cbStep();
-                }, true, SoftwareType::ShortInt3);
-                return;
+                    switch(instruction.info.mnemonic)
+                    {
+                    case ZYDIS_MNEMONIC_PUSHF:
+                    case ZYDIS_MNEMONIC_PUSHFD:
+                    case ZYDIS_MNEMONIC_PUSHFQ:
+                        isPushf = true;
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
         }
-        thread->StepInto(cbStep);
+
+        if(isPushf)
+        {
+            thread->cbInternalStep = [this, cbStep]()
+            {
+                // Remove the trap flag from the stack
+                auto gsp = Registers(this->thread->hThread).Gsp();
+                GleeBug::ptr data;
+                if(MemReadUnsafe(gsp, &data, sizeof(data)))
+                {
+                    data &= ~(int)Registers::F::Trap;
+                    MemWriteUnsafe(gsp, &data, sizeof(data));
+                }
+
+                cbStep();
+            };
+        }
+        else
+        {
+            thread->cbInternalStep = cbStep;
+        }
     }
 };

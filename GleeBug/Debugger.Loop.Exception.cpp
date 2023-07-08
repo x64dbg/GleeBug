@@ -31,12 +31,12 @@ namespace GleeBug
 
         //restore the original breakpoint byte and do an internal step
         mProcess->MemWriteUnsafe(info.address, info.internal.software.oldbytes, info.internal.software.size);
-        mThread->StepInternal(std::bind([this, info]()
+        mProcess->StepInternal([this, info]()
         {
             //only restore the bytes if the breakpoint still exists
             if(mProcess->breakpoints.find({ BreakpointType::Software, info.address }) != mProcess->breakpoints.end())
                 mProcess->MemWriteUnsafe(info.address, info.internal.software.newbytes, info.internal.software.size);
-        }));
+        });
 
         //call the generic callback
         cbBreakpoint(info);
@@ -126,12 +126,12 @@ namespace GleeBug
 
         //delete the hardware breakpoint from the thread (not the breakpoint buffer) and do an internal step (TODO: maybe delete from all threads?)
         mThread->DeleteHardwareBreakpoint(breakpointSlot);
-        mThread->StepInternal(std::bind([this, info]()
+        mProcess->StepInternal([this, info]()
         {
             //only restore if the breakpoint still exists
             if(mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) != mProcess->breakpoints.end())
                 mThread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
-        }));
+        });
 
         //call the generic callback
         cbBreakpoint(info);
@@ -182,7 +182,7 @@ namespace GleeBug
                 // -add more memory breakpoints
                 //The solution: We just try to see if the page is mapped into memoryBreakpointPages. If the page is in deed being used by any memory breakpoint,
                 // then we ought to restore the protection.
-                mThread->StepInternal(std::bind([this, pBaseAddr]()
+                mProcess->StepInternal([this, pBaseAddr]()
                 {
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
@@ -193,7 +193,7 @@ namespace GleeBug
                     }
                     mProcess->MemProtect(pBaseAddr, PAGE_SIZE, found_page->second.NewProtect);
                     return;
-                }));
+                });
             }
             return;
         }
@@ -243,7 +243,7 @@ namespace GleeBug
                     cbInternalError(error);
                 }
 
-                mThread->StepInternal(std::bind([this, pageAddr]()
+                mProcess->StepInternal([this, pageAddr]()
                 {
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
@@ -254,7 +254,7 @@ namespace GleeBug
                     }
                     mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
                     return;
-                }));
+                });
                 return;
             }
             else if(((pageProperties.Type & 0x1) != 0))
@@ -306,7 +306,7 @@ namespace GleeBug
             cbInternalError(error);
         }
         //Pass info as well
-        mThread->StepInternal(std::bind([this, pageAddr]()
+        mProcess->StepInternal([this, pageAddr]()
         {
             //With page check this should work better: So when we reach this part of the code we are sure that:
             //-The exception Address In deed corresponded to an existing (now possibly deleted) memory breakpoint range
@@ -327,7 +327,7 @@ namespace GleeBug
                 mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
             }
             return;
-        }));
+        });
 
         if(info.singleshoot)
         {
@@ -373,7 +373,7 @@ namespace GleeBug
                 // -add more memory breakpoints
                 //The solution: We just try to see if the page is mapped into memoryBreakpointPages. If the page is in deed being used by any memory breakpoint,
                 // then we ought to restore the protection.
-                mThread->StepInternal(std::bind([this, pBaseAddr]()
+                mProcess->StepInternal([this, pBaseAddr]()
                 {
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
@@ -384,7 +384,7 @@ namespace GleeBug
                     }
                     mProcess->MemProtect(pBaseAddr, PAGE_SIZE, found_page->second.NewProtect);
                     return;
-                }));
+                });
             }
             return;
         }
@@ -462,7 +462,7 @@ namespace GleeBug
             cbInternalError(error);
         }
         //Pass info as well
-        mThread->StepInternal(std::bind([this, pageAddr]()
+        mProcess->StepInternal([this, pageAddr]()
         {
             //With page check this should work better: So when we reach this part of the code we are sure that:
             //-The exception Address In deed corresponded to an existing (now possibly deleted) memory breakpoint range
@@ -483,7 +483,7 @@ namespace GleeBug
                 mProcess->MemProtect(pageAddr, PAGE_SIZE, found_page->second.NewProtect);
             }
             return;
-        }));
+        });
 
         if(info.singleshoot)
         {
