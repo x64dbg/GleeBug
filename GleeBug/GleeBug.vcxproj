@@ -68,22 +68,22 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(ProjectDir)..\bin\$(Configuration)\x32\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir)zyan-disassembler-engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(ProjectDir)..\bin\$(Configuration)\x64\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir)zyan-disassembler-engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(ProjectDir)..\bin\$(Configuration)\x32\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir)zyan-disassembler-engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(ProjectDir)..\bin\$(Configuration)\x64\</OutDir>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>$(ProjectDir)..;$(ProjectDir)zyan-disassembler-engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)..;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -176,18 +176,7 @@
     <ClCompile Include="Static.Pattern.cpp" />
     <ClCompile Include="Static.Pe.cpp" />
     <ClCompile Include="stringutils.cpp" />
-    <ClCompile Include="zyan-disassembler-engine\src\Decoder.c" />
-    <ClCompile Include="zyan-disassembler-engine\src\Formatter.c">
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">_CRT_SECURE_NO_WARNINGS;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">_CRT_SECURE_NO_WARNINGS;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">_CRT_SECURE_NO_WARNINGS;_USING_V110_SDK71_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\InstructionTable.c" />
-    <ClCompile Include="zyan-disassembler-engine\src\Mnemonic.c" />
-    <ClCompile Include="zyan-disassembler-engine\src\Register.c" />
-    <ClCompile Include="zyan-disassembler-engine\src\Utils.c" />
-    <ClCompile Include="zyan-disassembler-engine\src\Zydis.c" />
+    <ClCompile Include="Zydis\Zydis.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Debugger.Breakpoint.h" />
@@ -211,25 +200,7 @@
     <ClInclude Include="Static.Pe.Section.h" />
     <ClInclude Include="Static.Region.h" />
     <ClInclude Include="stringutils.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Decoder.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Defines.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Formatter.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\InstructionInfo.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionTable.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Mnemonic.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Register.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Status.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Types.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Utils.h" />
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Zydis.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\GeneratedTypes.inc" />
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionDefinitions.inc" />
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionFilters.inc" />
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\MnemonicDefines.inc" />
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\MnemonicStrings.inc" />
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\OperandDefinitions.inc" />
+    <ClInclude Include="Zydis\Zydis.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

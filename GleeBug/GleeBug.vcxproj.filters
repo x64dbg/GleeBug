@@ -10,13 +10,10 @@
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="Source Files\Zydis">
-      <UniqueIdentifier>{087a6721-6324-4dd6-94f3-8cf8ec131db6}</UniqueIdentifier>
+      <UniqueIdentifier>{c334ecd8-b526-42dd-aa95-8eb0acdb8892}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Zydis">
-      <UniqueIdentifier>{a3b02551-ba19-40b2-a117-90b9f44d3dcd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Zydis\Internal">
-      <UniqueIdentifier>{2bc2d721-bce0-440e-947e-e74497e76fa6}</UniqueIdentifier>
+      <UniqueIdentifier>{3108807c-0904-48ba-99db-88d28ee6dbd8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -83,29 +80,11 @@
     <ClCompile Include="Static.Pattern.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Decoder.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Formatter.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\InstructionTable.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Mnemonic.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Register.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Utils.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
-    <ClCompile Include="zyan-disassembler-engine\src\Zydis.c">
-      <Filter>Source Files\Zydis</Filter>
-    </ClCompile>
     <ClCompile Include="stringutils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Zydis\Zydis.c">
+      <Filter>Source Files\Zydis</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -160,39 +139,6 @@
     <ClInclude Include="Static.Pattern.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionTable.h">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Decoder.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Defines.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Formatter.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\InstructionInfo.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Mnemonic.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Register.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Status.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Types.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Utils.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
-    <ClInclude Include="zyan-disassembler-engine\include\Zydis\Zydis.h">
-      <Filter>Header Files\Zydis</Filter>
-    </ClInclude>
     <ClInclude Include="oprintf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -205,25 +151,8 @@
     <ClInclude Include="ntdll.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\GeneratedTypes.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionDefinitions.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\InstructionFilters.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\MnemonicDefines.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\MnemonicStrings.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
-    <None Include="zyan-disassembler-engine\include\Zydis\Internal\OperandDefinitions.inc">
-      <Filter>Header Files\Zydis\Internal</Filter>
-    </None>
+    <ClInclude Include="Zydis\Zydis.h">
+      <Filter>Header Files\Zydis</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
