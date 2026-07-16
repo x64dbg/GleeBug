@@ -230,132 +230,236 @@ namespace GleeBug
         }
     }
 
-    bool Process::SetNewPageProtection(ptr page, MemoryBreakpointData & data, MemoryType type)
+    // Derive the page-wide protection from per-type reference counts. Byte-disjoint
+    // breakpoint ranges may share a page, including several ranges of the same type.
+    static DWORD MemoryBreakpointProtection(const MemoryBreakpointData & data, bool permanentDep)
     {
-        DPRINTF();
-        //TODO: handle PAGE_NOACCESS and such correctly (since it cannot be combined with PAGE_GUARD)
+        if(data.Refcount == 0)
+            return data.OldProtect;
 
-        auto found = memoryBreakpointPages.find(page);
-        if(found == memoryBreakpointPages.end())
+        const bool needsGuard = data.AccessRefs != 0 || data.ReadRefs != 0 || (data.ExecuteRefs != 0 && !permanentDep);
+        if(needsGuard)
         {
-            data.Refcount = 1;
-            switch(type)
-            {
-            case MemoryType::Access:
-            case MemoryType::Read:
-                data.NewProtect = data.OldProtect | PAGE_GUARD;
-                break;
-            case MemoryType::Write:
-                data.NewProtect = RemoveWriteAccess(data.OldProtect);
-                break;
-            case MemoryType::Execute:
-                data.NewProtect = permanentDep ? RemoveExecuteAccess(data.OldProtect) : data.OldProtect | PAGE_GUARD;
-                break;
-            }
-        }
-        else
-        {
-            auto & oldData = found->second;
-            data.Type = oldData.Type | uint32(type); //combines new protection
-            data.OldProtect = oldData.OldProtect; // old protection remains the same
-            data.Refcount = oldData.Refcount + 1; //increment reference count
-            if(oldData.Type == uint32(type))  // Edge case for when you need to set a mem bpx on a same page with the same type, you just leave newProtect = OldProtect.
-            {
-                data.NewProtect = data.OldProtect;
-            }
-            else if(data.Type & uint32(MemoryType::Access) || data.Type & uint32(MemoryType::Read))  // Access/Read always becomes PAGE_GUARD ; This page cannot access or Read?
-                data.NewProtect = data.OldProtect | PAGE_GUARD; //as before
-            else if(data.Type & (uint32(MemoryType::Write) | uint32(MemoryType::Execute)))  // Write + Execute becomes either PAGE_GUARD or both write and execute flags removed
-                data.NewProtect = permanentDep ? RemoveExecuteAccess(RemoveWriteAccess(data.OldProtect)) : data.OldProtect | PAGE_GUARD;
+            // PAGE_GUARD cannot be combined with PAGE_NOACCESS, PAGE_NOCACHE, or PAGE_WRITECOMBINE.
+            if((data.OldProtect & 0xFF) == PAGE_NOACCESS)
+                return (data.OldProtect & ~0x7FF) | PAGE_NOACCESS;
+            return (data.OldProtect & ~0x700) | PAGE_GUARD;
         }
 
-        dprintf("SetNewPageProtection(%p, %X)\n", page, data.NewProtect);
-        return MemProtect(page, PAGE_SIZE, data.NewProtect);
+        DWORD protect = data.OldProtect;
+        if(data.ExecuteRefs != 0)
+            protect = RemoveExecuteAccess(protect);
+        if(data.WriteRefs != 0)
+            protect = RemoveWriteAccess(protect);
+        return protect;
+    }
+
+    static void RefreshMemoryBreakpointData(MemoryBreakpointData & data, bool permanentDep)
+    {
+        data.Refcount = data.AccessRefs + data.ReadRefs + data.WriteRefs + data.ExecuteRefs;
+        data.Type = 0;
+        if(data.AccessRefs != 0)
+            data.Type |= uint32(MemoryType::Access);
+        if(data.ReadRefs != 0)
+            data.Type |= uint32(MemoryType::Read);
+        if(data.WriteRefs != 0)
+            data.Type |= uint32(MemoryType::Write);
+        if(data.ExecuteRefs != 0)
+            data.Type |= uint32(MemoryType::Execute);
+        data.NewProtect = MemoryBreakpointProtection(data, permanentDep);
+    }
+
+    static bool AddMemoryBreakpointReference(MemoryBreakpointData & data, MemoryType type, bool permanentDep)
+    {
+        uint32* refs = nullptr;
+        switch(type)
+        {
+        case MemoryType::Access:
+            refs = &data.AccessRefs;
+            break;
+        case MemoryType::Read:
+            refs = &data.ReadRefs;
+            break;
+        case MemoryType::Write:
+            refs = &data.WriteRefs;
+            break;
+        case MemoryType::Execute:
+            refs = &data.ExecuteRefs;
+            break;
+        }
+        if(refs == nullptr || *refs == ~uint32(0))
+            return false;
+        ++*refs;
+        RefreshMemoryBreakpointData(data, permanentDep);
+        return true;
+    }
+
+    static bool RemoveMemoryBreakpointReference(MemoryBreakpointData & data, MemoryType type, bool permanentDep)
+    {
+        uint32* refs = nullptr;
+        switch(type)
+        {
+        case MemoryType::Access:
+            refs = &data.AccessRefs;
+            break;
+        case MemoryType::Read:
+            refs = &data.ReadRefs;
+            break;
+        case MemoryType::Write:
+            refs = &data.WriteRefs;
+            break;
+        case MemoryType::Execute:
+            refs = &data.ExecuteRefs;
+            break;
+        }
+        if(refs == nullptr || *refs == 0)
+            return false;
+        --*refs;
+        RefreshMemoryBreakpointData(data, permanentDep);
+        return true;
+    }
+
+    struct MemoryBreakpointPageAction
+    {
+        ptr page = 0;
+        ptr allocationBase = 0;
+        DWORD currentProtect = 0;
+        MemoryBreakpointData data;
+    };
+
+    static DWORD TargetProtection(const MemoryBreakpointPageAction & action)
+    {
+        return action.data.Refcount == 0 ? action.data.OldProtect : action.data.NewProtect;
+    }
+
+    // Apply one VirtualProtectEx per maximal run with the same target protection.
+    // AllocationBase is part of the key because VirtualProtectEx cannot span
+    // independently reserved allocations even when their pages are consecutive.
+    static bool ApplyProtectionRuns(Process & process, const std::vector<MemoryBreakpointPageAction> & actions, size_t count, bool rollback, size_t* appliedCount = nullptr)
+    {
+        size_t index = 0;
+        while(index < count)
+        {
+            const auto base = actions[index].page;
+            const auto allocationBase = actions[index].allocationBase;
+            const DWORD protect = rollback ? actions[index].currentProtect : TargetProtection(actions[index]);
+            size_t runEnd = index + 1;
+            while(runEnd < count &&
+                    actions[runEnd].page == actions[runEnd - 1].page + PAGE_SIZE &&
+                    actions[runEnd].allocationBase == allocationBase &&
+                    (rollback ? actions[runEnd].currentProtect : TargetProtection(actions[runEnd])) == protect)
+            {
+                ++runEnd;
+            }
+
+            const ptr byteSize = actions[runEnd - 1].page - base + PAGE_SIZE;
+            if(!process.MemProtect(base, byteSize, protect))
+            {
+                if(appliedCount != nullptr)
+                    *appliedCount = index;
+                return false;
+            }
+            index = runEnd;
+        }
+
+        if(appliedCount != nullptr)
+            *appliedCount = count;
+        return true;
     }
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, MemoryType type, bool singleshoot)
     {
+        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
         DPRINTF();
-        dprintf("SetMemoryBreakpoint(%p, %p, %d, %d)\n", address, size, type, singleshoot);
-        //TODO: error reporting
 
-        //basic checks
-        if(!MemIsValidPtr(address) || !size)
+        // Basic checks, including the range-end overflow that would otherwise wrap
+        // page enumeration back to address zero.
+        if(size == 0 || address > ~ptr(0) - (size - 1) || !MemIsValidPtr(address))
             return false;
 
-        //check if the range is unused for any previous memory breakpoints
-        auto range = Range(address, address + size - 1);
+        // Memory breakpoint byte ranges cannot intersect, but disjoint ranges are
+        // allowed to share their first or last page.
+        const ptr endAddress = address + size - 1;
+        const auto range = Range(address, endAddress);
         if(memoryBreakpointRanges.find(range) != memoryBreakpointRanges.end())
             return false;
 
-        //change page protections
-        bool success = true;
-        struct TempMemoryBreakpointData
+        // Stage all per-page bookkeeping before changing any protection. A single
+        // VirtualQueryEx result is reused for every page in that memory region.
+        const ptr alignedAddress = PAGE_ALIGN(address);
+        const ptr alignedEnd = PAGE_ALIGN(endAddress);
+        std::vector<MemoryBreakpointPageAction> actions;
+        actions.reserve(size_t((alignedEnd - alignedAddress) / PAGE_SIZE + 1));
+
+        MEMORY_BASIC_INFORMATION mbi = {};
+        ptr regionEnd = 0;
+        for(ptr page = alignedAddress;; page += PAGE_SIZE)
         {
-            ptr addr;
-            DWORD OldProtect;
-            MemoryBreakpointData data;
-        };
-        std::vector<TempMemoryBreakpointData> breakpointData;
-        {
-            breakpointData.reserve(BYTES_TO_PAGES((address - PAGE_ALIGN(address)) + size));
-            TempMemoryBreakpointData tempData;
-            MemoryBreakpointData data;
-            data.Type = uint32(type);
-            auto alignedAddress = PAGE_ALIGN(address);
-            auto alignedEnd = PAGE_ALIGN(address + size - 1);
-            for(auto page = alignedAddress; page <= alignedEnd; page += PAGE_SIZE)
+            if(page >= regionEnd)
             {
-                MEMORY_BASIC_INFORMATION mbi;
-                if(!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)))
-                {
-                    success = false;
-                    dprintf("!VirtualQueryEx\n");
-                    break;
-                }
-                data.OldProtect = mbi.Protect;
-                if(!SetNewPageProtection(page, data, type))
-                {
-                    success = false;
-                    dprintf("!SetNewPageProtection\n");
-                    break;
-                }
-                tempData.addr = page;
-                tempData.OldProtect = mbi.Protect;
-                tempData.data = data;
-                breakpointData.push_back(tempData);
+                if(!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT)
+                    return false;
+                const ptr regionBase = ptr(mbi.BaseAddress);
+                if(mbi.RegionSize > ~ptr(0) - regionBase)
+                    regionEnd = ~ptr(0);
+                else
+                    regionEnd = regionBase + ptr(mbi.RegionSize);
+                if(regionEnd <= page)
+                    return false;
             }
+
+            MemoryBreakpointPageAction action;
+            action.page = page;
+            action.allocationBase = ptr(mbi.AllocationBase);
+            action.currentProtect = mbi.Protect;
+
+            const auto found = memoryBreakpointPages.find(page);
+            if(found != memoryBreakpointPages.end())
+                action.data = found->second;
+            else
+                action.data.OldProtect = mbi.Protect;
+
+            if(!AddMemoryBreakpointReference(action.data, type, permanentDep))
+                return false;
+            actions.push_back(action);
+
+            if(page == alignedEnd)
+                break;
         }
 
-        //if changing the page protections failed, attempt to revert all protection changes
-        if(!success)
+        // Change protections in coalesced runs. If a later run fails, restore every
+        // earlier run to the actual protection observed while staging.
+        size_t appliedCount = 0;
+        if(!ApplyProtectionRuns(*this, actions, actions.size(), false, &appliedCount))
         {
-            for(const auto & page : breakpointData)
-                MemProtect(page.addr, PAGE_SIZE, page.OldProtect);
+            ApplyProtectionRuns(*this, actions, appliedCount, true);
             return false;
         }
 
-        //set the page data
-        for(const auto & page : breakpointData)
-            memoryBreakpointPages[page.addr] = page.data;
+        // Publish page metadata only after the complete protection transaction has
+        // succeeded. Exception dispatch holds the same recursive mutex and therefore
+        // cannot observe the debuggee and metadata in different transaction states.
+        for(const auto & action : actions)
+            memoryBreakpointPages[action.page] = action.data;
 
-        //setup the breakpoint information struct
+        // Set up and publish the byte-range breakpoint information.
         BreakpointInfo info = {};
         info.address = address;
         info.singleshoot = singleshoot;
         info.type = BreakpointType::Memory;
         info.internal.memory.type = type;
         info.internal.memory.size = size;
-
-        //insert in the breakpoint map
         breakpoints.insert({ { info.type, info.address }, info });
         memoryBreakpointRanges.insert(range);
 
+        dprintf("SetMemoryBreakpoint(%p, %p, %d, %d): %zu pages\n", address, size, type, singleshoot, actions.size());
         return true;
     }
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type, bool singleshoot)
     {
+        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
+
         //check if a callback on this address was already found
         if(breakpointCallbacks.find({ BreakpointType::Memory, address }) != breakpointCallbacks.end())
             return false;
@@ -369,51 +473,85 @@ namespace GleeBug
 
     bool Process::DeleteMemoryBreakpoint(ptr address)
     {
-        //find the memory breakpoint range
-        auto range = memoryBreakpointRanges.find(Range(address, address));
+        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
+
+        // Find the byte range containing address, then find its breakpoint record.
+        const auto range = memoryBreakpointRanges.find(Range(address, address));
         if(range == memoryBreakpointRanges.end())
             return false;
 
-        //find the memory breakpoint
-        auto found = breakpoints.find({ BreakpointType::Memory, range->first });
+        const auto found = breakpoints.find({ BreakpointType::Memory, range->first });
         if(found == breakpoints.end())
             return false;
-        const auto & info = found->second;
+        const BreakpointInfo info = found->second;
 
-        //delete the memory breakpoint from the pages
-        bool success = true;
-        auto alignedAddress = PAGE_ALIGN(info.address);
-        auto alignedEnd = PAGE_ALIGN(info.address + info.internal.memory.size - 1);
-        for(auto page = alignedAddress; page <= alignedEnd; page += PAGE_SIZE)
+        // Stage decremented per-type references and target protections without
+        // mutating the live page map. Region queries provide both the current
+        // rollback protection and allocation boundaries for safe coalescing.
+        const ptr endAddress = info.address + info.internal.memory.size - 1;
+        const ptr alignedAddress = PAGE_ALIGN(info.address);
+        const ptr alignedEnd = PAGE_ALIGN(endAddress);
+        std::vector<MemoryBreakpointPageAction> actions;
+        actions.reserve(size_t((alignedEnd - alignedAddress) / PAGE_SIZE + 1));
+
+        MEMORY_BASIC_INFORMATION mbi = {};
+        ptr regionEnd = 0;
+        for(ptr page = alignedAddress;; page += PAGE_SIZE)
         {
-            auto foundData = memoryBreakpointPages.find(page);
-            if(foundData == memoryBreakpointPages.end())
-                continue; //TODO: error reporting
-            auto & data = foundData->second;
-            DWORD Protect;
-            data.Refcount--;
-            if(data.Refcount)
+            if(page >= regionEnd)
             {
-                //TODO: properly determine the new protection flag
-                //Are there any other protections left?
-                //If so add the guard
-                if(data.Type & ~uint32(info.internal.memory.type))
-                    data.NewProtect = data.OldProtect | PAGE_GUARD;
-                Protect = data.NewProtect;
+                if(!VirtualQueryEx(hProcess, LPCVOID(page), &mbi, sizeof(mbi)) || mbi.State != MEM_COMMIT)
+                    return false;
+                const ptr regionBase = ptr(mbi.BaseAddress);
+                if(mbi.RegionSize > ~ptr(0) - regionBase)
+                    regionEnd = ~ptr(0);
+                else
+                    regionEnd = regionBase + ptr(mbi.RegionSize);
+                if(regionEnd <= page)
+                    return false;
             }
-            else
-                Protect = data.OldProtect;
-            if(!MemProtect(page, PAGE_SIZE, Protect))
-                success = false;
-            if(!data.Refcount)
-                memoryBreakpointPages.erase(foundData);
+
+            const auto foundData = memoryBreakpointPages.find(page);
+            if(foundData == memoryBreakpointPages.end())
+                return false;
+
+            MemoryBreakpointPageAction action;
+            action.page = page;
+            action.allocationBase = ptr(mbi.AllocationBase);
+            action.currentProtect = mbi.Protect;
+            action.data = foundData->second;
+            if(!RemoveMemoryBreakpointReference(action.data, info.internal.memory.type, permanentDep))
+                return false;
+            actions.push_back(action);
+
+            if(page == alignedEnd)
+                break;
         }
 
-        //delete the breakpoint from the maps
+        // Keep the live metadata unchanged unless every protection run succeeds.
+        // Roll back successful runs when a later run fails.
+        size_t appliedCount = 0;
+        if(!ApplyProtectionRuns(*this, actions, actions.size(), false, &appliedCount))
+        {
+            ApplyProtectionRuns(*this, actions, appliedCount, true);
+            return false;
+        }
+
+        // Commit updated shared-page metadata and release pages whose final
+        // breakpoint reference was removed.
+        for(const auto & action : actions)
+        {
+            if(action.data.Refcount == 0)
+                memoryBreakpointPages.erase(action.page);
+            else
+                memoryBreakpointPages[action.page] = action.data;
+        }
+
+        // Delete the byte-range breakpoint only after its page transaction commits.
         breakpoints.erase(found);
-        breakpointCallbacks.erase({ BreakpointType::Memory, address });
-        memoryBreakpointRanges.erase(Range(address, address));
-        return success;
+        breakpointCallbacks.erase({ BreakpointType::Memory, info.address });
+        memoryBreakpointRanges.erase(range);
+        return true;
     }
 
     bool Process::DeleteGenericBreakpoint(const BreakpointInfo & info)

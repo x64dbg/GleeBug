@@ -31,6 +31,7 @@ namespace GleeBug
         BreakpointInfo hardwareBreakpoints[4];
         MemoryBreakpointSet memoryBreakpointRanges;
         MemoryBreakpointMap memoryBreakpointPages;
+        std::recursive_mutex memoryBreakpointMutex;
 
         std::unordered_set<ptr> recentlyDeletedSwbp;
 
@@ -317,15 +318,6 @@ namespace GleeBug
         \return true if the hardware breakpoint was deleted, false otherwise.
         */
         bool DeleteHardwareBreakpoint(ptr address);
-
-        /**
-        \brief Sets new page protection to trigger an exception for certain memory breakpoint types.
-        \param page The page address.
-        \param data The current protection of the page.
-        \param type The memory breakpoint type to trigger an exception for.
-        \return true if it succeeds, false if it fails.
-        */
-        bool SetNewPageProtection(ptr page, MemoryBreakpointData & data, MemoryType type);
 
         /**
         \brief Sets a memory breakpoint.
