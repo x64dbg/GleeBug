@@ -95,10 +95,17 @@ namespace GleeBug
     */
     struct MemoryBreakpointData
     {
-        uint32 Refcount;
-        uint32 Type;
-        DWORD OldProtect;
-        DWORD NewProtect;
+        // Refcount and Type are cached aggregates used by existing page-handling
+        // code. Per-type counts preserve multiplicity when same-type ranges share
+        // one page and allow deletion to derive the exact remaining protection.
+        uint32 Refcount = 0;
+        uint32 Type = 0;
+        uint32 AccessRefs = 0;
+        uint32 ReadRefs = 0;
+        uint32 WriteRefs = 0;
+        uint32 ExecuteRefs = 0;
+        DWORD OldProtect = 0;
+        DWORD NewProtect = 0;
     };
 };
 

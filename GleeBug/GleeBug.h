@@ -10,6 +10,7 @@
 #include <set>
 #include <functional>
 #include <algorithm>
+#include <mutex>
 
 #include <windows.h>
 #include <psapi.h>

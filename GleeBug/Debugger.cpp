@@ -112,9 +112,76 @@ retry_no_aslr:
 
     bool Debugger::UnsafeDetach()
     {
-        // TODO: remove from all threads?
-        Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
-        return !!DebugActiveProcessStop(mMainProcess.dwProcessId);
+        bool success = true;
+
+        if(mProcess)
+        {
+            // 1. Restore all software (INT3) breakpoints, otherwise the debuggee
+            //    faults on a leftover 0xCC once it is no longer being debugged.
+            for(auto it = mProcess->breakpoints.begin(); it != mProcess->breakpoints.end(); )
+            {
+                auto & info = it->second;
+                if(info.type == BreakpointType::Software)
+                {
+                    if(!mProcess->MemWriteUnsafe(info.address,
+                                                 info.internal.software.oldbytes,
+                                                 info.internal.software.size))
+                        success = false;
+                    FlushInstructionCache(mProcess->hProcess, nullptr, 0);
+                    mProcess->softwareBreakpointReferences.erase(info.address);
+                    it = mProcess->breakpoints.erase(it);
+                }
+                else
+                    ++it;
+            }
+
+            // 2. Restore memory breakpoint page protections (drop PAGE_GUARD /
+            //    removed write/execute access) so the debuggee stops faulting on access.
+            for(auto & page : mProcess->memoryBreakpointPages)
+            {
+                DWORD oldProtect = 0;
+                if(!mProcess->MemProtect(page.first, PAGE_SIZE,
+                                         page.second.OldProtect, &oldProtect))
+                    success = false;
+            }
+            mProcess->memoryBreakpointPages.clear();
+            mProcess->memoryBreakpointRanges.clear();
+
+            // 3. Remove hardware breakpoints from every thread, then clear the trap
+            //    flag on every thread (the previous "TODO: remove from all threads").
+            //    Threads other than the current event's are not guaranteed suspended,
+            //    so suspend/resume them around the context edits to avoid races.
+            for(auto & kv : mProcess->threads)
+            {
+                auto thread = kv.second.get();
+                const bool current = (thread == mThread);
+                if(!current)
+                    SuspendThread(thread->hThread);
+
+                for(int slot = 0; slot < HWBP_COUNT; slot++)
+                {
+                    if(mProcess->hardwareBreakpoints[slot].internal.hardware.enabled)
+                        thread->DeleteHardwareBreakpoint(HardwareSlot(slot));
+                }
+
+                Registers regs(thread->hThread, CONTEXT_CONTROL | CONTEXT_DEBUG_REGISTERS);
+                regs.TrapFlag = false;
+
+                if(!current)
+                    ResumeThread(thread->hThread);
+            }
+            for(int slot = 0; slot < HWBP_COUNT; slot++)
+                mProcess->hardwareBreakpoints[slot].internal.hardware.enabled = false;
+        }
+        else if(mThread)
+        {
+            Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
+        }
+
+        if(!DebugActiveProcessStop(mMainProcess.dwProcessId))
+            success = false;
+
+        return success;
     }
 
     void Debugger::Detach()
