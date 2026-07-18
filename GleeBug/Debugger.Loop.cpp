@@ -1,5 +1,6 @@
 #include "Debugger.h"
 #include "Debugger.Thread.Registers.h"
+#include <unordered_set>
 
 #ifndef DBG_REPLY_LATER
 #define DBG_REPLY_LATER ((NTSTATUS)0x40010001L)
@@ -30,6 +31,7 @@ namespace GleeBug
 
         DWORD ThreadBeingProcessed = 0;
         std::unordered_map<DWORD, HANDLE> SuspendedThreads;
+        std::unordered_set<uint64_t> DeferredExceptionThreads;
         bool IsDbgReplyLaterSupported = false;
 
         // Check if DBG_REPLY_LATER is supported based on Windows version (Windows 10, version 1507 or above)
@@ -67,10 +69,12 @@ namespace GleeBug
 #endif
                 else
                 {
-                    //after 2 consecutive timeouts, clear recently deleted breakpoints
-                    //any stale events would have been delivered by now
+                    // Do not expire deleted breakpoints while a breakpoint step-over is
+                    // still in flight. The stepped instruction can block indefinitely and
+                    // breakpoint events from the suspended threads remain pending until its
+                    // single-step event arrives.
                     consecutiveTimeouts++;
-                    if(consecutiveTimeouts >= 2 && mProcess)
+                    if(consecutiveTimeouts >= 2 && ThreadBeingProcessed == 0 && SuspendedThreads.empty() && DeferredExceptionThreads.empty() && mProcess)
                         mProcess->recentlyDeletedSwbp.clear();
                     continue;
                 }
@@ -78,6 +82,8 @@ namespace GleeBug
 
             //event received, reset timeout counter
             consecutiveTimeouts = 0;
+            const uint64_t eventThreadKey = (uint64_t(mDebugEvent.dwProcessId) << 32) | mDebugEvent.dwThreadId;
+            const bool completingDeferredException = DeferredExceptionThreads.count(eventThreadKey) != 0;
 
             // Handle safe stepping
             if(IsDbgReplyLaterSupported)
@@ -87,7 +93,9 @@ namespace GleeBug
                     // Check if there is a thread processing a single step
                     if(ThreadBeingProcessed != 0 && mDebugEvent.dwThreadId != ThreadBeingProcessed)
                     {
-                        // Reply to the event later
+                        // Reply to the event later and retain its ownership state until
+                        // the same thread's event is processed normally.
+                        DeferredExceptionThreads.insert(eventThreadKey);
                         if(!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, DBG_REPLY_LATER))
                             break;
 
@@ -247,6 +255,8 @@ namespace GleeBug
             //continue the debug event
             if(!ContinueDebugEvent(mDebugEvent.dwProcessId, mDebugEvent.dwThreadId, mContinueStatus))
                 break;
+            if(completingDeferredException)
+                DeferredExceptionThreads.erase(eventThreadKey);
 
             if(mDetach || mDetachAndBreak)
             {
