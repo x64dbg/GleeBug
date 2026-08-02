@@ -12,6 +12,14 @@
 #define PAGE_SIZE 0x1000
 #endif // PAGE_SIZE
 
+#ifndef STATUS_WX86_SINGLE_STEP
+#define STATUS_WX86_SINGLE_STEP ((DWORD)0x4000001EL)
+#endif // STATUS_WX86_SINGLE_STEP
+
+#ifndef STATUS_WX86_BREAKPOINT
+#define STATUS_WX86_BREAKPOINT ((DWORD)0x4000001FL)
+#endif // STATUS_WX86_BREAKPOINT
+
 namespace GleeBug
 {
     //forward declarations

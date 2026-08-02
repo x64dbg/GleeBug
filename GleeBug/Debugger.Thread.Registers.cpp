@@ -106,6 +106,12 @@ namespace GleeBug
         TrapFlag(this),
         ResumeFlag(this)
     {
+#ifdef _WIN64
+        // Preserve hardware-breakpoint state across control-context updates,
+        // including transitions between WoW64 compatibility and native mode.
+        if((ContextFlags & CONTEXT_CONTROL) == CONTEXT_CONTROL)
+            ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+#endif // _WIN64
         memset(&mContext, 0, sizeof(CONTEXT));
         mContext.ContextFlags = ContextFlags;
         if(!!GetThreadContext(hThread, &mContext))
@@ -128,5 +134,19 @@ namespace GleeBug
     PCONTEXT Registers::GetContext()
     {
         return &mContext;
+    }
+
+    bool Registers::Is32BitMode() const
+    {
+#ifdef _WIN64
+        return mContext.SegCs == 0x23;
+#else
+        return true;
+#endif // _WIN64
+    }
+
+    size_t Registers::PointerSize() const
+    {
+        return Is32BitMode() ? sizeof(uint32) : sizeof(ptr);
     }
 };

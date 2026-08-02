@@ -185,7 +185,9 @@ namespace GleeBug
                 unloadDllEvent(mDebugEvent.u.UnloadDll);
                 break;
             case EXCEPTION_DEBUG_EVENT:
-                if(IsDbgReplyLaterSupported && mDebugEvent.u.Exception.ExceptionRecord.ExceptionCode == STATUS_SINGLE_STEP)
+            {
+                auto exceptionCode = mDebugEvent.u.Exception.ExceptionRecord.ExceptionCode;
+                if(IsDbgReplyLaterSupported && (exceptionCode == STATUS_SINGLE_STEP || exceptionCode == STATUS_WX86_SINGLE_STEP))
                 {
                     // Resume the other threads since we are done processing the single step
                     for(auto & itr : SuspendedThreads)
@@ -196,6 +198,7 @@ namespace GleeBug
                 }
                 exceptionEvent(mDebugEvent.u.Exception);
                 break;
+            }
             case OUTPUT_DEBUG_STRING_EVENT:
                 debugStringEvent(mDebugEvent.u.DebugString);
                 break;

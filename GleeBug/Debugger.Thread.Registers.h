@@ -159,6 +159,16 @@ namespace GleeBug
         */
         PCONTEXT GetContext();
 
+        /**
+        \brief Returns true when the thread is currently executing 32-bit code.
+        */
+        bool Is32BitMode() const;
+
+        /**
+        \brief Gets the pointer size for the thread's current execution mode.
+        */
+        size_t PointerSize() const;
+
     private:
         HANDLE hThread;
         CONTEXT mContext;
