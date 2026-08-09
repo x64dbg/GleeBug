@@ -116,6 +116,8 @@ retry_no_aslr:
 
         if(mProcess)
         {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
             // 1. Restore all software (INT3) breakpoints, otherwise the debuggee
             //    faults on a leftover 0xCC once it is no longer being debugged.
             for(auto it = mProcess->breakpoints.begin(); it != mProcess->breakpoints.end(); )

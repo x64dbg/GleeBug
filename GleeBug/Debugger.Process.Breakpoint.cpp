@@ -4,6 +4,8 @@ namespace GleeBug
 {
     bool Process::SetBreakpoint(ptr address, bool singleshoot, SoftwareType type)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //check the address
         if(!MemIsValidPtr(address) ||
                 breakpoints.find({ BreakpointType::Software, address }) != breakpoints.end())
@@ -44,6 +46,8 @@ namespace GleeBug
 
     bool Process::SetBreakpoint(ptr address, const BreakpointCallback & cbBreakpoint, bool singleshoot, SoftwareType type)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //check if a callback on this address was already found
         if(breakpointCallbacks.find({ BreakpointType::Software, address }) != breakpointCallbacks.end())
             return false;
@@ -57,6 +61,8 @@ namespace GleeBug
 
     bool Process::DeleteBreakpoint(ptr address)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //find the breakpoint
         auto found = breakpoints.find({ BreakpointType::Software, address });
         if(found == breakpoints.end())
@@ -79,6 +85,8 @@ namespace GleeBug
 
     bool Process::GetFreeHardwareBreakpointSlot(HardwareSlot & slot) const
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //find a free hardware breakpoint slot
         for(int i = 0; i < HWBP_COUNT; i++)
         {
@@ -93,6 +101,8 @@ namespace GleeBug
 
     bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, HardwareType type, HardwareSize size, bool singleshoot)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //check the address
         if(!MemIsValidPtr(address) ||
                 breakpoints.find({ BreakpointType::Hardware, address }) != breakpoints.end())
@@ -138,6 +148,8 @@ namespace GleeBug
 
     bool Process::SetHardwareBreakpoint(ptr address, HardwareSlot slot, const BreakpointCallback & cbBreakpoint, HardwareType type, HardwareSize size, bool singleshoot)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //check if a callback on this address was already found
         if(breakpointCallbacks.find({ BreakpointType::Hardware, address }) != breakpointCallbacks.end())
             return false;
@@ -151,6 +163,8 @@ namespace GleeBug
 
     bool Process::DeleteHardwareBreakpoint(ptr address)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         //find the hardware breakpoint
         auto found = breakpoints.find({ BreakpointType::Hardware, address });
         if(found == breakpoints.end())
@@ -369,7 +383,7 @@ namespace GleeBug
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, MemoryType type, bool singleshoot)
     {
-        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
         DPRINTF();
 
         // Basic checks, including the range-end overflow that would otherwise wrap
@@ -458,7 +472,7 @@ namespace GleeBug
 
     bool Process::SetMemoryBreakpoint(ptr address, ptr size, const BreakpointCallback & cbBreakpoint, MemoryType type, bool singleshoot)
     {
-        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
 
         //check if a callback on this address was already found
         if(breakpointCallbacks.find({ BreakpointType::Memory, address }) != breakpointCallbacks.end())
@@ -473,7 +487,7 @@ namespace GleeBug
 
     bool Process::DeleteMemoryBreakpoint(ptr address)
     {
-        std::lock_guard<std::recursive_mutex> lock(memoryBreakpointMutex);
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
 
         // Find the byte range containing address, then find its breakpoint record.
         const auto range = memoryBreakpointRanges.find(Range(address, address));

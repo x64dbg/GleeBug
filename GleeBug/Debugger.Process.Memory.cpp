@@ -13,6 +13,8 @@ namespace GleeBug
 
     bool Process::MemReadSafe(ptr address, void* buffer, ptr size, ptr* bytesRead) const
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         if(!MemReadUnsafe(address, buffer, size, bytesRead))
             return false;
 
@@ -65,6 +67,8 @@ namespace GleeBug
 
     bool Process::MemWriteSafe(ptr address, const void* buffer, ptr size, ptr* bytesWritten)
     {
+        std::lock_guard<std::recursive_mutex> lock(breakpointMutex);
+
         if(size == 0)
         {
             if(bytesWritten)
