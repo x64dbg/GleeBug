@@ -75,7 +75,10 @@ namespace GleeBug
                     // single-step event arrives.
                     consecutiveTimeouts++;
                     if(consecutiveTimeouts >= 2 && ThreadBeingProcessed == 0 && SuspendedThreads.empty() && DeferredExceptionThreads.empty() && mProcess)
+                    {
+                        std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
                         mProcess->recentlyDeletedSwbp.clear();
+                    }
                     continue;
                 }
             }

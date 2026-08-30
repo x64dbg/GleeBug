@@ -793,6 +793,7 @@ public:
 
     bool IsBPXEnabled(ULONG_PTR bpxAddress)
     {
+        std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
         return (mProcess->MemIsValidPtr(bpxAddress) &&
                 mProcess->breakpoints.find({ BreakpointType::Software, bpxAddress }) != mProcess->breakpoints.end());
     }
@@ -854,7 +855,11 @@ public:
         auto slot = IndexOfRegister - UE_DR0;
         if(!mProcess || slot > 3)
             return false;
-        auto address = mProcess->hardwareBreakpoints[slot].address;
+        ptr address;
+        {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+            address = mProcess->hardwareBreakpoints[slot].address;
+        }
         return mProcess->DeleteHardwareBreakpoint(address);
     }
 
@@ -874,7 +879,11 @@ public:
     {
         for(auto & it : mProcesses)
         {
-            auto breakpoints = it.second->breakpoints; //explicit copy
+            BreakpointMap breakpoints;
+            {
+                std::lock_guard<std::recursive_mutex> lock(it.second->breakpointMutex);
+                breakpoints = it.second->breakpoints;
+            }
             for(const auto & jt : breakpoints)
                 it.second->DeleteGenericBreakpoint(jt.second);
         }

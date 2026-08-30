@@ -5,6 +5,8 @@ namespace GleeBug
 {
     void Debugger::exceptionBreakpoint(const EXCEPTION_RECORD & exceptionRecord, const bool firstChance)
     {
+        std::unique_lock<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
         //check if the breakpoint exists
         auto exceptionAddress = ptr(exceptionRecord.ExceptionAddress);
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Software, exceptionAddress });
@@ -17,6 +19,7 @@ namespace GleeBug
                 mContinueStatus = DBG_CONTINUE;
 
                 //call the callback
+                lock.unlock();
                 cbSystemBreakpoint();
             }
             else
@@ -50,6 +53,8 @@ namespace GleeBug
         }
         mProcess->StepInternal([this, info]()
         {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
             //only restore the bytes if the breakpoint still exists
             auto foundBreakpoint = mProcess->breakpoints.find({ BreakpointType::Software, info.address });
             if(foundBreakpoint != mProcess->breakpoints.end())
@@ -64,13 +69,18 @@ namespace GleeBug
             }
         });
 
+        BreakpointCallback breakpointCallback;
+        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Software, info.address });
+        if(foundCallback != mProcess->breakpointCallbacks.end())
+            breakpointCallback = foundCallback->second;
+        lock.unlock();
+
         //call the generic callback
         cbBreakpoint(info);
 
         //call the user callback
-        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Software, info.address });
-        if(foundCallback != mProcess->breakpointCallbacks.end())
-            foundCallback->second(info);
+        if(breakpointCallback)
+            breakpointCallback(info);
 
         //delete the breakpoint if it is singleshoot
         if(info.singleshoot)
@@ -85,9 +95,6 @@ namespace GleeBug
             mThread->isInternalStepping = false;
             mContinueStatus = DBG_CONTINUE;
 
-            // Internal step callbacks can re-arm a memory-breakpoint page. Serialize
-            // that map access with concurrent set/delete transactions.
-            std::lock_guard<std::recursive_mutex> lock(mProcess->memoryBreakpointMutex);
             mThread->cbInternalStep();
         }
         if(mThread->isSingleStepping)  //handle single step
@@ -142,6 +149,7 @@ namespace GleeBug
             return; //not a hardware breakpoint
 
         //find the breakpoint in the internal structures
+        std::unique_lock<std::recursive_mutex> lock(mProcess->breakpointMutex);
         auto foundInfo = mProcess->breakpoints.find({ BreakpointType::Hardware, breakpointAddress });
         if(foundInfo == mProcess->breakpoints.end())
             return; //not a valid hardware breakpoint
@@ -156,21 +164,31 @@ namespace GleeBug
         mThread->DeleteHardwareBreakpoint(breakpointSlot);
         mProcess->StepInternal([this, info]()
         {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
             //only restore if the breakpoint still exists
             if(mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) != mProcess->breakpoints.end())
                 mThread->SetHardwareBreakpoint(info.address, info.internal.hardware.slot, info.internal.hardware.type, info.internal.hardware.size);
         });
 
+        BreakpointCallback breakpointCallback;
+        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
+        if(foundCallback != mProcess->breakpointCallbacks.end())
+            breakpointCallback = foundCallback->second;
+        lock.unlock();
+
         //call the generic callback
         cbBreakpoint(info);
 
         //call the user callback
-        auto foundCallback = mProcess->breakpointCallbacks.find({ BreakpointType::Hardware, info.address });
-        if(foundCallback != mProcess->breakpointCallbacks.end())
-            foundCallback->second(info);
+        if(breakpointCallback)
+            breakpointCallback(info);
 
         //if the breakpoint was deleted during callback, clear internal stepping to prevent thread suspension
-        if(mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) == mProcess->breakpoints.end())
+        lock.lock();
+        const bool breakpointDeleted = mProcess->breakpoints.find({ BreakpointType::Hardware, info.address }) == mProcess->breakpoints.end();
+        lock.unlock();
+        if(breakpointDeleted)
         {
             mThread->isInternalStepping = false;
             Registers(mThread->hThread, CONTEXT_CONTROL).TrapFlag = false;
@@ -185,13 +203,22 @@ namespace GleeBug
     {
         // Page protections are changed before set/delete publishes its metadata.
         // Wait for the transaction before classifying this memory-breakpoint fault.
-        std::unique_lock<std::recursive_mutex> lock(mProcess->memoryBreakpointMutex);
+        std::unique_lock<std::recursive_mutex> lock(mProcess->breakpointMutex);
 
         /*
         ASSUME:
         exceptionAddress may or may not have been generated by your breakpoints.
         */
         char error[128] = "";
+        auto reportError = [&]()
+        {
+            const bool relock = lock.owns_lock();
+            if(relock)
+                lock.unlock();
+            cbInternalError(error);
+            if(relock)
+                lock.lock();
+        };
         auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
 
         //check if the exception address is directly in the range of a memory breakpoint
@@ -212,7 +239,7 @@ namespace GleeBug
                 if(!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
                     sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
-                    cbInternalError(error);
+                    reportError();
                 }
 
                 //However the following situations may occur:
@@ -223,6 +250,8 @@ namespace GleeBug
                 // then we ought to restore the protection.
                 mProcess->StepInternal([this, pBaseAddr]()
                 {
+                    std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
                     if(found_page == mProcess->memoryBreakpointPages.end())
@@ -245,7 +274,7 @@ namespace GleeBug
         if(foundInfo == mProcess->breakpoints.end())
         {
             sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
-            cbInternalError(error);
+            reportError();
             return;
         }
 
@@ -260,7 +289,7 @@ namespace GleeBug
         if(bpxPage == mProcess->memoryBreakpointPages.end())
         {
             sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
-            cbInternalError(error);
+            reportError();
             return;
         }
         auto pageAddr = bpxPage->first;
@@ -284,11 +313,13 @@ namespace GleeBug
             if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
             {
                 sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
-                cbInternalError(error);
+                reportError();
             }
 
             mProcess->StepInternal([this, pageAddr]()
             {
+                std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
                 auto found_page = mProcess->memoryBreakpointPages.find(pageAddr);
                 if(found_page == mProcess->memoryBreakpointPages.end())
                     return;
@@ -328,11 +359,13 @@ namespace GleeBug
         if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
             sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
-            cbInternalError(error);
+            reportError();
         }
         //Pass info as well
         mProcess->StepInternal([this, pageAddr]()
         {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
             //With page check this should work better: So when we reach this part of the code we are sure that:
             //-The exception Address In deed corresponded to an existing (now possibly deleted) memory breakpoint range
             //-memoryBreakpointPages was in deed consistent with this memory address that generated the exception (The data structure wasn't corrupted somehow)
@@ -364,13 +397,22 @@ namespace GleeBug
 
     void Debugger::exceptionAccessViolation(const EXCEPTION_RECORD & exceptionRecord, bool firstChance)
     {
-        std::unique_lock<std::recursive_mutex> lock(mProcess->memoryBreakpointMutex);
+        std::unique_lock<std::recursive_mutex> lock(mProcess->breakpointMutex);
 
         /*
         ASSUME:
         exceptionAddress may or may not have been generated by your breakpoints.
         */
         char error[128] = "";
+        auto reportError = [&]()
+        {
+            const bool relock = lock.owns_lock();
+            if(relock)
+                lock.unlock();
+            cbInternalError(error);
+            if(relock)
+                lock.lock();
+        };
         auto exceptionAddress = ptr(exceptionRecord.ExceptionInformation[1]);
 
         //check if the exception address is directly in the range of a memory breakpoint
@@ -391,7 +433,7 @@ namespace GleeBug
                 if(!mProcess->MemProtect(foundPage->first, PAGE_SIZE, foundPage->second.OldProtect))
                 {
                     sprintf_s(error, "MemProtect failed on 0x%p", (void*)foundPage->first);
-                    cbInternalError(error);
+                    reportError();
                 }
 
                 //However the following situations may occur:
@@ -402,6 +444,8 @@ namespace GleeBug
                 // then we ought to restore the protection.
                 mProcess->StepInternal([this, pBaseAddr]()
                 {
+                    std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
                     //seek out the page address
                     auto found_page = mProcess->memoryBreakpointPages.find(pBaseAddr);
                     if(found_page == mProcess->memoryBreakpointPages.end())
@@ -424,7 +468,7 @@ namespace GleeBug
         if(foundInfo == mProcess->breakpoints.end())
         {
             sprintf_s(error, "inconsistent memory breakpoint at 0x%p", (void*)exceptionAddress);
-            cbInternalError(error);
+            reportError();
             return;
         }
 
@@ -439,7 +483,7 @@ namespace GleeBug
         if(bpxPage == mProcess->memoryBreakpointPages.end())
         {
             sprintf_s(error, "Process::memoryBreakPointPages data structure is incosistent, should dump page at 0x%p", (void*)(exceptionAddress & ~(PAGE_SIZE - 1)));
-            cbInternalError(error);
+            reportError();
             return;
         }
         auto pageAddr = bpxPage->first;
@@ -474,7 +518,7 @@ namespace GleeBug
             if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
             {
                 sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
-                cbInternalError(error);
+                reportError();
             }
 
             // The page-wide protection belongs to another range. Execute this
@@ -482,6 +526,8 @@ namespace GleeBug
             // any memory breakpoint still owns it.
             mProcess->StepInternal([this, pageAddr]()
             {
+                std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
                 auto foundPage = mProcess->memoryBreakpointPages.find(pageAddr);
                 if(foundPage != mProcess->memoryBreakpointPages.end())
                     mProcess->MemProtect(pageAddr, PAGE_SIZE, foundPage->second.NewProtect);
@@ -513,11 +559,13 @@ namespace GleeBug
         if(!mProcess->MemProtect(pageAddr, PAGE_SIZE, pageProperties.OldProtect))
         {
             sprintf_s(error, "MemProtect failed on 0x%p", (void*)pageAddr);
-            cbInternalError(error);
+            reportError();
         }
         //Pass info as well
         mProcess->StepInternal([this, pageAddr]()
         {
+            std::lock_guard<std::recursive_mutex> lock(mProcess->breakpointMutex);
+
             //With page check this should work better: So when we reach this part of the code we are sure that:
             //-The exception Address In deed corresponded to an existing (now possibly deleted) memory breakpoint range
             //-memoryBreakpointPages was in deed consistent with this memory address that generated the exception (The data structure wasn't corrupted somehow)

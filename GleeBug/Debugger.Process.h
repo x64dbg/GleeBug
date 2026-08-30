@@ -31,7 +31,7 @@ namespace GleeBug
         BreakpointInfo hardwareBreakpoints[4];
         MemoryBreakpointSet memoryBreakpointRanges;
         MemoryBreakpointMap memoryBreakpointPages;
-        std::recursive_mutex memoryBreakpointMutex;
+        mutable std::recursive_mutex breakpointMutex;
 
         std::unordered_set<ptr> recentlyDeletedSwbp;
 
