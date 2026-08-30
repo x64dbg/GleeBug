@@ -560,9 +560,11 @@ namespace GleeBug
         switch(exceptionInfo.ExceptionRecord.ExceptionCode)
         {
         case STATUS_BREAKPOINT:
+        case STATUS_WX86_BREAKPOINT:
             exceptionBreakpoint(exceptionRecord, firstChance);
             break;
         case STATUS_SINGLE_STEP:
+        case STATUS_WX86_SINGLE_STEP:
             exceptionSingleStep(exceptionRecord, firstChance);
             break;
         case STATUS_GUARD_PAGE_VIOLATION:

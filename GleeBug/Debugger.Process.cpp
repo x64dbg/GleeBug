@@ -62,15 +62,26 @@ namespace GleeBug
         }
     }
 
+    static ZydisMachineMode GetMachineMode(const Registers & registers)
+    {
+#ifdef _WIN64
+        return registers.Is32BitMode() ? ZYDIS_MACHINE_MODE_LONG_COMPAT_32 : ZYDIS_MACHINE_MODE_LONG_64;
+#else
+        return ZYDIS_MACHINE_MODE_LEGACY_32;
+#endif // _WIN64
+    }
+
     void Process::StepOver(const StepCallback & cbStep)
     {
-        auto gip = Registers(thread->hThread, CONTEXT_CONTROL).Gip();
+        Registers registers(thread->hThread, CONTEXT_CONTROL);
+        auto gip = registers.Gip();
+        auto machineMode = GetMachineMode(registers);
         unsigned char data[16];
         if(MemReadSafe(gip, data, sizeof(data)))
         {
             ZydisDisassembledInstruction instruction;
             if(ZYAN_SUCCESS(ZydisDisassembleIntel(
-                                GleeArchValue(ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_MACHINE_MODE_LONG_COMPAT_32),
+                                machineMode,
                                 gip,
                                 data,
                                 sizeof(data),
@@ -111,6 +122,7 @@ namespace GleeBug
 
         // Check if we're currently stepping on a pushf instruction
         auto isPushf = false;
+        auto pointerSize = registers.PointerSize();
         {
             auto gip = registers.Gip();
             unsigned char data[16];
@@ -118,7 +130,7 @@ namespace GleeBug
             {
                 ZydisDisassembledInstruction instruction;
                 if(ZYAN_SUCCESS(ZydisDisassembleIntel(
-                                    GleeArchValue(ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_MACHINE_MODE_LONG_COMPAT_32),
+                                    GetMachineMode(registers),
                                     gip,
                                     data,
                                     sizeof(data),
@@ -141,15 +153,16 @@ namespace GleeBug
 
         if(isPushf)
         {
-            thread->cbInternalStep = [this, cbStep]()
+            thread->cbInternalStep = [this, cbStep, pointerSize]()
             {
-                // Remove the trap flag from the stack
+                // Remove the trap flag from the stack using the execution
+                // mode's pointer width (PUSHFD is four bytes under WoW64).
                 auto gsp = Registers(this->thread->hThread).Gsp();
-                GleeBug::ptr data;
-                if(MemReadUnsafe(gsp, &data, sizeof(data)))
+                uint64 data = 0;
+                if(MemReadUnsafe(gsp, &data, pointerSize))
                 {
-                    data &= ~(int)Registers::F::Trap;
-                    MemWriteUnsafe(gsp, &data, sizeof(data));
+                    data &= ~uint64(Registers::F::Trap);
+                    MemWriteUnsafe(gsp, &data, pointerSize);
                 }
 
                 cbStep();

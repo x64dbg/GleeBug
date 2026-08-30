@@ -262,15 +262,12 @@ retry_no_aslr:
     }
 #endif
 
-    static bool ProcessRelocations(char* imageCopy, ULONG_PTR imageSize, ULONG_PTR newImageBase, ULONG_PTR & oldImageBase)
+    template<typename NtHeaders>
+    static bool ProcessRelocationsForArchitecture(char* imageCopy, NtHeaders* pnth, ULONG_PTR newImageBase, ULONG_PTR & oldImageBase)
     {
-        auto pnth = RtlImageNtHeader(imageCopy);
-        if(pnth == nullptr)
-            return false;
-
-        // Put the new base in the header
-        oldImageBase = pnth->OptionalHeader.ImageBase;
-        pnth->OptionalHeader.ImageBase = newImageBase;
+        // Put the new base in the header using the image's pointer width.
+        oldImageBase = ULONG_PTR(pnth->OptionalHeader.ImageBase);
+        pnth->OptionalHeader.ImageBase = decltype(pnth->OptionalHeader.ImageBase)(newImageBase);
 
         // Nothing to do if relocations are stripped
         if(pnth->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
@@ -282,7 +279,7 @@ retry_no_aslr:
             return true;
 
         // Process the relocations
-        auto delta = newImageBase - oldImageBase;
+        auto delta = LONG_PTR(newImageBase) - LONG_PTR(oldImageBase);
         auto relocationItr = (PIMAGE_BASE_RELOCATION)((ULONG_PTR)imageCopy + relocDir.VirtualAddress);
         auto relocationEnd = (PIMAGE_BASE_RELOCATION)((ULONG_PTR)relocationItr + relocDir.Size);
 
@@ -297,6 +294,20 @@ retry_no_aslr:
                 return false;
         }
         return true;
+    }
+
+    static bool ProcessRelocations(char* imageCopy, ULONG_PTR newImageBase, ULONG_PTR & oldImageBase)
+    {
+        auto pnth = RtlImageNtHeader(imageCopy);
+        if(pnth == nullptr)
+            return false;
+
+        auto magic = ((PIMAGE_NT_HEADERS32)pnth)->OptionalHeader.Magic;
+        if(magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+            return ProcessRelocationsForArchitecture(imageCopy, (PIMAGE_NT_HEADERS32)pnth, newImageBase, oldImageBase);
+        if(magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            return ProcessRelocationsForArchitecture(imageCopy, (PIMAGE_NT_HEADERS64)pnth, newImageBase, oldImageBase);
+        return false;
     }
 
     static bool RelocateImage(HANDLE hProcess, PVOID imageBase, SIZE_T imageSize)
@@ -319,7 +330,7 @@ retry_no_aslr:
 
         // perform the actual relocations
         ULONG_PTR oldImageBase = 0;
-        auto success = ProcessRelocations(imageCopy, imageSize, (ULONG_PTR)imageBase, oldImageBase);
+        auto success = ProcessRelocations(imageCopy, (ULONG_PTR)imageBase, oldImageBase);
 
         // write back the pages
         auto memWrite = [hProcess](PVOID ptr, LPCVOID data, SIZE_T size)
@@ -386,28 +397,47 @@ retry_no_aslr:
                 auto hMapping = CreateFileMappingW(hFile, nullptr, SEC_IMAGE | PAGE_READONLY, 0, 0, nullptr);
                 if(hMapping)
                 {
-                    CONTEXT ctx;
+                    CONTEXT ctx = {};
                     ctx.ContextFlags = CONTEXT_ALL;
                     if(GetThreadContext(pi.hThread, &ctx))
                     {
-                        PVOID imageBase;
-                        // TODO: support wow64 processes
+                        constexpr SIZE_T Peb32ImageBaseOffset = 0x8;
+                        constexpr SIZE_T Peb64ImageBaseOffset = 0x10;
+                        bool isWow64 = false;
+                        ULONG_PTR pebAddress = 0;
+                        SIZE_T imageBaseOffset = 0;
+                        SIZE_T imageBaseSize = 0;
 #ifdef _WIN64
-                        auto & pebRegister = ctx.Rdx;
-                        auto & entryPointRegister = ctx.Rcx;
-#else
-                        auto & pebRegister = ctx.Ebx;
-                        auto & entryPointRegister = ctx.Eax;
-#endif // _WIN64
-                        if(ReadProcessMemory(pi.hProcess, (char*)pebRegister + offsetof(PEB, ImageBaseAddress), &imageBase, sizeof(PVOID), nullptr))
+                        ULONG returnLength = 0;
+                        if(NT_SUCCESS(NtQueryInformationProcess(pi.hProcess, ProcessWow64Information, &pebAddress, sizeof(pebAddress), &returnLength)) && pebAddress != 0)
                         {
-                            if(ULONG_PTR(imageBase) == mDebugModuleImageBase)
+                            isWow64 = true;
+                            imageBaseOffset = Peb32ImageBaseOffset;
+                            imageBaseSize = sizeof(DWORD);
+                        }
+                        else
+                        {
+                            pebAddress = ctx.Rdx;
+                            imageBaseOffset = Peb64ImageBaseOffset;
+                            imageBaseSize = sizeof(DWORD64);
+                        }
+#else
+                        pebAddress = ctx.Ebx;
+                        imageBaseOffset = Peb32ImageBaseOffset;
+                        imageBaseSize = sizeof(DWORD);
+#endif // _WIN64
+
+                        ULONG_PTR imageBaseValue = 0;
+                        if(ReadProcessMemory(pi.hProcess, (char*)pebAddress + imageBaseOffset, &imageBaseValue, imageBaseSize, nullptr))
+                        {
+                            if(imageBaseValue == mDebugModuleImageBase)
                             {
                                 // Already at the right base
                                 success = true;
                             }
                             else
                             {
+                                auto imageBase = PVOID(imageBaseValue);
                                 auto status = NtUnmapViewOfSection(pi.hProcess, imageBase);
                                 if(status == STATUS_SUCCESS)
                                 {
@@ -422,22 +452,58 @@ retry_no_aslr:
                                     }
                                     if(status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE)
                                     {
-                                        auto pebOk = WriteProcessMemory(pi.hProcess, (char*)pebRegister + offsetof(PEB, ImageBaseAddress), &imageBase, sizeof(PVOID), nullptr);
+                                        imageBaseValue = ULONG_PTR(imageBase);
+                                        auto pebOk = WriteProcessMemory(pi.hProcess, (char*)pebAddress + imageBaseOffset, &imageBaseValue, imageBaseSize, nullptr);
+#ifdef _WIN64
+                                        if(pebOk && isWow64)
+                                        {
+                                            PROCESS_BASIC_INFORMATION processInfo = {};
+                                            if(NT_SUCCESS(NtQueryInformationProcess(pi.hProcess, ProcessBasicInformation, &processInfo, sizeof(processInfo), &returnLength)))
+                                            {
+                                                DWORD64 imageBase64 = imageBaseValue;
+                                                pebOk = WriteProcessMemory(pi.hProcess, (char*)processInfo.PebBaseAddress + Peb64ImageBaseOffset, &imageBase64, sizeof(imageBase64), nullptr);
+                                            }
+                                            else
+                                            {
+                                                pebOk = false;
+                                            }
+                                        }
+#else
+                                        if(pebOk && isThisProcessWow64())
+                                        {
+                                            DWORD64 imageBase64 = imageBaseValue;
+                                            pebOk = WriteProcessMemory(pi.hProcess, (char*)pebAddress - 0x1000 + Peb64ImageBaseOffset, &imageBase64, sizeof(imageBase64), nullptr);
+                                        }
+#endif // _WIN64
                                         auto relocatedOk = RelocateImage(pi.hProcess, imageBase, viewSize);
                                         if(pebOk && relocatedOk)
                                         {
-                                            auto expectedBase = mDebugModuleImageBase == ULONG_PTR(imageBase);
-                                            mDebugModuleImageBase = ULONG_PTR(imageBase);
-                                            entryPointRegister = mDebugModuleImageBase + debugModuleEntryPoint;
-                                            if(SetThreadContext(pi.hThread, &ctx))
+                                            auto expectedBase = mDebugModuleImageBase == imageBaseValue;
+                                            mDebugModuleImageBase = imageBaseValue;
+                                            auto entryPoint = mDebugModuleImageBase + debugModuleEntryPoint;
+                                            bool contextOk = false;
+#ifdef _WIN64
+                                            if(isWow64)
                                             {
-                                                success = expectedBase;
-#ifndef _WIN64
-                                                // For Wow64 processes, also adjust the 64-bit PEB
-                                                if(isThisProcessWow64() && !WriteProcessMemory(pi.hProcess, (char*)pebRegister - 0x1000 + 0x10, &imageBase, sizeof(PVOID), nullptr))
-                                                    success = false;
-#endif // _WIN64
+                                                WOW64_CONTEXT ctx32 = {};
+                                                ctx32.ContextFlags = WOW64_CONTEXT_INTEGER;
+                                                if(Wow64GetThreadContext(pi.hThread, &ctx32))
+                                                {
+                                                    ctx32.Eax = DWORD(entryPoint);
+                                                    contextOk = Wow64SetThreadContext(pi.hThread, &ctx32) != FALSE;
+                                                }
                                             }
+                                            else
+                                            {
+                                                ctx.Rcx = entryPoint;
+                                                contextOk = SetThreadContext(pi.hThread, &ctx) != FALSE;
+                                            }
+#else
+                                            ctx.Eax = DWORD(entryPoint);
+                                            contextOk = SetThreadContext(pi.hThread, &ctx) != FALSE;
+#endif // _WIN64
+                                            if(contextOk)
+                                                success = expectedBase;
                                         }
                                     }
                                 }
