@@ -50,6 +50,26 @@ __declspec(dllexport) bool TITCALL MemoryWriteSafe(HANDLE hProcess, LPVOID lpBas
     return emu.MemoryWriteSafe(hProcess, lpBaseAddress, lpBuffer, nSize, lpNumberOfBytesWritten);
 }
 
+__declspec(dllexport) SIZE_T TITCALL MemoryQuerySafe(HANDLE hProcess, LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength)
+{
+    return VirtualQueryEx(hProcess, lpAddress, lpBuffer, dwLength);
+}
+
+__declspec(dllexport) LPVOID TITCALL MemoryAllocSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect)
+{
+    return VirtualAllocEx(hProcess, lpAddress, dwSize, flAllocationType, flProtect);
+}
+
+__declspec(dllexport) bool TITCALL MemoryFreeSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType)
+{
+    return !!VirtualFreeEx(hProcess, lpAddress, dwSize, dwFreeType);
+}
+
+__declspec(dllexport) bool TITCALL MemoryProtectSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect)
+{
+    return !!VirtualProtectEx(hProcess, lpAddress, dwSize, flNewProtect, lpflOldProtect);
+}
+
 __declspec(dllexport) bool TITCALL Fill(LPVOID MemoryStart, DWORD MemorySize, PBYTE FillByte)
 {
     return emu.Fill(MemoryStart, MemorySize, FillByte);
@@ -106,6 +126,28 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool
 {
     return emu.TitanOpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
 }
+
+__declspec(dllexport) bool TITCALL TitanCloseHandle(HANDLE hEngineHandle)
+{
+    return !!CloseHandle(hEngineHandle);
+}
+
+__declspec(dllexport) bool TITCALL ProcessIsWow64(HANDLE hProcess, PBOOL isWow64)
+{
+    return !!IsWow64Process(hProcess, isWow64);
+}
+
+__declspec(dllexport) bool TITCALL TitanTerminateProcess(HANDLE hProcess, DWORD exitCode) { return !!TerminateProcess(hProcess, exitCode); }
+__declspec(dllexport) bool TITCALL TitanDebugBreakProcess(HANDLE hProcess) { return !!DebugBreakProcess(hProcess); }
+__declspec(dllexport) HANDLE TITCALL TitanCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE start, LPVOID argument, DWORD creationFlags, LPDWORD threadId) { return CreateRemoteThread(hProcess, nullptr, 0, start, argument, creationFlags, threadId); }
+__declspec(dllexport) DWORD TITCALL TitanSuspendThread(HANDLE hThread) { return SuspendThread(hThread); }
+__declspec(dllexport) DWORD TITCALL TitanResumeThread(HANDLE hThread) { return ResumeThread(hThread); }
+__declspec(dllexport) bool TITCALL TitanTerminateThread(HANDLE hThread, DWORD exitCode) { return !!TerminateThread(hThread, exitCode); }
+__declspec(dllexport) DWORD TITCALL TitanGetThreadId(HANDLE hThread) { return GetThreadId(hThread); }
+__declspec(dllexport) int TITCALL TitanGetThreadPriority(HANDLE hThread) { return GetThreadPriority(hThread); }
+__declspec(dllexport) bool TITCALL TitanSetThreadPriority(HANDLE hThread, int priority) { return !!SetThreadPriority(hThread, priority); }
+__declspec(dllexport) bool TITCALL TitanGetThreadTimes(HANDLE hThread, LPFILETIME creation, LPFILETIME exit, LPFILETIME kernel, LPFILETIME user) { return !!GetThreadTimes(hThread, creation, exit, kernel, user); }
+__declspec(dllexport) bool TITCALL TitanQueryThreadCycleTime(HANDLE hThread, PULONG64 cycleTime) { return !!QueryThreadCycleTime(hThread, cycleTime); }
 
 __declspec(dllexport) PROCESS_INFORMATION* TITCALL TitanGetProcessInformation()
 {
@@ -169,6 +211,18 @@ __declspec(dllexport) void TITCALL GetMMXRegisters(uint64_t mmx[8], TITAN_ENGINE
 __declspec(dllexport) void TITCALL Getx87FPURegisters(x87FPURegister_t x87FPURegisters[8], TITAN_ENGINE_CONTEXT_t* titcontext)
 {
     emu.Getx87FPURegisters(x87FPURegisters, titcontext);
+}
+
+__declspec(dllexport) bool TITCALL GetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
+{
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
+}
+
+__declspec(dllexport) bool TITCALL SetAVXContext(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_t* titcontext)
+{
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
 }
 
 __declspec(dllexport) bool TITCALL GetAVX512Context(HANDLE hActiveThread, TITAN_ENGINE_CONTEXT_AVX512_t* titcontext)

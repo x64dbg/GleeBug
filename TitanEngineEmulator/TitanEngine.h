@@ -758,6 +758,10 @@ __declspec(dllexport) ULONG_PTR TITCALL ConvertFileOffsetToVA(ULONG_PTR FileMapV
 __declspec(dllexport) ULONG_PTR TITCALL ConvertFileOffsetToVAEx(ULONG_PTR FileMapVA, DWORD FileSize, ULONG_PTR ImageBase, ULONG_PTR AddressToConvert, bool ReturnType);
 __declspec(dllexport) bool TITCALL MemoryReadSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesRead);
 __declspec(dllexport) bool TITCALL MemoryWriteSafe(HANDLE hProcess, LPVOID lpBaseAddress, LPCVOID lpBuffer, SIZE_T nSize, SIZE_T* lpNumberOfBytesWritten);
+__declspec(dllexport) SIZE_T TITCALL MemoryQuerySafe(HANDLE hProcess, LPCVOID lpAddress, PMEMORY_BASIC_INFORMATION lpBuffer, SIZE_T dwLength);
+__declspec(dllexport) LPVOID TITCALL MemoryAllocSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flAllocationType, DWORD flProtect);
+__declspec(dllexport) bool TITCALL MemoryFreeSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType);
+__declspec(dllexport) bool TITCALL MemoryProtectSafe(HANDLE hProcess, LPVOID lpAddress, SIZE_T dwSize, DWORD flNewProtect, PDWORD lpflOldProtect);
 // TitanEngine.Realigner.functions:
 __declspec(dllexport) bool TITCALL FixHeaderCheckSum(const char* szFileName);
 __declspec(dllexport) bool TITCALL FixHeaderCheckSumW(const wchar_t* szFileName);
@@ -1038,6 +1042,19 @@ __declspec(dllexport) long TITCALL GetActiveProcessIdW(const wchar_t* szImageNam
 __declspec(dllexport) void TITCALL EnumProcessesWithLibrary(const char* szLibraryName, void* EnumFunction);
 __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwProcessId);
 __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId);
+__declspec(dllexport) bool TITCALL TitanCloseHandle(HANDLE hEngineHandle);
+__declspec(dllexport) bool TITCALL ProcessIsWow64(HANDLE hProcess, PBOOL isWow64);
+__declspec(dllexport) bool TITCALL TitanTerminateProcess(HANDLE hProcess, DWORD exitCode);
+__declspec(dllexport) bool TITCALL TitanDebugBreakProcess(HANDLE hProcess);
+__declspec(dllexport) HANDLE TITCALL TitanCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE start, LPVOID argument, DWORD creationFlags, LPDWORD threadId);
+__declspec(dllexport) DWORD TITCALL TitanSuspendThread(HANDLE hThread);
+__declspec(dllexport) DWORD TITCALL TitanResumeThread(HANDLE hThread);
+__declspec(dllexport) bool TITCALL TitanTerminateThread(HANDLE hThread, DWORD exitCode);
+__declspec(dllexport) DWORD TITCALL TitanGetThreadId(HANDLE hThread);
+__declspec(dllexport) int TITCALL TitanGetThreadPriority(HANDLE hThread);
+__declspec(dllexport) bool TITCALL TitanSetThreadPriority(HANDLE hThread, int priority);
+__declspec(dllexport) bool TITCALL TitanGetThreadTimes(HANDLE hThread, LPFILETIME creation, LPFILETIME exit, LPFILETIME kernel, LPFILETIME user);
+__declspec(dllexport) bool TITCALL TitanQueryThreadCycleTime(HANDLE hThread, PULONG64 cycleTime);
 // TitanEngine.TLSFixer.functions:
 __declspec(dllexport) bool TITCALL TLSBreakOnCallBack(LPVOID ArrayOfCallBacks, DWORD NumberOfCallBacks, LPVOID bpxCallBack);
 __declspec(dllexport) bool TITCALL TLSGrabCallBackData(const char* szFileName, LPVOID ArrayOfCallBacks, LPDWORD NumberOfCallBacks);
