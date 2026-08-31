@@ -1,12 +1,84 @@
 #include <Windows.h>
+#include <Psapi.h>
 #include "Emulator.h"
 
+#pragma comment(lib, "psapi.lib")
+
 Emulator emu;
+static bool gSessionStarted = false;
 
 //Debugger basics
 __declspec(dllexport) void* TITCALL InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder)
 {
-    return emu.InitDebugW(szFileName, szCommandLine, szCurrentFolder);
+    auto result = emu.InitDebugW(szFileName, szCommandLine, szCurrentFolder);
+    gSessionStarted = result != nullptr;
+    return result;
+}
+
+__declspec(dllexport) PROCESS_INFORMATION* TITCALL InitReplayW(const wchar_t* szArtifactPath, TitanSessionKind ExpectedKind)
+{
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return nullptr;
+}
+
+__declspec(dllexport) bool TITCALL GetSessionInfo(TITAN_SESSION_INFO* SessionInfo)
+{
+    if(!SessionInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return false;
+    }
+    *SessionInfo = {};
+    SessionInfo->structSize = sizeof(*SessionInfo);
+    if(!gSessionStarted && !emu.IsFileBeingDebugged())
+        return true;
+    SessionInfo->kind = UE_SESSION_STATIC;
+    SessionInfo->capabilities = UE_SESSION_CAP_MEMORY_READ | UE_SESSION_CAP_MEMORY_QUERY |
+                                UE_SESSION_CAP_CONTEXT_READ | UE_SESSION_CAP_MEMORY_WRITE |
+                                UE_SESSION_CAP_CONTEXT_WRITE | UE_SESSION_CAP_PROCESS_CONTROL |
+                                UE_SESSION_CAP_THREAD_CONTROL | UE_SESSION_CAP_NATIVE_HANDLES;
+#ifdef _WIN64
+    SessionInfo->machineType = IMAGE_FILE_MACHINE_AMD64;
+#else
+    SessionInfo->machineType = IMAGE_FILE_MACHINE_I386;
+#endif
+    return true;
+}
+
+__declspec(dllexport) bool TITCALL ReplayGetPosition(TITAN_REPLAY_POSITION* Position)
+{
+    if(Position)
+        *Position = {};
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
+}
+
+__declspec(dllexport) bool TITCALL ReplayGetExtent(TITAN_REPLAY_POSITION* First, TITAN_REPLAY_POSITION* Last)
+{
+    if(First)
+        *First = {};
+    if(Last)
+        *Last = {};
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
+}
+
+__declspec(dllexport) bool TITCALL ReplaySetPosition(const TITAN_REPLAY_POSITION* Position)
+{
+    SetLastError(Position ? ERROR_NOT_SUPPORTED : ERROR_INVALID_PARAMETER);
+    return false;
+}
+
+__declspec(dllexport) bool TITCALL ReplayRun(bool Reverse)
+{
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
+}
+
+__declspec(dllexport) bool TITCALL ReplayStep(bool Reverse, bool StepOver, TITANCBSTEP StepCallBack)
+{
+    SetLastError(ERROR_NOT_SUPPORTED);
+    return false;
 }
 
 __declspec(dllexport) void* TITCALL InitDLLDebugW(const wchar_t* szFileName, bool ReserveModuleBase, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder, LPVOID EntryCallBack)
@@ -16,12 +88,17 @@ __declspec(dllexport) void* TITCALL InitDLLDebugW(const wchar_t* szFileName, boo
 
 __declspec(dllexport) bool TITCALL StopDebug()
 {
-    return emu.StopDebug();
+    auto result = emu.StopDebug();
+    gSessionStarted = false;
+    return result;
 }
 
 __declspec(dllexport) bool TITCALL AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
 {
-    return emu.AttachDebugger(ProcessId, KillOnExit, DebugInfo, CallBack);
+    gSessionStarted = true;
+    auto result = emu.AttachDebugger(ProcessId, KillOnExit, DebugInfo, CallBack);
+    gSessionStarted = false;
+    return result;
 }
 
 __declspec(dllexport) bool TITCALL DetachDebuggerEx(DWORD ProcessId)
@@ -130,6 +207,27 @@ __declspec(dllexport) HANDLE TITCALL TitanOpenProcess(DWORD dwDesiredAccess, boo
 __declspec(dllexport) HANDLE TITCALL TitanOpenThread(DWORD dwDesiredAccess, bool bInheritHandle, DWORD dwThreadId)
 {
     return emu.TitanOpenThread(dwDesiredAccess, bInheritHandle, dwThreadId);
+}
+
+__declspec(dllexport) bool TITCALL TitanGetProcessImagePathW(HANDLE hProcess, LPWSTR szPath, SIZE_T cchPath)
+{
+    if(!hProcess || !szPath || !cchPath || cchPath > MAXDWORD)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return false;
+    }
+    DWORD length = (DWORD)cchPath;
+    return !!QueryFullProcessImageNameW(hProcess, 0, szPath, &length);
+}
+
+__declspec(dllexport) bool TITCALL TitanGetModulePathW(HANDLE hProcess, ULONG_PTR ModuleBase, LPWSTR szPath, SIZE_T cchPath)
+{
+    if(!hProcess || !ModuleBase || !szPath || !cchPath || cchPath > MAXDWORD)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return false;
+    }
+    return GetModuleFileNameExW(hProcess, (HMODULE)ModuleBase, szPath, (DWORD)cchPath) != 0;
 }
 
 __declspec(dllexport) bool TITCALL TitanCloseHandle(HANDLE hEngineHandle)
