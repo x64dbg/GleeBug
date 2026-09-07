@@ -36,7 +36,8 @@ __declspec(dllexport) bool TITCALL GetSessionInfo(TITAN_SESSION_INFO* SessionInf
                                 UE_SESSION_CAP_CONTEXT_READ | UE_SESSION_CAP_FORWARD_EXECUTION |
                                 UE_SESSION_CAP_MEMORY_WRITE | UE_SESSION_CAP_CONTEXT_WRITE |
                                 UE_SESSION_CAP_PROCESS_CONTROL | UE_SESSION_CAP_THREAD_CONTROL |
-                                UE_SESSION_CAP_NATIVE_HANDLES | UE_SESSION_CAP_EXCEPTION_CONTINUE;
+                                UE_SESSION_CAP_NATIVE_HANDLES | UE_SESSION_CAP_EXCEPTION_CONTINUE |
+                                UE_SESSION_CAP_PAUSE_EXECUTION;
 #ifdef _WIN64
     SessionInfo->machineType = IMAGE_FILE_MACHINE_AMD64;
 #else
@@ -69,13 +70,13 @@ __declspec(dllexport) bool TITCALL ReplaySetPosition(const TITAN_REPLAY_POSITION
     return false;
 }
 
-__declspec(dllexport) bool TITCALL ReplayRun(bool Reverse)
+__declspec(dllexport) bool TITCALL ReplayRunBack()
 {
     SetLastError(ERROR_NOT_SUPPORTED);
     return false;
 }
 
-__declspec(dllexport) bool TITCALL ReplayStep(bool Reverse, bool StepOver, TITANCBSTEP StepCallBack)
+__declspec(dllexport) bool TITCALL ReplayStepBack(TITANCBSTEP StepCallBack)
 {
     SetLastError(ERROR_NOT_SUPPORTED);
     return false;
@@ -241,7 +242,7 @@ __declspec(dllexport) bool TITCALL ProcessIsWow64(HANDLE hProcess, PBOOL isWow64
 }
 
 __declspec(dllexport) bool TITCALL TitanTerminateProcess(HANDLE hProcess, DWORD exitCode) { return !!TerminateProcess(hProcess, exitCode); }
-__declspec(dllexport) bool TITCALL TitanDebugBreakProcess(HANDLE hProcess) { return !!DebugBreakProcess(hProcess); }
+__declspec(dllexport) bool TITCALL RequestPause(TitanPausePolicy MaximumPolicy, TITANCBPAUSE PauseCallback) { return emu.RequestPause(MaximumPolicy, PauseCallback); }
 __declspec(dllexport) HANDLE TITCALL TitanCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE start, LPVOID argument, DWORD creationFlags, LPDWORD threadId) { return CreateRemoteThread(hProcess, nullptr, 0, start, argument, creationFlags, threadId); }
 __declspec(dllexport) DWORD TITCALL TitanSuspendThread(HANDLE hThread) { return SuspendThread(hThread); }
 __declspec(dllexport) DWORD TITCALL TitanResumeThread(HANDLE hThread) { return ResumeThread(hThread); }

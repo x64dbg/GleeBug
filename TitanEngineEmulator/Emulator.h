@@ -8,6 +8,7 @@
 #include "PEB.h"
 #include "Global.Engine.Context.h"
 #include "Hider.h"
+#include <TlHelp32.h>
 
 // Related to floating x87 registers
 #define GetSTInTOPStackFromStatusWord(StatusWord) ((StatusWord & 0x3800) >> 11)
@@ -26,6 +27,7 @@ public:
     //Debugger
     PROCESS_INFORMATION* InitDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder)
     {
+        cancelPause();
         mCbATTACHBREAKPOINT = nullptr;
         if(!Init(szFileName, szCommandLine, szCurrentFolder))
             return nullptr;
@@ -62,11 +64,13 @@ public:
 
     bool StopDebug()
     {
+        cancelPause();
         return Stop();
     }
 
     bool AttachDebugger(DWORD ProcessId, bool KillOnExit, LPVOID DebugInfo, LPVOID CallBack)
     {
+        cancelPause();
         if(!Attach(ProcessId))
             return false;
         mCbATTACHBREAKPOINT = STEPCALLBACK(CallBack);
@@ -191,6 +195,84 @@ public:
         }
     }
 
+    bool RequestPause(TitanPausePolicy MaximumPolicy, TITANCBPAUSE PauseCallback)
+    {
+        if(MaximumPolicy < UE_PAUSE_POLICY_NONINVASIVE || MaximumPolicy > UE_PAUSE_POLICY_AGGRESSIVE ||
+           !PauseCallback || !mProcess || !mThread || !mMainProcess.hProcess)
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return false;
+        }
+
+        bool escalate = false;
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            if(mPauseCallback)
+            {
+                escalate = MaximumPolicy == UE_PAUSE_POLICY_AGGRESSIVE && !mPauseBreakInExpected &&
+                           GetTickCount64() - mPauseRequestTime >= 2000;
+                if(!escalate)
+                    return true;
+            }
+            else
+            {
+                if(MaximumPolicy == UE_PAUSE_POLICY_NONINVASIVE)
+                {
+                    SetLastError(ERROR_NOT_SUPPORTED);
+                    return false;
+                }
+                mPauseCallback = PauseCallback;
+                mPauseRequestTime = GetTickCount64();
+            }
+        }
+        if(escalate)
+        {
+            requestPauseBreakIn(); // The current-IP request remains pending on failure.
+            return true;
+        }
+
+        auto thread = mAttachedToProcess ? mMainProcess.hThread : mThread->hThread;
+        auto threadId = mAttachedToProcess ? mMainProcess.dwThreadId : mThread->dwThreadId;
+        auto previousSuspendCount = SuspendThread(thread);
+        if(previousSuspendCount != 0)
+        {
+            if(previousSuspendCount != (DWORD)-1)
+                ResumeThread(thread);
+            if(MaximumPolicy == UE_PAUSE_POLICY_AGGRESSIVE && requestPauseBreakIn())
+                return true;
+            cancelPause();
+            SetLastError(ERROR_BUSY);
+            return false;
+        }
+
+        CONTEXT context = {};
+        context.ContextFlags = CONTEXT_CONTROL;
+        bool armed = GetThreadContext(thread, &context) != FALSE;
+#ifdef _WIN64
+        auto cip = (ULONG_PTR)context.Rip;
+#else
+        auto cip = (ULONG_PTR)context.Eip;
+#endif
+        if(armed)
+        {
+            armed = mProcess->SetBreakpoint(cip, [this](const BreakpointInfo &)
+            {
+                completePause();
+            }, true);
+        }
+        if(armed)
+            PostThreadMessageW(threadId, WM_NULL, 0, 0);
+        auto resumed = ResumeThread(thread) != (DWORD)-1;
+        if(armed && resumed)
+            return true;
+        if(armed)
+            mProcess->DeleteBreakpoint(cip);
+        if(MaximumPolicy == UE_PAUSE_POLICY_AGGRESSIVE && requestPauseBreakIn())
+            return true;
+        cancelPause();
+        return false;
+    }
+
     void SetEngineVariable(DWORD VariableId, bool VariableSet)
     {
         switch(VariableId)
@@ -206,6 +288,9 @@ public:
             break;
         case UE_ENGINE_NO_CONSOLE_WINDOW:
             mNoConsoleWindow = VariableSet;
+            break;
+        case UE_ENGINE_WOW64_SINGLE_STEP_WORKAROUND:
+            mWow64SingleStepWorkaround = VariableSet;
             break;
         }
     }
@@ -334,8 +419,24 @@ public:
 
     void StepInto(LPVOID CallBack)
     {
-        if(!mThread || !CallBack)
+        if(!mThread || !mProcess || !CallBack)
             return;
+#ifndef _WIN64
+        if(mWow64SingleStepWorkaround)
+        {
+            unsigned char data[7] = {};
+            auto cip = GetContextDataEx(mThread->hThread, UE_CIP);
+            if(mProcess->MemReadSafe(cip, data, sizeof(data), nullptr) &&
+                    data[0] == 0xEA && data[5] == 0x33 && data[6] == 0x00)
+            {
+                ULONG_PTR returnAddress = 0;
+                auto csp = GetContextDataEx(mThread->hThread, UE_CSP);
+                if(mProcess->MemReadSafe(csp, &returnAddress, sizeof(returnAddress), nullptr) &&
+                        SetBPX(returnAddress, UE_SINGLESHOOT, CallBack))
+                    return;
+            }
+        }
+#endif
         mThread->StepInto(STEPCALLBACK(CallBack));
     }
 
@@ -910,6 +1011,12 @@ protected:
 
     void cbCreateThreadEvent(const CREATE_THREAD_DEBUG_INFO & createThread, const Thread & thread) override
     {
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            if(mPauseBreakInExpected && mPauseBreakInStart &&
+                    (ULONG_PTR)createThread.lpStartAddress == mPauseBreakInStart)
+                mPauseBreakInThreadId = thread.dwThreadId;
+        }
         if(mCbCREATETHREAD)
             mCbCREATETHREAD(&createThread);
     }
@@ -930,6 +1037,23 @@ protected:
     {
         if(mCbUNLOADDLL)
             mCbUNLOADDLL(&unloadDll);
+    }
+
+    void cbExceptionEvent(const EXCEPTION_DEBUG_INFO & exceptionInfo) override
+    {
+        bool pauseBreakIn = false;
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            pauseBreakIn = mPauseBreakInExpected && mThread && mPauseBreakInThreadId &&
+                           mThread->dwThreadId == mPauseBreakInThreadId &&
+                           (exceptionInfo.ExceptionRecord.ExceptionCode == STATUS_BREAKPOINT ||
+                            exceptionInfo.ExceptionRecord.ExceptionCode == STATUS_WX86_BREAKPOINT);
+        }
+        if(pauseBreakIn)
+        {
+            mContinueStatus = DBG_CONTINUE;
+            completePause();
+        }
     }
 
     void cbUnhandledException(const EXCEPTION_RECORD & exceptionRecord, bool firstChance) override
@@ -967,6 +1091,87 @@ protected:
     }
 
 private: //functions
+    ULONG_PTR pauseBreakInStartAddress()
+    {
+        auto localNtdll = GetModuleHandleW(L"ntdll.dll");
+        auto localStart = localNtdll ? GetProcAddress(localNtdll, "DbgUiRemoteBreakin") : nullptr;
+        if(!localStart || !mMainProcess.dwProcessId)
+            return 0;
+        auto snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32,
+                                                 mMainProcess.dwProcessId);
+        if(snapshot == INVALID_HANDLE_VALUE)
+            return 0;
+        MODULEENTRY32W module = {};
+        module.dwSize = sizeof(module);
+        ULONG_PTR result = 0;
+        if(Module32FirstW(snapshot, &module))
+        {
+            do
+            {
+                if(!_wcsicmp(module.szModule, L"ntdll.dll"))
+                {
+                    result = (ULONG_PTR)module.modBaseAddr +
+                             (ULONG_PTR)localStart - (ULONG_PTR)localNtdll;
+                    break;
+                }
+            }
+            while(Module32NextW(snapshot, &module));
+        }
+        CloseHandle(snapshot);
+        return result;
+    }
+
+    bool requestPauseBreakIn()
+    {
+        auto startAddress = pauseBreakInStartAddress();
+        if(!startAddress)
+        {
+            SetLastError(ERROR_PROC_NOT_FOUND);
+            return false;
+        }
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            mPauseBreakInExpected = true;
+            mPauseBreakInStart = startAddress;
+            mPauseBreakInThreadId = 0;
+        }
+        if(DebugBreakProcess(mMainProcess.hProcess))
+            return true;
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            mPauseBreakInExpected = false;
+            mPauseBreakInStart = 0;
+            mPauseBreakInThreadId = 0;
+        }
+        return false;
+    }
+
+    void completePause()
+    {
+        TITANCBPAUSE callback = nullptr;
+        {
+            std::lock_guard<std::mutex> lock(mPauseMutex);
+            callback = mPauseCallback;
+            mPauseCallback = nullptr;
+            mPauseRequestTime = 0;
+            mPauseBreakInExpected = false;
+            mPauseBreakInStart = 0;
+            mPauseBreakInThreadId = 0;
+        }
+        if(callback)
+            callback();
+    }
+
+    void cancelPause()
+    {
+        std::lock_guard<std::mutex> lock(mPauseMutex);
+        mPauseCallback = nullptr;
+        mPauseRequestTime = 0;
+        mPauseBreakInExpected = false;
+        mPauseBreakInStart = 0;
+        mPauseBreakInThreadId = 0;
+    }
+
     inline Registers::R registerFromDword(DWORD IndexOfRegister)
     {
         switch(IndexOfRegister)
@@ -1343,6 +1548,13 @@ private: //functions
 
 private: //variables
     bool mSetDebugPrivilege = false;
+    bool mWow64SingleStepWorkaround = true;
+    std::mutex mPauseMutex;
+    TITANCBPAUSE mPauseCallback = nullptr;
+    ULONGLONG mPauseRequestTime = 0;
+    bool mPauseBreakInExpected = false;
+    ULONG_PTR mPauseBreakInStart = 0;
+    DWORD mPauseBreakInThreadId = 0;
     typedef void(*CUSTOMHANDLER)(const void*);
     typedef void(*STEPCALLBACK)();
     typedef STEPCALLBACK BPCALLBACK;

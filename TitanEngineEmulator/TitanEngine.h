@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 typedef void(TITCALL* TITANCBSTEP)();
+typedef void(TITCALL* TITANCBPAUSE)();
 
 #pragma pack(push, 1)
 
@@ -63,6 +64,8 @@ enum TitanSessionCapability : uint64_t
     UE_SESSION_CAP_NATIVE_HANDLES = 1ull << 12,
     UE_SESSION_CAP_EXCEPTION_CONTINUE = 1ull << 13,
     UE_SESSION_CAP_TIMELINE_STATE = 1ull << 14,
+    UE_SESSION_CAP_PAUSE_EXECUTION = 1ull << 16,
+    UE_SESSION_CAP_NAVIGABLE_PROCESS_EXIT = 1ull << 17,
 };
 
 typedef struct
@@ -107,6 +110,14 @@ typedef struct
 #define UE_ENGINE_MEMBP_ALT 11
 #define UE_ENGINE_DISABLE_ASLR 12
 #define UE_ENGINE_SAFE_STEP 13
+#define UE_ENGINE_WOW64_SINGLE_STEP_WORKAROUND 14
+
+enum TitanPausePolicy
+{
+    UE_PAUSE_POLICY_NONINVASIVE = 0,
+    UE_PAUSE_POLICY_STANDARD = 1,
+    UE_PAUSE_POLICY_AGGRESSIVE = 2,
+};
 
 #define UE_OPTION_REMOVEALL 1
 #define UE_OPTION_DISABLEALL 2
@@ -900,8 +911,8 @@ __declspec(dllexport) bool TITCALL GetSessionInfo(TITAN_SESSION_INFO* SessionInf
 __declspec(dllexport) bool TITCALL ReplayGetPosition(TITAN_REPLAY_POSITION* Position);
 __declspec(dllexport) bool TITCALL ReplayGetExtent(TITAN_REPLAY_POSITION* First, TITAN_REPLAY_POSITION* Last);
 __declspec(dllexport) bool TITCALL ReplaySetPosition(const TITAN_REPLAY_POSITION* Position);
-__declspec(dllexport) bool TITCALL ReplayRun(bool Reverse);
-__declspec(dllexport) bool TITCALL ReplayStep(bool Reverse, bool StepOver, TITANCBSTEP StepCallBack);
+__declspec(dllexport) bool TITCALL ReplayRunBack();
+__declspec(dllexport) bool TITCALL ReplayStepBack(TITANCBSTEP StepCallBack);
 __declspec(dllexport) void* TITCALL InitNativeDebug(char* szFileName, char* szCommandLine, char* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitNativeDebugW(const wchar_t* szFileName, const wchar_t* szCommandLine, const wchar_t* szCurrentFolder);
 __declspec(dllexport) void* TITCALL InitDebugEx(const char* szFileName, const char* szCommandLine, const char* szCurrentFolder, LPVOID EntryCallBack);
@@ -1102,7 +1113,7 @@ __declspec(dllexport) bool TITCALL TitanGetModulePathW(HANDLE hProcess, ULONG_PT
 __declspec(dllexport) bool TITCALL TitanCloseHandle(HANDLE hEngineHandle);
 __declspec(dllexport) bool TITCALL ProcessIsWow64(HANDLE hProcess, PBOOL isWow64);
 __declspec(dllexport) bool TITCALL TitanTerminateProcess(HANDLE hProcess, DWORD exitCode);
-__declspec(dllexport) bool TITCALL TitanDebugBreakProcess(HANDLE hProcess);
+__declspec(dllexport) bool TITCALL RequestPause(TitanPausePolicy MaximumPolicy, TITANCBPAUSE PauseCallback);
 __declspec(dllexport) HANDLE TITCALL TitanCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE start, LPVOID argument, DWORD creationFlags, LPDWORD threadId);
 __declspec(dllexport) DWORD TITCALL TitanSuspendThread(HANDLE hThread);
 __declspec(dllexport) DWORD TITCALL TitanResumeThread(HANDLE hThread);
