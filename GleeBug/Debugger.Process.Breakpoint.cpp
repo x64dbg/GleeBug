@@ -69,10 +69,18 @@ namespace GleeBug
             return false;
         const auto & info = found->second;
 
-        //restore the breakpoint bytes
+        // Restore the breakpoint bytes if the memory still exists. DLL unload
+        // events arrive after the image has been unmapped, so there is nothing
+        // to restore in that case, but the breakpoint records must be removed.
         if(!MemWriteUnsafe(address, info.internal.software.oldbytes, info.internal.software.size))
-            return false;
-        FlushInstructionCache(hProcess, nullptr, 0);
+        {
+            MEMORY_BASIC_INFORMATION mbi = {};
+            if(!VirtualQueryEx(hProcess, LPCVOID(address), &mbi, sizeof(mbi)) ||
+                    (mbi.State != MEM_FREE && mbi.State != MEM_RESERVE))
+                return false;
+        }
+        else
+            FlushInstructionCache(hProcess, nullptr, 0);
 
         recentlyDeletedSwbp.insert(address);
 
